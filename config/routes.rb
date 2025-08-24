@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  resources :group_classifier_states
+  resources :banned_users
   resources :trained_messages
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

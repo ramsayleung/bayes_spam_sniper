@@ -1,0 +1,57 @@
+<%= form_with(model: group_classifier_state, class: "contents") do |form| %>
+  <% if group_classifier_state.errors.any? %>
+    <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-md mt-3">
+      <h2><%= pluralize(group_classifier_state.errors.count, "error") %> prohibited this group_classifier_state from being saved:</h2>
+
+      <ul class="list-disc ml-6">
+        <% group_classifier_state.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="my-5">
+    <%= form.label :group_id %>
+    <%= form.number_field :group_id, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": group_classifier_state.errors[:group_id].none?, "border-red-400 focus:outline-red-600": group_classifier_state.errors[:group_id].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :spam_counts %>
+    <%= form.textarea :spam_counts, rows: 4, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": group_classifier_state.errors[:spam_counts].none?, "border-red-400 focus:outline-red-600": group_classifier_state.errors[:spam_counts].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :ham_counts %>
+    <%= form.textarea :ham_counts, rows: 4, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": group_classifier_state.errors[:ham_counts].none?, "border-red-400 focus:outline-red-600": group_classifier_state.errors[:ham_counts].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :total_spam_words %>
+    <%= form.number_field :total_spam_words, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": group_classifier_state.errors[:total_spam_words].none?, "border-red-400 focus:outline-red-600": group_classifier_state.errors[:total_spam_words].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :total_ham_words %>
+    <%= form.number_field :total_ham_words, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": group_classifier_state.errors[:total_ham_words].none?, "border-red-400 focus:outline-red-600": group_classifier_state.errors[:total_ham_words].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :total_spam_messages %>
+    <%= form.number_field :total_spam_messages, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": group_classifier_state.errors[:total_spam_messages].none?, "border-red-400 focus:outline-red-600": group_classifier_state.errors[:total_spam_messages].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :total_ham_messages %>
+    <%= form.number_field :total_ham_messages, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": group_classifier_state.errors[:total_ham_messages].none?, "border-red-400 focus:outline-red-600": group_classifier_state.errors[:total_ham_messages].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :vocabulary_size %>
+    <%= form.number_field :vocabulary_size, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": group_classifier_state.errors[:vocabulary_size].none?, "border-red-400 focus:outline-red-600": group_classifier_state.errors[:vocabulary_size].any?}] %>
+  </div>
+
+  <div class="inline">
+    <%= form.submit class: "w-full sm:w-auto rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
+  </div>
+<% end %>

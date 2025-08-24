@@ -1,0 +1,34 @@
+<div id="<%= dom_id group_classifier_state %>" class="w-full sm:w-auto my-5 space-y-5">
+  <div>
+    <strong class="block font-medium mb-1">Group:</strong>
+    <%= group_classifier_state.group_id %>
+  </div>
+  <div>
+    <strong class="block font-medium mb-1">Spam counts:</strong>
+    <%= group_classifier_state.spam_counts %>
+  </div>
+  <div>
+    <strong class="block font-medium mb-1">Ham counts:</strong>
+    <%= group_classifier_state.ham_counts %>
+  </div>
+  <div>
+    <strong class="block font-medium mb-1">Total spam words:</strong>
+    <%= group_classifier_state.total_spam_words %>
+  </div>
+  <div>
+    <strong class="block font-medium mb-1">Total ham words:</strong>
+    <%= group_classifier_state.total_ham_words %>
+  </div>
+  <div>
+    <strong class="block font-medium mb-1">Total spam messages:</strong>
+    <%= group_classifier_state.total_spam_messages %>
+  </div>
+  <div>
+    <strong class="block font-medium mb-1">Total ham messages:</strong>
+    <%= group_classifier_state.total_ham_messages %>
+  </div>
+  <div>
+    <strong class="block font-medium mb-1">Vocabulary size:</strong>
+    <%= group_classifier_state.vocabulary_size %>
+  </div>
+</div>

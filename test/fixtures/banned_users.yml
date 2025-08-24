@@ -4,8 +4,10 @@ one:
   group_id: 1
   sender_chat_id: 1
   sender_user_name: MyString
+  spam_message: MyText
 
 two:
   group_id: 1
   sender_chat_id: 1
   sender_user_name: MyString
+  spam_message: MyText

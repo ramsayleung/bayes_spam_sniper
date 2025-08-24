@@ -1,0 +1,37 @@
+<%= form_with(model: banned_user, class: "contents") do |form| %>
+  <% if banned_user.errors.any? %>
+    <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-md mt-3">
+      <h2><%= pluralize(banned_user.errors.count, "error") %> prohibited this banned_user from being saved:</h2>
+
+      <ul class="list-disc ml-6">
+        <% banned_user.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="my-5">
+    <%= form.label :group_id %>
+    <%= form.number_field :group_id, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": banned_user.errors[:group_id].none?, "border-red-400 focus:outline-red-600": banned_user.errors[:group_id].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :sender_chat_id %>
+    <%= form.number_field :sender_chat_id, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": banned_user.errors[:sender_chat_id].none?, "border-red-400 focus:outline-red-600": banned_user.errors[:sender_chat_id].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :sender_user_name %>
+    <%= form.text_field :sender_user_name, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": banned_user.errors[:sender_user_name].none?, "border-red-400 focus:outline-red-600": banned_user.errors[:sender_user_name].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :spam_message %>
+    <%= form.textarea :spam_message, rows: 4, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": banned_user.errors[:spam_message].none?, "border-red-400 focus:outline-red-600": banned_user.errors[:spam_message].any?}] %>
+  </div>
+
+  <div class="inline">
+    <%= form.submit class: "w-full sm:w-auto rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
+  </div>
+<% end %>
