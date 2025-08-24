@@ -10,7 +10,29 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_24_065623) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_24_073324) do
+  create_table "banned_users", force: :cascade do |t|
+    t.integer "group_id"
+    t.integer "sender_chat_id"
+    t.string "sender_user_name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "group_classifier_states", force: :cascade do |t|
+    t.integer "group_id"
+    t.text "spam_counts"
+    t.text "ham_counts"
+    t.integer "total_spam_words"
+    t.integer "total_ham_words"
+    t.integer "total_spam_messages"
+    t.integer "total_ham_messages"
+    t.integer "vocabulary_size"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["group_id"], name: "index_group_classifier_states_on_group_id"
+  end
+
   create_table "trained_messages", force: :cascade do |t|
     t.integer "group_id"
     t.text "message"

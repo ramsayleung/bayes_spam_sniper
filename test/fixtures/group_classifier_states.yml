@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  group_id: 1
+  spam_counts: MyText
+  ham_counts: MyText
+  total_spam_words: 1
+  total_ham_words: 1
+  total_spam_messages: 1
+  total_ham_messages: 1
+  vocabulary_size: 1
+
+two:
+  group_id: 1
+  spam_counts: MyText
+  ham_counts: MyText
+  total_spam_words: 1
+  total_ham_words: 1
+  total_spam_messages: 1
+  total_ham_messages: 1
+  vocabulary_size: 1

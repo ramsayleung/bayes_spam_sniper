@@ -160,6 +160,7 @@ GEM
     jbuilder (2.14.1)
       actionview (>= 7.0.0)
       activesupport (>= 7.0.0)
+    jieba_rb (0.0.5)
     json (2.13.2)
     kamal (2.7.0)
       activesupport (>= 7.0)
@@ -425,6 +426,7 @@ DEPENDENCIES
   debug
   importmap-rails
   jbuilder
+  jieba_rb (~> 0.0.5)
   kamal
   propshaft
   puma (>= 5.0)

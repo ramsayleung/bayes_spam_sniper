@@ -1,0 +1,11 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  group_id: 1
+  sender_chat_id: 1
+  sender_user_name: MyString
+
+two:
+  group_id: 1
+  sender_chat_id: 1
+  sender_user_name: MyString

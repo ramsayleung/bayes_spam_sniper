@@ -65,3 +65,5 @@ group :test do
 end
 
 gem "telegram-bot-ruby", "~> 2.4"
+
+gem "jieba_rb", "~> 0.0.5"
