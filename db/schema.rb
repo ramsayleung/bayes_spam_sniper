@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_24_181237) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_24_230758) do
   create_table "banned_users", force: :cascade do |t|
     t.integer "group_id"
     t.integer "sender_chat_id"
