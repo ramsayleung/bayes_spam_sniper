@@ -1,5 +1,5 @@
 class TelegramBotWorkerJob < ApplicationJob
-  queue_as :default
+  queue_as :bot
 
   def perform(token)
     puts "Starting bot..."
