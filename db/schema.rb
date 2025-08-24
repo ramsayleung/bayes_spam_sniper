@@ -10,13 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_24_073324) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_24_181237) do
   create_table "banned_users", force: :cascade do |t|
     t.integer "group_id"
     t.integer "sender_chat_id"
     t.string "sender_user_name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "spam_message"
   end
 
   create_table "group_classifier_states", force: :cascade do |t|

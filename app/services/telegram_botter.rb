@@ -41,12 +41,11 @@ class TelegramBotter
 
 
   def handle_message(bot, message)
-    return if message.from.is_bot
+    Rails.logger.info "Handling message"
   
     # Check if the user is an admin (we'll need this for protected commands)
     # TODO: This API call can be rate-limited. Cache results in production.
     is_admin = is_admin?(bot: bot, user: message.from, chat: message.chat)
-
     case message.text
     when %r{^/start}
       start_message = "Hello! I am a spam detection bot. Add me to your group..."
@@ -61,7 +60,8 @@ class TelegramBotter
 
       # 1. Train the model
       classifier = SpamClassifierService.new(message.chat.id)
-      classifier.train(replied.text, replied.from.id, [replied.from.first_name, replied.from.last_name].join(" "), :spam)
+      user_name = [replied.from.first_name, replied.from.last_name].join(" ")
+      classifier.train(replied.text, replied.from.id, user_name, :spam)
 
       # 2. Ban user and record the ban
       bot.api.ban_chat_member(chat_id: message.chat.id, user_id: replied.from.id)
@@ -69,7 +69,8 @@ class TelegramBotter
       BannedUser.find_or_create_by!(
         group_id: message.chat.id,
         sender_chat_id: replied.from.id,
-        sender_user_name: banned_user_name
+        sender_user_name: banned_user_name,
+        spam_message: replied.text
       )
 
       # 3. Delete the spam message
@@ -117,6 +118,7 @@ class TelegramBotter
       
         banned_users.each do |user|
           text += "User: #{user.sender_user_name}\n"
+          text += "Spam Message: #{user.spam_message}\n"
           text += "Banned on: #{user.created_at.strftime("%Y-%m-%d %H:%M")}\n\n"
         
           # Create an "unban" button for each user
@@ -159,6 +161,8 @@ class TelegramBotter
   end
 
   def handle_callback(bot, callback)
+    Rails.logger.info "Handling callback"
+
     chat_id = callback.message.chat.id
     message_id = callback.message.message_id
     data = callback.data
