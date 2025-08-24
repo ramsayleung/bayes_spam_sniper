@@ -25,13 +25,14 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
 
   test "#train should correctly update state for a new spam message" do
     spam_message = "快来买便宜的伟哥"
-    sender_id = 111
-    sender_name = "Spammer"
-
-    assert_difference "TrainedMessage.count", 1 do
-      @service.train(spam_message, sender_id, sender_name, :spam)
-    end
-
+    trained_message = TrainedMessage.new(
+      group_id: @group_id,
+      message: spam_message,
+      message_type: :spam,
+      sender_chat_id: 111,
+      sender_user_name: "Spammer"
+    )
+    @service.train(trained_message)
     state = @service.classifier_state.reload
 
     assert_equal 1, state.total_spam_messages
@@ -43,11 +44,16 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
   end
 
   test "#train should correctly update state for a new ham message" do
-    ham_message = "我们明天开会讨论项目" # "Let's have a meeting tomorrow to discuss the project"
-    sender_id = 222
-    sender_name = "Teammate"
+    ham_message = "我们明天开会讨论项目"
+    trained_message = TrainedMessage.new(
+      group_id: @group_id,
+      message: ham_message,
+      message_type: :ham,
+      sender_chat_id: 222,
+      sender_user_name: "Teammate"
+    )
 
-    @service.train(ham_message, sender_id, sender_name, :ham)
+    @service.train(trained_message)
     
     state = @service.classifier_state.reload
 
@@ -63,9 +69,27 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
   end
 
   test "#classify should correctly identify a message as spam" do
-    @service.train("便宜的伟哥现在买", 1, "s", :spam)
-    @service.train("免费点击这里", 1, "s", :spam)
-    @service.train("你好，今天天气不错", 2, "h", :ham)
+    @service.train(TrainedMessage.new(
+                     group_id: @group_id,
+                     message: "便宜的伟哥现在买",
+                     message_type: :spam,
+                     sender_chat_id: 1,
+                     sender_user_name: "s"
+                   ))
+    @service.train(TrainedMessage.new(
+                     group_id: @group_id,
+                     message: "免费点击这里",
+                     message_type: :spam,
+                     sender_chat_id: 1,
+                     sender_user_name: "s"
+                   ))
+    @service.train(TrainedMessage.new(
+                     group_id: @group_id,
+                     message: "你好，今天天气不错",
+                     message_type: :ham,
+                     sender_chat_id: 2,
+                     sender_user_name: "s"
+                   ))
 
     is_spam, spam_score, ham_score = @service.classify("点击这里买伟哥")
 
@@ -74,13 +98,34 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
   end
 
   test "#classify should correctly identify a message as ham" do
-    @service.train("便宜的伟哥现在买", 1, "s", :spam)
-    @service.train("你好，今天天气不错", 2, "h", :ham)
-    @service.train("我们明天开会", 2, "h", :ham)
+    @service.train(TrainedMessage.new(
+                     group_id: @group_id,
+                     message: "便宜的伟哥现在买",
+                     message_type: :spam,
+                     sender_chat_id: 1,
+                     sender_user_name: "s"
+                   ))
+    @service.train(TrainedMessage.new(
+                     group_id: @group_id,
+                     message: "你好，今天天气不错",
+                     message_type: :ham,
+                     sender_chat_id: 1,
+                     sender_user_name: "s"
+                   ))
+    @service.train(TrainedMessage.new(
+                     group_id: @group_id,
+                     message: "我们明天开会",
+                     message_type: :ham,
+                     sender_chat_id: 2,
+                     sender_user_name: "s"
+                   ))
 
     is_spam, spam_score, ham_score = @service.classify("我们明天见")
 
+    state = @service.classifier_state
+
     assert_not is_spam, "Message should be classified as ham"
+    puts "ham_score: #{ham_score}, spam_score: #{spam_score} spam_counts: #{state.spam_counts}, ham_counts: #{state.ham_counts}"
     assert ham_score > spam_score, "Ham score should be higher than spam score"
   end
 end

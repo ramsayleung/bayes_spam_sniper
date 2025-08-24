@@ -70,9 +70,18 @@ class TelegramBotter
 
     begin
       # 1. Train the model
-      classifier = SpamClassifierService.new(message.chat.id)
+      group_id = message.chat.id
       user_name = [replied.from.first_name, replied.from.last_name].compact.join(" ")
-      classifier.train(replied.text, replied.from.id, user_name, :spam)
+      trained_message = TrainedMessage.create!(
+        group_id: group_id,
+        message: replied.text,
+        sender_chat_id: replied.from.id,
+        sender_user_name: user_name,
+        message_type: :spam
+      )
+
+      classifier = SpamClassifierService.new(message.chat.id)
+      classifier.train(trained_message)
 
       # 2. Ban user and record the ban
       bot.api.ban_chat_member(chat_id: message.chat.id, user_id: replied.from.id)
@@ -118,7 +127,14 @@ class TelegramBotter
     begin
       classifier = SpamClassifierService.new(message.chat.id)
       user_name = [message.from.first_name, message.from.last_name].compact.join(" ")
-      classifier.train(spam_text, message.from.id, user_name, :spam)
+      trained_message = TrainedMessage.create!(
+        group_id: message.chat.id,
+        message: spam_text,
+        sender_chat_id: message.from.id,
+        sender_user_name: user_name,
+        message_type: :spam
+      )
+      classifier.train(trained_message)
     
       # Show a preview of what was learned (truncated if too long)
       preview = spam_text.length > 100 ? "#{spam_text[0..100]}..." : spam_text

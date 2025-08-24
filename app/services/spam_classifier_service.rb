@@ -19,19 +19,10 @@ class SpamClassifierService
     @jieba = JiebaRb::Segment.new
   end
 
-  def train(message_text, sender_id, sender_name, message_type)
-    TrainedMessage.create!(
-      group_id: @group_id,
-      message: message_text,
-      sender_chat_id: sender_id,
-      sender_user_name: sender_name,
-      message_type: message_type
-    )
-
-    tokens = tokenize(message_text)
+  def train(trained_message)
+    tokens = tokenize(trained_message.message)
     vocabulary = Set.new((@classifier_state.spam_counts.keys + @classifier_state.ham_counts.keys))
-
-    if message_type == :spam
+    if trained_message.spam?
       @classifier_state.total_spam_messages += 1
       @classifier_state.total_spam_words += tokens.size
       tokens.each do |token|
@@ -71,8 +62,7 @@ class SpamClassifierService
     vocab_size = @classifier_state.vocabulary_size
 
     tokens.each do |token|
-      # Add 1 for Laplace smoothing
-      # Use Laplace smoothing to solve zero probability problem
+      # Add 1 for Laplace smoothing, Laplace smoothing is tailored to solve zero probability problem
       spam_count = @classifier_state.spam_counts.fetch(token, 0) + 1
       spam_score += Math.log(spam_count.to_f / (@classifier_state.total_spam_words + vocab_size))
 
