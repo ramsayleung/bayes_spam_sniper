@@ -44,7 +44,7 @@ class TelegramBotter
     return if message.from.is_bot
   
     # Check if the user is an admin (we'll need this for protected commands)
-    # NOTE: This API call can be rate-limited. Cache results in production.
+    # TODO: This API call can be rate-limited. Cache results in production.
     is_admin = is_admin?(bot: bot, user: message.from, chat: message.chat)
 
     case message.text
@@ -61,21 +61,23 @@ class TelegramBotter
 
       # 1. Train the model
       classifier = SpamClassifierService.new(message.chat.id)
-      classifier.train(replied.text, replied.from.id, replied.from.first_name, :spam)
+      classifier.train(replied.text, replied.from.id, [replied.from.first_name, replied.from.last_name].join(" "), :spam)
 
       # 2. Ban user and record the ban
       bot.api.ban_chat_member(chat_id: message.chat.id, user_id: replied.from.id)
+      banned_user_name = [replied.from.first_name, replied.from.last_name].join(" ")
       BannedUser.find_or_create_by!(
         group_id: message.chat.id,
         sender_chat_id: replied.from.id,
-        sender_user_name: replied.from.first_name
+        sender_user_name: banned_user_name
       )
 
       # 3. Delete the spam message
       bot.api.delete_message(chat_id: message.chat.id, message_id: replied.message_id)
 
       # 4. Confirm action
-      bot.api.send_message(chat_id: message.chat.id, text: "✅ User #{replied.from.first_name} has been banned and the message marked as spam.")
+      response_message = "✅ User @[#{banned_user_name}](tg://user?id=#{replied.from.id}) has been banned and the message marked as spam."
+      bot.api.send_message(chat_id: message.chat.id, text: response_message, parse_mode: 'Markdown')
 
     when %r{^/feedspam(?: (.+))?$}
       return unless is_admin
@@ -87,7 +89,7 @@ class TelegramBotter
       end
 
       classifier = SpamClassifierService.new(message.chat.id)
-      classifier.train(spam_text, message.from.id, message.from.first_name, :spam)
+      classifier.train(spam_text, message.from.id, [message.from.first_name, message.from.last_name].join(" "), :spam)
       bot.api.send_message(chat_id: message.chat.id, text: "✅ Got it. I've learned from that spam message.")
     when %r{^/listspam}
       return unless is_admin
@@ -143,9 +145,9 @@ class TelegramBotter
     
       if is_spam
         bot.api.delete_message(chat_id: message.chat.id, message_id: message.message_id)
-        alert_msg = "⚠️ Potential spam detected from #{message.from.first_name} and removed."
-        Rails.logger.info "⚠️ Potential spam detected from #{message.from.first_name} and removed."
-        bot.api.send_message(chat_id: message.chat.id, text: alert_msg)
+        alert_msg = "⚠️ Potential spam detected from @[#{[message.from.first_name, message.from.last_name].join(" ")}](tg://user?id=#{message.from.id}) and removed."
+        Rails.logger.info alert_msg
+        bot.api.send_message(chat_id: message.chat.id, text: alert_msg, parse_mode: 'Markdown')
       end
     end
   rescue => e
@@ -153,7 +155,7 @@ class TelegramBotter
   end
 
   def edit_message_text(bot, chat_id, message_id, text)
-    bot.api.edit_message_text(chat_id: chat_id, message_id: message_id, text: text)
+    bot.api.edit_message_text(chat_id: chat_id, message_id: message_id, text: text, parse_mode: 'Markdown')
   end
 
   def handle_callback(bot, callback)
@@ -190,7 +192,7 @@ class TelegramBotter
     
       # Delete the banned user record from the database
       banned_user.destroy!
-      edit_message_text(bot, chat_id, message_id, "✅ User #{banned_user.sender_user_name} has been unbanned and their messages marked as ham.")
+      edit_message_text(bot, chat_id, message_id, "✅ User @[#{banned_user.sender_user_name}](tg://user?id=#{banned_user.sender_chat_id}) has been unbanned and their messages marked as ham.")
     end
   rescue => e
     puts "Error handling callback: #{e.message}\n#{e.backtrace.join("\n")}"
