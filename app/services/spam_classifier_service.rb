@@ -81,16 +81,15 @@ class SpamClassifierService
     is_spam = spam_score > ham_score
     [is_spam, spam_score, ham_score]
   end
+
   def retrain_as_ham(messages)
     # This is a critical action, so we use a transaction to ensure atomicity
     ActiveRecord::Base.transaction do
       state = classifier_state.reload # Reload to get the latest counts
 
       messages.each do |message|
-        # First, tokenize the message
         tokens = tokenize(message.message)
 
-        # Decrement spam counts
         state.total_spam_messages -= 1
         state.total_spam_words -= tokens.size
         tokens.each do |token|
@@ -98,17 +97,18 @@ class SpamClassifierService
           state.spam_counts.delete(token) if state.spam_counts[token] <= 0
         end
 
-        # Increment ham counts
         state.total_ham_messages += 1
         state.total_ham_words += tokens.size
         tokens.each do |token|
           state.ham_counts[token] = state.ham_counts.fetch(token, 0) + 1
         end
 
-        # Update the message record to reflect its new type
         message.update!(message_type: :ham)
       end
 
+      # Recalculate vocabulary size
+      vocabulary = Set.new((state.spam_counts.keys + state.ham_counts.keys))
+      state.vocabulary_size = vocabulary.size
       state.save!
     end
   end
@@ -116,7 +116,36 @@ class SpamClassifierService
   private
 
   def tokenize(text)
-    cleaned_text = text
-    @jieba.cut(cleaned_text)
+    cleaned_text = clean_text(text)
+    
+    raw_tokens = @jieba.cut(cleaned_text)
+    
+    processed_tokens = raw_tokens
+                         .reject(&:blank?)                    # Remove empty strings
+                         .reject { |token| token.length < 2 } # Remove single characters (usually not meaningful)
+                         .reject { |token| pure_punctuation?(token) } # Remove pure punctuation
+                         .reject { |token| pure_numbers?(token) }     # Remove pure numbers
+                         .map(&:downcase)                     # Normalize case (for mixed content)
+    
+    processed_tokens
+  end
+
+  def clean_text(text)
+    return "" if text.nil?
+    
+    text = text.to_s.strip
+    
+    # Remove excessive whitespace
+    text.gsub(/\s+/, ' ')
+  end
+
+  def pure_punctuation?(token)
+    # Check if token contains only punctuation marks
+    token.match?(/^[[:punct:]。、，！？；：""''（）【】《》〈〉「」『』…—–]+$/)
+  end
+
+  def pure_numbers?(token)
+    # Check if token contains only numbers (Arabic or Chinese)
+    token.match?(/^[0-9一二三四五六七八九十百千万亿零]+$/)
   end
 end

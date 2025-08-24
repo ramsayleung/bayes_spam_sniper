@@ -36,7 +36,7 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
 
     assert_equal 1, state.total_spam_messages
     assert_equal 0, state.total_ham_messages
-    assert_equal 5, state.total_spam_words
+    assert_equal 3, state.total_spam_words
     
     assert state.spam_counts["便宜"] >= 1
     assert_nil state.ham_counts["便宜"]
