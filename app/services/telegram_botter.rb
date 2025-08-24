@@ -69,9 +69,10 @@ class TelegramBotter
     return if replied.text.nil? || replied.text.empty?
 
     begin
-      # 1. Train the model
       group_id = message.chat.id
       user_name = [replied.from.first_name, replied.from.last_name].compact.join(" ")
+      # 1. Save the traineded message, which will invoke ActiveModel
+      # hook to train the model in the background job
       trained_message = TrainedMessage.create!(
         group_id: group_id,
         message: replied.text,
@@ -79,9 +80,6 @@ class TelegramBotter
         sender_user_name: user_name,
         message_type: :spam
       )
-
-      classifier = SpamClassifierService.new(message.chat.id)
-      classifier.train(trained_message)
 
       # 2. Ban user and record the ban
       bot.api.ban_chat_member(chat_id: message.chat.id, user_id: replied.from.id)
@@ -125,8 +123,10 @@ class TelegramBotter
     Rails.logger.info "spam message: #{message_text}"
 
     begin
-      classifier = SpamClassifierService.new(message.chat.id)
       user_name = [message.from.first_name, message.from.last_name].compact.join(" ")
+
+      # Save the traineded message, which will invoke ActiveModel
+      # hook to train the model in the background job
       trained_message = TrainedMessage.create!(
         group_id: message.chat.id,
         message: spam_text,
@@ -134,7 +134,6 @@ class TelegramBotter
         sender_user_name: user_name,
         message_type: :spam
       )
-      classifier.train(trained_message)
     
       # Show a preview of what was learned (truncated if too long)
       preview = spam_text.length > 100 ? "#{spam_text[0..100]}..." : spam_text
@@ -293,9 +292,9 @@ class TelegramBotter
         sender_chat_id: banned_user.sender_chat_id,
         message_type: :spam
       )
-
-      classifier = SpamClassifierService.new(chat_id)
-      classifier.retrain_as_ham(messages_to_retrain)
+      # This will trigger ActiveModel hook to automatically rebuild
+      # classifier in a background job
+      messages_to_retrain.update!(message_type: :ham)
 
       bot.api.unban_chat_member(chat_id: chat_id, user_id: banned_user.sender_chat_id)
 

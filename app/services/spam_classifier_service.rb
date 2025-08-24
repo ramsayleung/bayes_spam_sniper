@@ -74,34 +74,37 @@ class SpamClassifierService
     [is_spam, spam_score, ham_score]
   end
 
-  def retrain_as_ham(messages)
-    # This is a critical action, so we use a transaction to ensure atomicity
+  class << self
+    def rebuild_for_group(group_id)
+      service = new(group_id)
+      service.rebuild_classifier
+    end
+  end
+  
+  def rebuild_classifier
+    Rails.logger.info "Rebuild classifier for group_id: #{group_id}"
+    # Clear current state
+
     ActiveRecord::Base.transaction do
-      state = @classifier_state.reload # Reload to get the latest counts
-
-      messages.each do |message|
-        tokens = tokenize(message.message)
-
-        state.total_spam_messages -= 1
-        state.total_spam_words -= tokens.size
-        tokens.each do |token|
-          state.spam_counts[token] = state.spam_counts.fetch(token, 0) - 1
-          state.spam_counts.delete(token) if state.spam_counts[token] <= 0
-        end
-
-        state.total_ham_messages += 1
-        state.total_ham_words += tokens.size
-        tokens.each do |token|
-          state.ham_counts[token] = state.ham_counts.fetch(token, 0) + 1
-        end
-
-        message.update!(message_type: :ham)
+      classifier_state.update!(
+        spam_counts: {},
+        ham_counts: {},
+        total_spam_words: 0,
+        total_ham_words: 0,
+        total_spam_messages: 0,
+        total_ham_messages: 0,
+        vocabulary_size: 0
+      )
+    
+      # Retrain from all messages for this group
+      TrainedMessage.where(group_id: group_id).find_each do |message|
+        train(message)
       end
 
-      # Recalculate vocabulary size
-      vocabulary = Set.new((state.spam_counts.keys + state.ham_counts.keys))
-      state.vocabulary_size = vocabulary.size
-      state.save!
+      # Retrain from shared messages
+      TrainedMessage.shared.find_each do |shared_message|
+        train(shared_message)
+      end
     end
   end
 
