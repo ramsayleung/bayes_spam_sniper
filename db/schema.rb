@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_24_060940) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_24_065623) do
   create_table "trained_messages", force: :cascade do |t|
     t.integer "group_id"
     t.text "message"
@@ -18,6 +18,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_24_060940) do
     t.integer "sender_chat_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "sender_user_name"
     t.index ["group_id"], name: "index_trained_messages_on_group_id"
     t.index ["sender_chat_id"], name: "index_trained_messages_on_sender_chat_id"
   end
