@@ -70,12 +70,14 @@ class TelegramBotter
 
     begin
       group_id = message.chat.id
+      group_name = message.chat.title
       user_name = [replied.from.first_name, replied.from.last_name].compact.join(" ")
       # 1. Save the traineded message, which will invoke ActiveModel
       # hook to train the model in the background job
       trained_message = TrainedMessage.create!(
         group_id: group_id,
         message: replied.text,
+        group_name: group_name,
         sender_chat_id: replied.from.id,
         sender_user_name: user_name,
         message_type: :spam
@@ -85,6 +87,7 @@ class TelegramBotter
       bot.api.ban_chat_member(chat_id: message.chat.id, user_id: replied.from.id)
       banned_user_name = [replied.from.first_name, replied.from.last_name].compact.join(" ")
       BannedUser.find_or_create_by!(
+        group_name: group_name,
         group_id: message.chat.id,
         sender_chat_id: replied.from.id,
         sender_user_name: banned_user_name,
@@ -124,11 +127,13 @@ class TelegramBotter
 
     begin
       user_name = [message.from.first_name, message.from.last_name].compact.join(" ")
+      group_name = message.chat.title
 
       # Save the traineded message, which will invoke ActiveModel
       # hook to train the model in the background job
       trained_message = TrainedMessage.create!(
         group_id: message.chat.id,
+        group_name: group_name,
         message: spam_text,
         sender_chat_id: message.from.id,
         sender_user_name: user_name,

@@ -3,11 +3,13 @@ require 'jieba_rb'
 class SpamClassifierService
   # A spam message classifier based on Naive Bayes Theorem
   
-  attr_reader :group_id, :classifier_state
+  attr_reader :group_id, :classifier_state, :group_name
 
-  def initialize(group_id)
+  def initialize(group_id, group_name)
     @group_id = group_id
+    @group_name = group_name
     @classifier_state = GroupClassifierState.find_or_create_by!(group_id: @group_id) do |state|
+      state.group_name = group_name
       state.spam_counts = {}
       state.ham_counts = {}
       state.total_spam_words = 0
@@ -87,6 +89,7 @@ class SpamClassifierService
 
     ActiveRecord::Base.transaction do
       classifier_state.update!(
+        group_name: group_name,
         spam_counts: {},
         ham_counts: {},
         total_spam_words: 0,
@@ -117,7 +120,6 @@ class SpamClassifierService
     
     processed_tokens = raw_tokens
                          .reject(&:blank?)                    # Remove empty strings
-                         .reject { |token| token.length < 2 } # Remove single characters (usually not meaningful)
                          .reject { |token| pure_punctuation?(token) } # Remove pure punctuation
                          .reject { |token| pure_numbers?(token) }     # Remove pure numbers
                          .map(&:downcase)                     # Normalize case (for mixed content)
