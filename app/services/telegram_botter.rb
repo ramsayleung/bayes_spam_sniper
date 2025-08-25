@@ -31,8 +31,6 @@ class TelegramBotter
 
   def handle_message(bot, message)
     Rails.logger.info "Handling message"
-
-    is_admin = is_admin?(bot: bot, user: message.from, chat: message.chat)
   
     # Clean the message text and handle @botname mentions
     message_text = message.text&.strip || ""
@@ -42,14 +40,18 @@ class TelegramBotter
   
     # Route to appropriate command handler
     case message_text
+    when %r{^/help}
+      handle_help_command(bot, message)
     when %r{^/start}
       handle_start_command(bot, message)
+    when %r{^/groupid}
+      handle_groupid_command(bot, message)
     when %r{^/markspam}
-      handle_markspam_command(bot, message, is_admin)
+      handle_markspam_command(bot, message)
     when %r{^/feedspam}
-      handle_feedspam_command(bot, message, is_admin, message_text)
+      handle_feedspam_command(bot, message, message_text)
     when %r{^/listspam}
-      handle_listspam_command(bot, message, is_admin)
+      handle_listspam_command(bot, message)
     else
       handle_regular_message(bot, message)
     end
@@ -57,12 +59,37 @@ class TelegramBotter
     Rails.logger.error "An error occurred: #{e.message}\n#{e.backtrace.join("\n")}"
   end
 
+  def handle_help_command(bot, message)
+    text = "**/start:** Start the bot and get a welcome message\n\n"
+    text += "Group commands(group chat only)\n"
+    text += "**/markspam:** Mark a message as spam, then the bot will ban the sender and delete the spam message from group\n"
+    text += "**/feedspam:** 'Feed spam message to bot to help train the bot(only work in group chat)'\n"
+    text += "**/groupid:** 'Get group id of current group'\n"
+    text += "\n"
+    text += "Adminstration commands(admin only)\n"
+    text += "**/listspam groupId:** 'List all banned users of the group, you could unban them manually'"
+    bot.api.send_message(chat_id: message.chat.id, text: text, parse_mode: 'Markdown')
+  end
+
+  def handle_groupid_command(bot, message)
+    if message.chat.type == 'private'
+      bot.api.send_message(chat_id: message.chat.id, text: "❌ It's not a group")
+    elsif ['group', 'supergroup'].include?(message.chat.type)
+      group_title = message.chat.title
+      bot.api.send_message(chat_id: message.chat.id, text: "✅ The group Id of '#{group_title}' is : #{message.chat.id}")
+    else
+      # Could be a 'channel' or another type
+      bot.api.send_message(chat_id: message.chat.id, text: "❌ It's not a group")
+    end
+  end
+
   def handle_start_command(bot, message)
     start_message = "Hello! I am a spam detection bot. Add me to your group and promote me to an admin with 'Ban Users' and 'Delete Messages' permissions to get started!"
     bot.api.send_message(chat_id: message.chat.id, text: start_message)
   end
 
-  def handle_markspam_command(bot, message, is_admin)
+  def handle_markspam_command(bot, message)
+    is_admin = is_admin?(bot: bot, user: message.from, group_id: message.chat.id)
     return unless is_admin && message.reply_to_message
 
     replied = message.reply_to_message
@@ -106,7 +133,8 @@ class TelegramBotter
     end
   end
 
-  def handle_feedspam_command(bot, message, is_admin, message_text)
+  def handle_feedspam_command(bot, message, message_text)
+    is_admin = is_admin?(bot: bot, user: message.from, group_id: message.chat.id)
     return unless is_admin
 
     # Extract everything after /feedspam command, preserving multiline content
@@ -150,66 +178,97 @@ class TelegramBotter
     end
   end
 
-  def handle_listspam_command(bot, message, is_admin)
-    return unless is_admin
-
-    # Parse the page number from the command, defaulting to 1
-    page_match = message.text.match(%r{^/listspam\s+(\d+)})
-    page = page_match ? page_match[1].to_i : 1
-    page = 1 if page < 1
+  def handle_listspam_command(bot, message)
+    # Parse the command: /listspam groupId pageId
+    command_parts = message.text.strip.split(/\s+/)
   
+    if command_parts.length < 2
+      bot.api.send_message(
+        chat_id: message.chat.id,
+        text: "❌ Usage: `/listspam groupId [pageId]`\nExample: `/listspam -1001234567890 1`",
+        parse_mode: 'Markdown'
+      )
+      return
+    end
+
+    target_group_id = command_parts[1]
+    page = command_parts[2] ? command_parts[2].to_i : 1
+    page = 1 if page < 1
+
+    # Validate group ID format (should be a number, typically negative for groups)
+    unless target_group_id.match?(/^-?\d+$/)
+      bot.api.send_message(
+        chat_id: message.chat.id,
+        text: "❌ Invalid group ID format. Group ID should be a number (e.g., -1001234567890)",
+      )
+      return
+    end
+
+    target_group_id = target_group_id.to_i
+
+    # Check if the user is admin of the target group
+    unless is_admin?(bot: bot, user: message.from, group_id: target_group_id)
+      group_chat = bot.api.get_chat(chat_id: target_group_id)
+      bot.api.send_message(
+        chat_id: message.chat.id,
+        text: "❌ You are not an administrator of the group: #{group_chat.title}",
+      )
+      return
+    end
+
     items_per_page = 10
     offset = (page - 1) * items_per_page
 
     begin
-      banned_users = BannedUser.where(group_id: message.chat.id)
+      banned_users = BannedUser.where(group_id: target_group_id)
                        .order(created_at: :desc)
                        .offset(offset)
                        .limit(items_per_page)
 
-      total_count = BannedUser.where(group_id: message.chat.id).count
+      total_count = BannedUser.where(group_id: target_group_id).count
       total_pages = (total_count.to_f / items_per_page).ceil
 
       if banned_users.empty?
         if page == 1
           bot.api.send_message(
             chat_id: message.chat.id,
-            text: "There are no banned users in this group."
+            text: "There are no banned users in group `#{target_group_id}`.",
+            parse_mode: 'Markdown'
           )
         else
           bot.api.send_message(
             chat_id: message.chat.id,
-            text: "No banned users found on page #{page}. Try `/listspam 1` to see the first page.",
+            text: "No banned users found on page #{page} for group `#{target_group_id}`. Try `/listspam #{target_group_id} 1` to see the first page.",
             parse_mode: 'Markdown'
           )
         end
       else
-        text = "🚫 **Banned Users** (Page #{page}/#{total_pages})\n"
+        text = "🚫 **Banned Users** (Group: `#{target_group_id}`, Page #{page}/#{total_pages})\n"
         text += "Total banned users: #{total_count}\n\n"
         buttons = []
 
         banned_users.each do |user|
           # Truncate long spam messages for display
           spam_preview = user.spam_message.length > 50 ? "#{user.spam_message[0..50]}..." : user.spam_message
-        
+      
           text += "**User:** #{user.sender_user_name}\n"
           text += "**Message:** #{spam_preview}\n"
           text += "**Banned:** #{user.created_at.strftime("%Y-%m-%d %H:%M")}\n\n"
 
           # Create an "unban" button for each user
-          callback_data = build_callback_data('unban', user_id: user.id)
+          callback_data = build_callback_data('unban', user_id: user.id, group_id: target_group_id)
           buttons << [{ text: "✅ Unban #{user.sender_user_name}", callback_data: callback_data }]
         end
 
         # Add pagination buttons if needed
         pagination_buttons = []
         if page > 1
-          pagination_buttons << { text: "⬅️ Previous", callback_data: "listspam:#{page - 1}" }
+          pagination_buttons << { text: "⬅️ Previous", callback_data: build_callback_data('listspam_page', group_id: target_group_id, page: page - 1) }
         end
         if page < total_pages
-          pagination_buttons << { text: "Next ➡️", callback_data: "listspam:#{page + 1}" }
+          pagination_buttons << { text: "Next ➡️", callback_data: build_callback_data('listspam_page', group_id: target_group_id, page: page + 1) }
         end
-      
+    
         buttons << pagination_buttons unless pagination_buttons.empty?
 
         reply_markup = { inline_keyboard: buttons }.to_json
@@ -247,17 +306,17 @@ class TelegramBotter
     end
   end
   
-  def is_admin?(bot:, user:, chat:)
+  def is_admin?(bot:, user:, group_id:)
     # If the admin is a bot
     return true if user.is_bot && user.username == 'GroupAnonymousBot'
 
     # TODO: This API call can be rate-limited. Cache results in production.
     begin
-      admins = bot.api.get_chat_administrators(chat_id: chat.id.to_s)
+      admins = bot.api.get_chat_administrators(chat_id: group_id.to_s)
     
       return admins.any? { |admin| admin.user.id == user.id }
     rescue => e
-      Rails.logger.error "Error during admin check for chat #{chat.id}. Error: #{e.message}"
+      Rails.logger.error "Error during admin check for chat #{group_id}. Error: #{e.message}"
       return false
     end
   end
@@ -266,7 +325,7 @@ class TelegramBotter
     Rails.logger.info "Handling callback"
 
     # Only admin has permission to perform actions
-    return unless is_admin?(bot: bot, user: callback.from, chat: callback.message.chat)
+    return unless is_admin?(bot: bot, user: callback.from, group_id: callback.message.chat.id)
 
     callback_data = parse_callback_data(callback.data)
     action = callback_data[:action]
@@ -316,13 +375,17 @@ class TelegramBotter
 
   def handle_listspam_pagination_callback(bot, callback, page)
     # Simulate the listspam command with the new page
+
+    callback_data = parse_callback_data(callback.data)
+    group_id = callback_data[:group_id]
+
     fake_message = OpenStruct.new(
-      text: "/listspam #{page}",
+      text: "/listspam #{group_id} #{page}",
       chat: callback.message.chat,
       from: callback.from
     )
   
-    is_admin = is_admin?(bot: bot, user: callback.from, chat: callback.message.chat)
+    is_admin = is_admin?(bot: bot, user: callback.from, group_id: callback.message.chat.id)
   
     # Delete the old message
     bot.api.delete_message(chat_id: callback.message.chat.id, message_id: callback.message.message_id)
