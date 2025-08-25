@@ -19,4 +19,8 @@
     <strong class="block font-medium mb-1">Spam message:</strong>
     <%= banned_user.spam_message %>
   </div>
+  <div>
+    <strong class="block font-medium mb-1">Created at:</strong>
+    <%= banned_user.created_at.strftime("%Y-%m-%d %H:%M") %>
+  </div>
 </div>

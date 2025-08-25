@@ -23,4 +23,8 @@
     <strong class="block font-medium mb-1">Sender user name:</strong>
     <%= trained_message.sender_user_name %>
   </div>
+  <div>
+    <strong class="block font-medium mb-1">Created at:</strong>
+    <%= trained_message.created_at.strftime("%Y-%m-%d %H:%M") %>
+  </div>
 </div>
