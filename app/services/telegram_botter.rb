@@ -181,37 +181,47 @@ class TelegramBotter
   def handle_listspam_command(bot, message)
     # Parse the command: /listspam groupId pageId
     command_parts = message.text.strip.split(/\s+/)
-  
-    if command_parts.length < 2
-      bot.api.send_message(
-        chat_id: message.chat.id,
-        text: "❌ Usage: `/listspam groupId [pageId]`\nExample: `/listspam -1001234567890 1`",
-        parse_mode: 'Markdown'
-      )
-      return
-    end
 
-    target_group_id = command_parts[1]
-    page = command_parts[2] ? command_parts[2].to_i : 1
+    group_title = ""
+    if ['group', 'supergroup'].include?(message.chat.type)
+      target_group_id = message.chat.id
+      group_title = message.chat.title
+      page = command_parts[1] ? command_parts.length > 1 : 1
+    else
+      if command_parts.length < 2
+        bot.api.send_message(
+          chat_id: message.chat.id,
+          text: "❌ Usage: `/listspam groupId [pageId]`\nExample: `/listspam -1001234567890 1`",
+          parse_mode: 'Markdown'
+        )
+        return
+      end
+
+      target_group_id = command_parts[1]
+      page = command_parts[2] ? command_parts[2].to_i : 1
+
+      # Validate group ID format (should be a number, typically negative for groups)
+      unless target_group_id.match?(/^-?\d+$/)
+        bot.api.send_message(
+          chat_id: message.chat.id,
+          text: "❌ Invalid group ID format. Group ID should be a number (e.g., -1001234567890)",
+        )
+        return
+      end
+
+    end
     page = 1 if page < 1
-
-    # Validate group ID format (should be a number, typically negative for groups)
-    unless target_group_id.match?(/^-?\d+$/)
-      bot.api.send_message(
-        chat_id: message.chat.id,
-        text: "❌ Invalid group ID format. Group ID should be a number (e.g., -1001234567890)",
-      )
-      return
-    end
-
     target_group_id = target_group_id.to_i
 
     # Check if the user is admin of the target group
     unless is_admin?(bot: bot, user: message.from, group_id: target_group_id)
-      group_chat = bot.api.get_chat(chat_id: target_group_id)
+      if group_title.empty?
+        group_chat = bot.api.get_chat(chat_id: target_group_id)
+        group_title = group_chat.title
+      end
       bot.api.send_message(
         chat_id: message.chat.id,
-        text: "❌ You are not an administrator of the group: #{group_chat.title}",
+        text: "❌ You are not an administrator of the group: #{group_title}",
       )
       return
     end
@@ -229,16 +239,21 @@ class TelegramBotter
       total_pages = (total_count.to_f / items_per_page).ceil
 
       if banned_users.empty?
+        # TODO: Add cache for it
+        if group_title.empty?
+          group_chat = bot.api.get_chat(chat_id: target_group_id)
+          group_title = group_chat.title
+        end
         if page == 1
           bot.api.send_message(
             chat_id: message.chat.id,
-            text: "There are no banned users in group `#{target_group_id}`.",
+            text: "There are no banned users in group `#{group_title}`.",
             parse_mode: 'Markdown'
           )
         else
           bot.api.send_message(
             chat_id: message.chat.id,
-            text: "No banned users found on page #{page} for group `#{target_group_id}`. Try `/listspam #{target_group_id} 1` to see the first page.",
+            text: "No banned users found on page #{page} for group `#{group_title}`. Try `/listspam #{target_group_id} 1` to see the first page.",
             parse_mode: 'Markdown'
           )
         end
