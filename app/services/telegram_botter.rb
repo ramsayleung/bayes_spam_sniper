@@ -44,8 +44,6 @@ class TelegramBotter
       handle_help_command(bot, message)
     when %r{^/start}
       handle_start_command(bot, message)
-    when %r{^/groupid}
-      handle_groupid_command(bot, message)
     when %r{^/markspam}
       handle_markspam_command(bot, message)
     when %r{^/feedspam}
@@ -64,23 +62,10 @@ class TelegramBotter
     text += "Group commands(group chat only)\n"
     text += "**/markspam:** Mark a message as spam, then the bot will ban the sender and delete the spam message from group\n"
     text += "**/feedspam:** 'Feed spam message to bot to help train the bot(only work in group chat)'\n"
-    text += "**/groupid:** 'Get group id of current group'\n"
     text += "\n"
     text += "Adminstration commands(admin only)\n"
     text += "**/listspam groupId:** 'List all banned users of the group, you could unban them manually'"
     bot.api.send_message(chat_id: message.chat.id, text: text, parse_mode: 'Markdown')
-  end
-
-  def handle_groupid_command(bot, message)
-    if message.chat.type == 'private'
-      bot.api.send_message(chat_id: message.chat.id, text: "❌ It's not a group")
-    elsif ['group', 'supergroup'].include?(message.chat.type)
-      group_title = message.chat.title
-      bot.api.send_message(chat_id: message.chat.id, text: "✅ The group Id of '#{group_title}' is : #{message.chat.id}")
-    else
-      # Could be a 'channel' or another type
-      bot.api.send_message(chat_id: message.chat.id, text: "❌ It's not a group")
-    end
   end
 
   def handle_start_command(bot, message)

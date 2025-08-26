@@ -13,7 +13,6 @@ namespace :bot do
       {command: 'markspam', description: 'Mark a message as spam, then the bot will ban the sender and delete the spam message from group, only work in group chat'},
       {command: 'feedspam', description: 'Feed spam message to bot to help train the bot'},
       {command: 'listspam', description: 'List all banned users in the group, you could unban them manually'},
-      {command: 'groupid', description: 'Get group id of current group'}
     ]
     begin
       require 'telegram/bot'
