@@ -77,8 +77,8 @@ class SpamClassifierService
   end
 
   class << self
-    def rebuild_for_group(group_id)
-      service = new(group_id)
+    def rebuild_for_group(group_id, group_name)
+      service = new(group_id, group_name)
       service.rebuild_classifier
     end
   end
@@ -99,14 +99,9 @@ class SpamClassifierService
         vocabulary_size: 0
       )
     
-      # Retrain from all messages for this group
-      TrainedMessage.where(group_id: group_id).find_each do |message|
+      # Retrain from all messages
+      TrainedMessage.all.find_each do |message|
         train(message)
-      end
-
-      # Retrain from shared messages
-      TrainedMessage.shared.find_each do |shared_message|
-        train(shared_message)
       end
     end
   end

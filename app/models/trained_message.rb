@@ -14,6 +14,6 @@ class TrainedMessage < ApplicationRecord
 
   def retrain_classifier
     # For efficiency, we could queue this as a background job
-    ClassifierTrainerJob.perform_later(group_id)
+    ClassifierTrainerJob.perform_later(group_id, group_name)
   end
 end

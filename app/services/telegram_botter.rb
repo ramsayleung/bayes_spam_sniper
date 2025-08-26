@@ -305,7 +305,7 @@ class TelegramBotter
     return if message.text.nil? || message.text.strip.empty?
 
     begin
-      classifier = SpamClassifierService.new(message.chat.id)
+      classifier = SpamClassifierService.new(message.chat.id, message.chat.title)
       is_spam, spam_score, ham_score = classifier.classify(message.text)
       Rails.logger.info "is_spam:#{is_spam}, spam_score: #{spam_score}, ham_score: #{ham_score}"
 
