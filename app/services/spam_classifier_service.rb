@@ -21,7 +21,7 @@ class SpamClassifierService
     @jieba = JiebaRb::Segment.new
   end
 
-  def train(trained_message)
+  def train_only(trained_message)
     tokens = tokenize(trained_message.message)
     vocabulary = Set.new((@classifier_state.spam_counts.keys + @classifier_state.ham_counts.keys))
     if trained_message.spam?
@@ -41,6 +41,10 @@ class SpamClassifierService
     end
 
     @classifier_state.vocabulary_size = vocabulary.size
+  end
+
+  def train(trained_message)
+    train_only(trained_message)
     @classifier_state.save!
   end
 
@@ -101,8 +105,9 @@ class SpamClassifierService
     
       # Retrain from all messages
       TrainedMessage.all.find_each do |message|
-        train(message)
+        train_only(message)
       end
+      classifier_state.save!
     end
   end
 

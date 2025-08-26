@@ -17,6 +17,7 @@ namespace :bot do
     begin
       require 'telegram/bot'
       api = Telegram::Bot::Api.new(token)
+      # Old command list will be overwritten
       response = api.set_my_commands(commands: commands)
       if response
         puts "Succeed to set commands"
