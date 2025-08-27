@@ -29,3 +29,27 @@ zh:
       support: "如有问题，请加群 @[BSS 支持群](https://t.me/+i8fy3qOtiNAyODZl)。"
     errors:
       processing: "处理请求时出错。"
+    markspam:
+      success_message: "✅ 用户的消息 @[#{banned_user_name}](tg://user?id=%{replied.from.id}) 已被删除且禁言."
+      failure_message: "❌ 处理垃圾文本异常."
+    feedspam:
+      help_message: "请在此命令后提供垃圾信息文本。示例：`/feedspam 看我简介，免费送U`"
+      success_message: "✅ 收到，已把这条信息加入到训练数据:\n\n`%{preview}`"
+      failure_message: "❌ 处理投喂数据异常."
+    unban:
+      already_unbanned_message: "✅ 用户已被解禁"
+      success_message: "✅ 用户 @[%{user_name}](tg://user?id=%{user_id}) 已被解禁."
+      failure_message: "❌ 封禁用户失败."
+    is_admin:
+      error_message: "❌ 你不是当前群组的管理员"
+    listspam:
+      no_banned_user_message: "当前群组无被禁言用户"
+      no_banned_on_page_x_message: "在群组 %{group_title} 的第 %{page} 页未找到被封禁用户。请尝试 /listspam %{target_group_id} 1 查看第一页内容"
+      unban_message: "解禁"
+      failure_message: "❌ 获取封禁用户列表异常."
+    handle_callback:
+      error_message: "❌ 处理消息异常"
+    is_group_chat:
+      error_message: "❌ 当前聊天不是群组" 
+    handle_regular_message:
+      alert_message: "⚠️ Potential spam detected from @[%{user_name}](tg://user?id=%{message.from.id}) and removed." 

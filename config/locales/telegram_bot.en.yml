@@ -29,3 +29,27 @@ en:
       support: "For assistance, join our support group: @[BSS support group](https://t.me/+i8fy3qOtiNAyODZl)"
     errors:
       processing: "An error occurred while processing your request."
+    markspam:
+      success_message: "✅ User @[%{banned_user_name}](tg://user?id=%{replied.from.id}) has been banned and the message marked as spam."
+      failure_message: "❌ Failed to process the spam marking request."
+    feedspam:
+      help_message: "Please provide the spam message text after the command. Examples: `/feedspam FREE IPHONE`"
+      success_message: "✅ Got it. I've learned from that spam message:\n\n`%{preview}`"
+      failure_message: "❌ Failed to process the spam training request."
+    unban:
+      already_unbanned_message: "✅User already has been unbanned"
+      success_message: "✅ User @[%{user_name}](tg://user?id=%{user_id}) has been unbanned and their messages marked as ham."
+      failure_message: "❌ Failed to unban user."
+    is_admin:
+      error_message: "❌ You are not an administrator of this group"
+    listspam:
+      no_banned_user_message: "There is no banned users in this group"
+      no_banned_on_page_x_message: "No banned users found on page %{page} for group `%{group_title}`. Try `/listspam %{target_group_id} 1` to see the first page."
+      unban_message: "Unban"
+      failure_message: "❌ Failed to retrieve banned users list."
+    handle_callback:
+      error_message: "❌ An error occurred while processing your request."
+    is_group_chat:
+      error_message: "❌ Current chat is not a group chat" 
+    handle_regular_message:
+      alert_message: "⚠️ 检测到来自 @[%{user_name}](tg://user?id=%{message.from.id})的广告，已删除" 
