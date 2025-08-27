@@ -1,0 +1,31 @@
+en:
+  telegram_bot:
+    welcome:
+      title: "🤖 Welcome to the machine learning-based spam detection bot!"
+      description: "This bot is powered by passion, and its code is [open source](https://github.com/ramsayleung/)"
+      select_option: "Please select an option below:"
+    buttons:
+      user_guide: "📖User Guide"
+      add_to_group: "💯Get Start" 
+      back: "Back"
+    user_guide:
+      title: "📖 *User Guide*"
+      how_to_use: "*How to Use:*"
+      steps:
+        - "Add the bot to [your group](https://t.me/%{bot_username}?startgroup=true)"
+        - "Grant the bot administrator permissions (delete message, ban user)"
+        - "The bot will start working automatically"
+      basic_features: "*Core Features:*"
+      features:
+        - "Automatically detect spam messages in groups"
+        - "Train the bot to recognize spam"
+        - "View ban statistics"
+      commands_title: "*Command List:*"
+      commands:
+        start: "/start - Start using the bot"
+        markspam: "/markspam - Delete spam messages and restrict users"
+        feedspam: "/feedspam - Submit spam samples for training" 
+        listspam: "/listspam - View list of banned accounts"
+      support: "For assistance, join our support group: @[BSS support group](https://t.me/+i8fy3qOtiNAyODZl)"
+    errors:
+      processing: "An error occurred while processing your request."

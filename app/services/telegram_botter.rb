@@ -34,16 +34,15 @@ class TelegramBotter
   
     # Clean the message text and handle @botname mentions
     message_text = message.text&.strip || ""
-  
+    # lang_code = message.from.language_code || "en"
+    lang_code = "zh"
     # Remove @botname from the beginning if present
     message_text = message_text.gsub(/^@#{@bot_username}\s+/, '') if @bot_username
   
     # Route to appropriate command handler
     case message_text
-    when %r{^/help}
-      handle_help_command(bot, message)
     when %r{^/start}
-      handle_start_command(bot, message)
+      handle_start_command(bot, message, lang_code)
     when %r{^/markspam}
       handle_markspam_command(bot, message)
     when %r{^/feedspam}
@@ -57,20 +56,30 @@ class TelegramBotter
     Rails.logger.error "An error occurred: #{e.message}\n#{e.backtrace.join("\n")}"
   end
 
-  def handle_help_command(bot, message)
-    text = "**/start:** Start the bot and get a welcome message\n\n"
-    text += "Group commands(group chat only)\n"
-    text += "**/markspam:** Mark a message as spam, then the bot will ban the sender and delete the spam message from group\n"
-    text += "**/feedspam:** 'Feed spam message to bot to help train the bot(only work in group chat)'\n"
-    text += "\n"
-    text += "Adminstration commands(admin only)\n"
-    text += "**/listspam groupId:** 'List all banned users of the group, you could unban them manually'"
-    bot.api.send_message(chat_id: message.chat.id, text: text, parse_mode: 'Markdown')
-  end
+  def handle_start_command(bot, message, lang)
+    keyboard = [
+      [
+        { text: I18n.t('telegram_bot.buttons.user_guide', locale: lang), 
+          callback_data: build_callback_data("user_guide", lang: lang) },
+        { text: I18n.t('telegram_bot.buttons.add_to_group', locale: lang), 
+          url: "https://t.me/#{@bot_username}?startgroup=true" }
+      ]
+    ]
 
-  def handle_start_command(bot, message)
-    start_message = "Hello! I am a spam detection bot. Add me to your group and promote me to an admin with 'Ban Users' and 'Delete Messages' permissions to get started!"
-    bot.api.send_message(chat_id: message.chat.id, text: start_message)
+    # Build welcome message in both languages
+    welcome_text = I18n.with_locale(lang) do
+      "#{I18n.t('telegram_bot.welcome.title')}\n\n" \
+      "#{I18n.t('telegram_bot.welcome.description')}\n\n" \
+      "#{I18n.t('telegram_bot.welcome.select_option')}"
+    end
+
+
+    bot.api.send_message(
+      chat_id: message.chat.id,
+      text: welcome_text,
+      reply_markup: { inline_keyboard: keyboard }.to_json(),
+      parse_mode: 'Markdown'
+    )
   end
 
   def handle_markspam_command(bot, message)
@@ -323,28 +332,88 @@ class TelegramBotter
 
   def handle_callback(bot, callback)
     Rails.logger.info "Handling callback"
-
-    # Only admin has permission to perform actions
-    return unless is_admin?(bot: bot, user: callback.from, group_id: callback.message.chat.id)
-
+    
     callback_data = parse_callback_data(callback.data)
     action = callback_data[:action]
     user_id = callback_data[:user_id]
+    lang = callback_data[:lang] || 'en'
 
     chat_id = callback.message.chat.id
     message_id = callback.message.message_id
-    case action
-    when 'unban'
-      handle_unban_callback(bot, chat_id, message_id, user_id)
-    when 'listspam'
-      handle_listspam_pagination_callback(bot, callback, user_id.to_i)
+    I18n.with_locale(lang) do
+      case action
+      when 'user_guide'
+        handle_user_guide_callback(bot, callback, lang)
+      when 'unban'
+        handle_unban_callback(bot, chat_id, message_id, user_id)
+      when 'listspam'
+        handle_listspam_pagination_callback(bot, callback, user_id.to_i)
+      when 'back_to_main'
+        handle_back_to_main_callback(bot, callback, lang)
+      end
     end
   rescue => e
     Rails.logger.info "Error handling callback: #{e.message}\n#{e.backtrace.join("\n")}"
     bot.api.send_message(chat_id: chat_id, text: "An error occurred while processing your request.")
   end
 
+  def handle_back_to_main_callback(bot, callback, lang)
+    handle_start_command(bot, callback.message, lang)
+    bot.api.answer_callback_query(callback_query_id: callback.id)
+  end
+
+  def build_user_guide_text(lang)
+    steps = I18n.t('telegram_bot.user_guide.steps', bot_username: @bot_username)
+              .map.with_index(1) { |step, i| "#{i}. #{step}" }
+              .join("\n")
+
+    features = I18n.t('telegram_bot.user_guide.features')
+                 .map { |feature| "• #{feature}" }
+                 .join("\n")
+
+    commands = I18n.t('telegram_bot.user_guide.commands').values.join("\n")
+
+    <<~TEXT
+      #{I18n.t('telegram_bot.user_guide.title')}
+      
+      #{I18n.t('telegram_bot.user_guide.how_to_use')}
+      #{steps}
+      
+      #{I18n.t('telegram_bot.user_guide.basic_features')}
+      #{features}
+      
+      #{I18n.t('telegram_bot.user_guide.commands_title')}
+      #{commands}
+      
+      #{I18n.t('telegram_bot.user_guide.support')}
+    TEXT
+  end
+
+  def handle_user_guide_callback(bot, callback, lang)
+    I18n.with_locale(lang) do
+      usage_text = build_user_guide_text(lang)
+      
+      bot.api.edit_message_text(
+        chat_id: callback.message.chat.id,
+        message_id: callback.message.message_id,
+        text: usage_text,
+        parse_mode: 'Markdown',
+        reply_markup: { 
+          inline_keyboard: [[
+                              { text: "← #{I18n.t('telegram_bot.buttons.back')}", 
+                                callback_data: build_callback_data("back_to_main", lang: lang) }
+                            ]]
+        }.to_json()
+      )
+    end
+    
+    bot.api.answer_callback_query(callback_query_id: callback.id)
+  end
+
   def handle_unban_callback(bot, chat_id, message_id, banned_user_id)
+    # Only admin has permission to perform actions
+    return unless is_admin?(bot: bot, user: callback.from, group_id: callback.message.chat.id)
+
     banned_user = BannedUser.find_by(id: banned_user_id)
 
     # If the user is already unbanned, just update the message
@@ -374,6 +443,8 @@ class TelegramBotter
   end
 
   def handle_listspam_pagination_callback(bot, callback, page)
+    # Only admin has permission to perform actions
+    return unless is_admin?(bot: bot, user: callback.from, group_id: callback.message.chat.id)
     # Simulate the listspam command with the new page
 
     callback_data = parse_callback_data(callback.data)

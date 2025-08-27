@@ -89,7 +89,6 @@ class SpamClassifierService
   
   def rebuild_classifier
     Rails.logger.info "Rebuild classifier for group_id: #{group_id}"
-    # Clear current state
 
     ActiveRecord::Base.transaction do
       classifier_state.update!(
