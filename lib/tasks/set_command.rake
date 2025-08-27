@@ -8,11 +8,10 @@ namespace :bot do
     end
 
     commands = [
-      { command: 'start', description: 'Start the bot and get a welcome message' },
-      {command: 'help', description: 'Start the bot and get a help message'},
-      {command: 'markspam', description: 'Mark a message as spam, then the bot will ban the sender and delete the spam message from group, only work in group chat'},
-      {command: 'feedspam', description: 'Feed spam message to bot to help train the bot'},
-      {command: 'listspam', description: 'List all banned users in the group, you could unban them manually'},
+      { command: 'start', description: '欢迎页(Welcome message)' },
+      {command: 'markspam', description: '删除垃圾消息并禁言(Delete the spam message and ban the sender)'},
+      {command: 'feedspam', description: '投喂垃圾信息来训练(Feed spam message to train the bot)'},
+      {command: 'listspam', description: '查看封禁账户列表(List all banned users)'},
     ]
     begin
       require 'telegram/bot'
@@ -21,6 +20,15 @@ namespace :bot do
       response = api.set_my_commands(commands: commands)
       if response
         puts "Succeed to set commands"
+      else
+        puts "Failed to set commands: #{response['description']}"
+      end
+
+      response = api.set_chat_menu_button(
+        menu_button: { type: 'commands' }
+      )
+      if response
+        puts "Succeed to set menu"
       else
         puts "Failed to set commands: #{response['description']}"
       end
