@@ -274,12 +274,16 @@ class TelegramBotter
       begin
         classifier = SpamClassifierService.new(message.chat.id, message.chat.title)
         is_spam, spam_score, ham_score = classifier.classify(message.text)
-        Rails.logger.info "is_spam:#{is_spam}, spam_score: #{spam_score}, ham_score: #{ham_score}"
+        # Spammer might leverage username as a way to send spam 
+        username = [message.from.first_name, message.from.last_name].compact.join(" ")
+        username_classifier = SpamClassifierService.new(GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID, GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_NAME)
+        username_is_spam, username_spam_score, username_ham_score = username_classifier.classify(username)
 
-        if is_spam
+        Rails.logger.info "is_spam:#{is_spam}, spam_score: #{spam_score}, ham_score: #{ham_score}, username_is_spam:#{username_is_spam}, username_spam_score:#{username_spam_score}, username_ham_score:#{username_ham_score}"
+
+        if (is_spam || username_is_spam)
           bot.api.delete_message(chat_id: message.chat.id, message_id: message.message_id)
-          user_name = [message.from.first_name, message.from.last_name].compact.join(" ")
-          alert_msg = I18n.t('telegram_bot.handle_regular_message.alert_message', user_name: user_name, message: message)
+          alert_msg = I18n.t('telegram_bot.handle_regular_message.alert_message', user_name: username, message: message)
           bot.api.send_message(chat_id: message.chat.id, text: alert_msg, parse_mode: 'Markdown')
         end
       rescue => e

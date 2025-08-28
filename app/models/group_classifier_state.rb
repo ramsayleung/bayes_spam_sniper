@@ -5,5 +5,6 @@ class GroupClassifierState < ApplicationRecord
   serialize :ham_counts, coder: JSON
 
   USER_NAME_CLASSIFIER_GROUP_ID = 0
+  USER_NAME_CLASSIFIER_GROUP_NAME = "User Name Classifier"
   scope :username, -> { where(group_id: USER_NAME_CLASSIFIER_GROUP_ID) }
 end
