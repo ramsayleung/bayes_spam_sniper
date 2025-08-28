@@ -115,8 +115,6 @@ class SpamClassifierService
     end
   end
 
-  private
-
   def tokenize(text)
     cleaned_text = clean_text(text)
     
@@ -133,11 +131,36 @@ class SpamClassifierService
 
   def clean_text(text)
     return "" if text.nil?
-    
-    text = text.to_s.strip
-    
-    # Remove excessive whitespace
-    text.gsub(/\s+/, ' ')
+  
+    cleaned = text.to_s.strip
+  
+    # Step 1: Handle anti-spam separators
+    # This still handles the cases like "合-约" -> "合约"
+    previous = ""
+    while previous != cleaned
+      previous = cleaned.dup
+      cleaned = cleaned.gsub(/([一-龯A-Za-z0-9])[^一-龯A-Za-z0-9\s]+([一-龯A-Za-z0-9])/, '\1\2')
+    end
+  
+    # Step 2: Handle anti-spam SPACES between Chinese characters
+    # This specifically targets the "想 赚 钱" -> "想赚钱" case.
+    # We run it in a loop to handle multiple spaces, e.g., "社 区" -> "社区"
+    previous = ""
+    while previous != cleaned
+      previous = cleaned.dup
+      # Find a Chinese char, followed by one or more spaces, then another Chinese char
+      cleaned = cleaned.gsub(/([一-龯])(\s+)([一-龯])/, '\1\3')
+    end
+
+    # Step 3: Add strategic spaces
+    # This helps jieba segment properly, e.g., "社区ETH" -> "社区 ETH"
+    cleaned = cleaned.gsub(/([一-龯])([A-Za-z0-9])/, '\1 \2')
+    cleaned = cleaned.gsub(/([A-Za-z0-9])([一-龯])/, '\1 \2')
+  
+    # Step 4: Remove excessive space
+    cleaned = cleaned.gsub(/\s+/, ' ').strip
+  
+    cleaned
   end
 
   def pure_punctuation?(token)

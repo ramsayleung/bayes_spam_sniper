@@ -4,12 +4,13 @@ require 'test_helper'
 class SpamClassifierServiceTest < ActiveSupport::TestCase
   def setup
     @group_id = 12345
-    @service = SpamClassifierService.new(@group_id)
+    @group_name = "test group"
+    @service = SpamClassifierService.new(@group_id, @group_name)
   end
 
   test "should initialize a new classifier state for a new group" do
     assert_difference "GroupClassifierState.count", 1 do
-      SpamClassifierService.new(99999)
+      SpamClassifierService.new(99999, @group_name)
     end
 
     assert_equal @group_id, @service.group_id
@@ -19,7 +20,7 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
 
   test "should not create a new classifier state if one already exists" do
     assert_no_difference "GroupClassifierState.count" do
-      SpamClassifierService.new(@group_id)
+      SpamClassifierService.new(@group_id, @group_name)
     end
   end
 
@@ -37,7 +38,7 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
 
     assert_equal 1, state.total_spam_messages
     assert_equal 0, state.total_ham_messages
-    assert_equal 3, state.total_spam_words
+    assert_equal 5, state.total_spam_words
     
     assert state.spam_counts["便宜"] >= 1
     assert_nil state.ham_counts["便宜"]
@@ -61,6 +62,45 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
     assert_equal 1, state.total_ham_messages
     assert state.ham_counts["项目"] >= 1
     assert_nil state.spam_counts["项目"]
+  end
+
+  test "#cleanup should handle any anti-spam separators" do
+    spam_variants = [
+      "合-约*报@单群组",
+      "B#T@C$500点",
+      "稳.赚.不.亏.的",
+      "联,系,我,们",
+    ]
+
+    expected_variants = [
+      "合约报单群组",
+      "BTC500 点",
+      "稳赚不亏的",
+      "联系我们"
+    ]
+  
+    spam_variants.each_with_index do |variant, index|
+      expected_text = expected_variants[index]
+      cleaned_text = @service.clean_text(variant)
+      puts "cleaned_text #{cleaned_text}"
+      cleaned_text = @service.clean_text(variant)
+      assert_equal expected_text, cleaned_text, "Failed on input: '#{variant}'"
+    
+      # Should NOT contain separator characters
+      refute cleaned_text.match?(/[*@#$,.-]/)
+    end
+  end
+
+  test "#toenize should handle punctuation correctly" do
+    spam_message = "这人简-介挂的 合-约-报单群组挺牛的ETH500点，大饼5200点！ + @BTCETHl6666"
+    cleaned_text = @service.clean_text(spam_message)
+    assert_equal "这人简介挂的合约报单群组挺牛的 ETH500 点大饼 5200 点！ + @BTCETHl6666", cleaned_text
+    tokens = @service.tokenize(spam_message)
+    assert_includes tokens, "简介"
+    assert_includes tokens, "合约"
+    assert_includes tokens, "报单"
+    assert_includes tokens, "群组"
+    assert_includes tokens, "大饼"
   end
 
   test "#classify should return false if the model is not trained" do
