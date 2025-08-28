@@ -129,9 +129,6 @@ class TelegramBotter
   end
 
   def handle_feedspam_command(bot, message, message_text)
-    return unless is_group_chat?(bot, message)
-    return unless is_admin?(bot, message)
-
     # Extract everything after /feedspam command, preserving multiline content
     spam_text = message_text.sub(%r{^/feedspam\s*}, '').strip
   
@@ -158,7 +155,7 @@ class TelegramBotter
           message: spam_text,
           sender_chat_id: message.from.id,
           sender_user_name: user_name,
-          message_type: :spam
+          message_type: :untrained
         )
     
         # Show a preview of what was learned (truncated if too long)
