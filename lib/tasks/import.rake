@@ -2,7 +2,7 @@
 require 'csv'
 
 namespace :import do
-  desc "Imports trained messages from a CSV file"
+  desc "Imports trained messages from a CSV file, skipping duplicates."
   task trained_messages: :environment do
     csv_file_path = Rails.root.join('data', 'training_data.csv')
 
@@ -13,22 +13,38 @@ namespace :import do
 
     puts "Starting CSV import..."
     
-    # The CSV should have two columns: 'message' and 'type' (ham/spam)
+    new_records = 0
+    skipped_records = 0
+
+    # CSV format: 'message','type'(ham/spam)
     CSV.foreach(csv_file_path, headers: true) do |row|
       begin
-        TrainedMessage.create!(
-          group_id: 0, # Import to the shared classifier
+        # Find a message by its content and group_id
+        record = TrainedMessage.find_or_create_by(
           message: row['message'],
-          message_type: row['type'].strip.downcase, # 'ham' or 'spam'
-          sender_chat_id: 0,
-          sender_user_name: "CSV Import"
-        )
-        print "." # Progress indicator
+          group_id: 0
+        ) do |trained_message|
+          # These attributes are only set if a new record is being created
+          trained_message.message_type = row['type'].strip.downcase
+          trained_message.sender_chat_id = 0
+          trained_message.sender_user_name = "CSV Import"
+        end
+
+        if record.previously_new_record?
+          print "." # New record created
+          new_records += 1
+        else
+          print "x" # Skipped
+          skipped_records += 1
+        end
+
       rescue => e
         puts "\nFailed to import row: #{row.to_h}. Error: #{e.message}"
       end
     end
 
-    puts "\nSuccess to import..."
+    puts "\n\nImport complete!"
+    puts "Imported: #{new_records} new messages."
+    puts "Skipped: #{skipped_records} duplicate messages."
   end
 end
