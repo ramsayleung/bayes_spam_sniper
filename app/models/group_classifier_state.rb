@@ -3,4 +3,7 @@ class GroupClassifierState < ApplicationRecord
   # and back to a JSON string when saved.
   serialize :spam_counts, coder: JSON
   serialize :ham_counts, coder: JSON
+
+  USER_NAME_CLASSIFIER_GROUP_ID = 0
+  scope :username, -> { where(group_id: USER_NAME_CLASSIFIER_GROUP_ID) }
 end

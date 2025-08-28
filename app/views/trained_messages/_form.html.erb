@@ -30,6 +30,14 @@
   </div>
 
   <div class="my-5">
+    <%= form.label :training_target %>
+    <%= form.select :training_target, 
+          options_for_select([['Message Content', 'message_content'], ['User name', 'user_name']], @trained_message.training_target), 
+          { prompt: 'Select training target' },
+       { class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": trained_message.errors[:training_target].none?, "border-red-400 focus:outline-red-600": trained_message.errors[:training_target].any?}] } %>
+  </div>
+
+  <div class="my-5">
     <%= form.label :sender_chat_id %>
     <%= form.number_field :sender_chat_id, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": trained_message.errors[:sender_chat_id].none?, "border-red-400 focus:outline-red-600": trained_message.errors[:sender_chat_id].any?}] %>
   </div>

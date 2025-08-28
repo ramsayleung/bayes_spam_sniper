@@ -1,7 +1,12 @@
 class TrainedMessage < ApplicationRecord
   enum :message_type, { spam: 0, ham: 1 , untrained: 2}
-
-  scope :shared, -> { where(group_id: 0) }
+  # New enum for what is being trained
+  enum :training_target, { message_content: 0, user_name: 1 }
+  GLOBAL_SHARED_MESSAGE = 0
+  scope :shared, -> { where(group_id: GLOBAL_SHARED_MESSAGE) }
+  scope :trainable, -> { where(message_type: [:spam, :ham]) }
+  scope :for_message_content, -> {where(training_target: :message_content)}
+  scope :for_user_name, -> {where(training_target: :user_name)}
 
   validates :group_id, presence: true
   validates :message, presence: true
@@ -14,8 +19,14 @@ class TrainedMessage < ApplicationRecord
 
   def retrain_classifier
     return if untrained?
-    # For efficiency, we could queue this as a background job
-    ClassifierTrainerJob.perform_later(group_id, group_name)
+
+    if user_name?
+      # Target is user_name
+      ClassifierTrainerJob.perform_later(GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID, "User name Classifier")
+    else
+      # For efficiency, we could queue this as a background job
+      ClassifierTrainerJob.perform_later(group_id, group_name)
+    end
   end
 
   private

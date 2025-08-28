@@ -89,6 +89,11 @@ class SpamClassifierService
   
   def rebuild_classifier
     Rails.logger.info "Rebuild classifier for group_id: #{group_id}"
+    messages_to_train = if group_id == GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID
+                          TrainedMessage.trainable.for_user_name
+                        else
+                          TrainedMessage.trainable.for_message_content.where(group_id: self.group_id)
+                        end
 
     ActiveRecord::Base.transaction do
       classifier_state.update!(
@@ -102,8 +107,8 @@ class SpamClassifierService
         vocabulary_size: 0
       )
     
-      # Retrain from all messages
-      TrainedMessage.all.find_each do |message|
+      # Retrain from all trainable messages
+      messages_to_train.find_each do |message|
         train_only(message)
       end
       classifier_state.save!

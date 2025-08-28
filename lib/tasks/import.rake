@@ -18,11 +18,13 @@ namespace :import do
 
     # CSV format: 'message','type'(ham/spam)
     CSV.foreach(csv_file_path, headers: true) do |row|
+      training_target = row['target'] || "message_content"
       begin
         # Find a message by its content and group_id
         record = TrainedMessage.find_or_create_by(
           message: row['message'],
-          group_id: 0
+          group_id: 0,
+          training_target: training_target
         ) do |trained_message|
           # These attributes are only set if a new record is being created
           trained_message.message_type = row['type'].strip.downcase
