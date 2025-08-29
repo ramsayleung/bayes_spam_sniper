@@ -236,7 +236,7 @@ class TelegramBotter
             text += "**Banned:** #{user.created_at.strftime("%Y-%m-%d %H:%M")}\n\n"
 
             # Create an "unban" button for each user
-            callback_data = build_callback_data('unban', user_id: user.id, group_id: target_group_id, lang: @lang_code)
+            callback_data = build_callback_data('unban', uid: user.id, group_id: target_group_id)
             buttons << [{ text: "✅ #{I18n.t('telegram_bot.listspam.unban_message')} #{user.sender_user_name}", callback_data: callback_data }]
           end
 
@@ -367,8 +367,8 @@ class TelegramBotter
     Rails.logger.info "Handling callback"
     
     callback_data = parse_callback_data(callback.data)
-    action = callback_data[:action]
-    user_id = callback_data[:user_id]
+    action = callback_data[:a]
+    user_id = callback_data[:uid]
     @lang_code = callback_data[:lang] || 'en'
 
     chat_id = callback.message.chat.id
@@ -497,7 +497,8 @@ class TelegramBotter
   end
 
   def build_callback_data(action, **params)
-    data = { action: action }
+    # Telegram's API has a strict limit: callback_data strings must be between 1 and 64 bytes.
+    data = { a: action }
     data.merge!(params) if params.any?
     data.to_json
   end
