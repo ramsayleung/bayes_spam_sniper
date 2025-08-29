@@ -92,7 +92,7 @@ class SpamClassifierService
     messages_to_train = if group_id == GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID
                           TrainedMessage.trainable.for_user_name
                         else
-                          TrainedMessage.trainable.for_message_content.where(group_id: self.group_id)
+                          TrainedMessage.trainable.for_message_content
                         end
 
     ActiveRecord::Base.transaction do

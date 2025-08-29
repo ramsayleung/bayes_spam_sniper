@@ -3,6 +3,7 @@ class TrainedMessage < ApplicationRecord
   # New enum for what is being trained
   enum :training_target, { message_content: 0, user_name: 1 }
   GLOBAL_SHARED_MESSAGE = 0
+
   scope :shared, -> { where(group_id: GLOBAL_SHARED_MESSAGE) }
   scope :trainable, -> { where(message_type: [:spam, :ham]) }
   scope :for_message_content, -> {where(training_target: :message_content)}

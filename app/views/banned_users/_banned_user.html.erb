@@ -20,6 +20,10 @@
     <%= banned_user.spam_message %>
   </div>
   <div>
+    <strong class="block font-medium mb-1">Message Id:</strong>
+    <%= banned_user.message_id %>
+  </div>
+  <div>
     <strong class="block font-medium mb-1">Created at:</strong>
     <%= banned_user.created_at.strftime("%Y-%m-%d %H:%M") %>
   </div>
