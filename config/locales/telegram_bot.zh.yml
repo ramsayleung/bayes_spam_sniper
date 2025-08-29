@@ -13,7 +13,7 @@ zh:
       how_to_use: "*如何使用：*"
       steps:
         - "将机器人[添加到您的群组](https://t.me/%{bot_username}?startgroup=true)"
-        - "给予机器人管理员权限（删除消息，禁言权限）"
+        - "给予机器人管理员权限（删除消息，封禁用户权限）"
         - "机器人将自动开始工作"
       basic_features: "*基本功能：*"
       features:
@@ -23,14 +23,14 @@ zh:
       commands_title: "*命令列表：*"
       commands:
         start: "/start - 开始使用机器人"
-        markspam: "/markspam - 删除垃圾消息并禁言"
+        markspam: "/markspam - 删除垃圾消息并封禁用户"
         feedspam: "/feedspam - 投喂垃圾信息来训练"
         listspam: "/listspam - 查看封禁账户列表"
       support: "如有问题，请加群 @[BSS 支持群](https://t.me/+i8fy3qOtiNAyODZl)。"
     errors:
       processing: "处理请求时出错。"
     markspam:
-      success_message: "✅ 用户的消息 @[#{banned_user_name}](tg://user?id=%{replied.from.id}) 已被删除且禁言."
+      success_message: "✅ 用户的消息 @[#{banned_user_name}](tg://user?id=%{replied.from.id}) 已被删除且封禁."
       failure_message: "❌ 处理垃圾文本异常."
     feedspam:
       help_message: "请在此命令后提供垃圾信息文本。示例：`/feedspam 看我简介，免费送U`"
