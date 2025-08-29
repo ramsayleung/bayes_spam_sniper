@@ -1,67 +1,76 @@
-#+OPTIONS: author:nil ^:{} H:4
-#+DATE: [2025-08-28 Thu 21:50]
-* 基于贝叶斯算法的 Telegram广告拦截机器人
-  BSS智能广告拦截机器人(@BayesSpamSniperBot), 一个具备自学习能力的，基于贝叶斯定理实现的开源 Telegram 广告拦截机器人
-** 特点
-   常见的 Telegram 广告机器人是大多是基于关键字的，通过匹配关键字进行文本拦截，非常容易被发垃圾广告的人绕过。
+#+LATEX_CLASS: ramsay-org-article
+#+LATEX_CLASS_OPTIONS: [oneside,A4paper,12pt]
+#+AUTHOR: Ramsay Leung
+#+EMAIL: ramsayleung@gmail.com
+#+DATE: 2025-08-28 Thu 23:16
+[[./README_zh.org][中文版本]]
+* A Bayesian Algorithm-Based Telegram Ad-blocking Bot
+  BSS Intelligent Ad-blocking Bot ([[https://t.me/BayesSpamSniperBot?start=ad_7202424896][@BayesSpamSniperBot]]) is an open-source Telegram ad-blocking bot with self-learning capabilities, implemented based on Bayes' theorem.
+** Features
+   Most common Telegram ad bots are keyword-based, blocking messages by matching keywords, which can be easily bypassed by spammers.
 
-   这不禁让我想起了保罗.格雷厄姆在《黑客与画家》一书在2002年介绍的情况：
+   This reminds me of the situation described by Paul Graham in his 2002 essay "Hackers and Painters":
 
-   当时电子邮件兴起，也有非常多的垃圾邮件，常见的垃圾广告拦截方式是关键字匹配+邮件地址黑名单，但是既低效也容易被绕过。
+   Back when email was rising in popularity, there was also a lot of spam. The common methods of blocking spam were keyword matching and blacklisting email addresses, but these were inefficient and easily circumvented.
 
-   保罗.格雷厄姆就创造性地使用贝叶斯算法(Bayes Theorem)实现了一个[[https://paulgraham.com/spam.html][广告拦截器]], 效果竟然出奇地好。
+   Paul Graham creatively used Bayes' theorem to implement a [[https://paulgraham.com/spam.html][spam blocker]], and the results were surprisingly effective.
 
-   对于 Telegram 的垃圾广告而言，这不是类似的问题嘛？那我可以用类似的解决方案来解决 Telegram 广告的问题嘛
-** 如何使用
-   - 将机器人[[https://t.me/@BayesSpamSniperBot?startgroup=true][添加到您的群组]]
-   - 给予机器人管理员权限（删除消息(delete message )，封禁用户权限(ban user )）
-   - 机器人将自动开始工作
+   Isn't this a similar problem for Telegram spam? Then it's likely I could use a similar solution to tackle Telegram ads
+** How to Use
+   - [[https://t.me/BayesSpamSniperBot?startgroup=true][Add the bot to your group]]
+   - Grant the bot admin permissions (delete messages, ban users)
+   - The bot will start working automatically
 
-   机器人会自动识别群内广告，然后删除文本消息，如果发送垃圾文本超过3次，将会被封禁。
+   The bot will automatically identify ads in the group, then delete the text messages. If a user sends spam more than 3 times, they will be banned.
 
    [[./doc/img/detect_spam_and_ban_user.jpg]]
 
-   本机器人的设计理念就是最小化打扰管理员与用户，提供简单的操作命令，并最大可能地自动化，
-   所以本机器人只提供以下三个命令（支持"/"开头自动补全）:
+   The design philosophy of this bot is to minimize disruption to admins and users, provide simple commands, and maximize automation.
+   Therefore, this bot only offers the following three commands (supporting auto-completion with "/"):
+   [[./doc/img/command_auto_completion.jpg]]
 *** =/markspam=
-    删除垃圾消息并封禁用户, 需要管理员权限。
+    Delete spam messages and ban the user. Requires admin permissions.
 
-    与常见的群管理机器人不同，这条命令不仅会删除垃圾消息并封禁用户, 因为这条消息还被管理员标记成垃圾文本，有非常高的置信度，所以系统就会以这条垃圾文本为训练数据，对模型进行实时更新。
+    [[./doc/img/markspam.jpg]]
 
-    下次类似的发言不仅会被识别，所有使用本机器人的群组都会受益，也会把类似的文本标记成垃圾广告
+    Unlike common group management bots, this command not only deletes the spam and bans the user, but also marks the message as spam with very high confidence. The system then uses this spam text as training data to update the model in real-time.
+
+    Similar messages will not only be identified in the future, but all groups using this bot will benefit, as similar texts will also be marked as spam.
 *** =/listspam=
-    查看封禁账户列表, 需要管理员权限。
+    View the list of banned accounts. Requires admin permissions.
 
-    查看已封禁的用户列表，并主动解封。
+    [[./doc/img/listspam.jpg]]
+    View the list of banned users and proactively unban them.
 *** =/feedspam=
-    投喂垃圾信息来训练，无任何权限要求，可私聊投喂或在群组内投喂.
+    Feed spam messages for training. No permissions required. Can be used in private chat or in-group.
 
-    私聊投喂:
+    Feeding in private chat:
+
     [[./doc/img/feedspam.jpg]]
 
-    群组内投喂:
+    Feeding in-group:
+
     [[./doc/img/feedspam2.jpg]]
-** 架构设计
-   Telegram Bot 支持两种与 Telegram 服务器交互的模式，分别是：
-   1. Webhook: Telegram 服务器会在 Bot 收到新消息时主动回调此前 Bot 注册的地址，Bot Server 只需要处理回调的消息
-   2. Long Polling: Bot Server 一直轮询 Telegram 服务器，看是否有新消息，有就处理，本项目使用的是此模式
+** Architecture Design
+   Telegram Bot supports two modes of interacting with Telegram servers:
+   1. Webhook: Telegram servers actively callback a previously registered URL when the bot receives a new message. The bot server only needs to handle the callback messages.
+   2. Long Polling: The bot server continuously polls Telegram servers to check for new messages and processes them if any. This project uses this mode.
 
    [[./doc/img/webhook_vs_long_polling.jpg]]
-*** 消息分析
+*** Message Analysis
     [[./doc/img/spam_analyze.jpg]]
 
-    Bot Server 收到消息之后，会派发到单独的 =telegram_bot_worker= 处理，然后根据预训练的模型判断是否是垃圾文本，如果是，调用 bot API 删除消息
-*** 封禁并训练
+    After the Bot Server receives a message, it dispatches it to a separate =telegram_bot_worker= for processing. Then, based on the pre-trained model, it determines whether the text is spam. If it is, it calls the bot API to delete the message.
+*** Ban and Train
     [[./doc/img/mark_spam_and_ban_user.jpg]]
 
-    Bot Server 收到消息之后，会派发到单独的 =telegram_bot_worker= 处理， =telegram_bot_worker= 会调用 bot API 删除消息并封禁用户，并插入一条训练数据，标记为垃圾文本(spam)
+    After the Bot Server receives a message, it dispatches it to a separate =telegram_bot_worker= for processing. The =telegram_bot_worker= calls the bot API to delete the message and ban the user, and inserts a training data record marked as spam.
 
-    保存训练数据会触发 hook, 创建一个训练消息，投递到消息队列 =training=, 会有另外的 worker =classifier_trainer= 订阅 =training= 消息，并使用新消息重新训练和更新模型
-** 如何贡献
-   本项目纯粹用爱发电，如果想支持本项目，有以下的方式进行贡献:
+    Saving the training data triggers a hook, creating a training message that is delivered to the =training= message queue. A separate worker, =classifier_trainer=, subscribes to the =training= messages and uses the new data to retrain and update the model.
+** How to Contribute
+   This project is purely powered by love. If you want to support it, you can contribute in the following ways:
 
-   1. 通过 =/feedspam= 命令投喂训练数据
-   2. 通过 [[./data/training_data.csv]] 批量贡献训练数据
-   3. 加入 [[https://t.me/+i8fy3qOtiNAyODZl][BSS 支持群]]，在群里发广告
-   4. [[https://github.com/sponsors/ramsayleung][Sponsor 作者]]
-
+   1. Feed training data using the =/feedspam= command.
+   2. Contribute training data in bulk via [[./data/training_data.csv]].
+   3. Join the [[https://t.me/+i8fy3qOtiNAyODZl][BSS Support Group]] or the author's [[https://t.me/pipeapplebun][private channel]], and post ads in the group.
+   4. [[https://github.com/sponsors/ramsayleung][Sponsor the author]].
