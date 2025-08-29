@@ -27,6 +27,7 @@
 
    The design philosophy of this bot is to minimize disruption to admins and users, provide simple commands, and maximize automation.
    Therefore, this bot only offers the following three commands (supporting auto-completion with "/"):
+
    [[./doc/img/command_auto_completion.jpg]]
 *** =/markspam=
     Delete spam messages and ban the user. Requires admin permissions.
@@ -40,6 +41,7 @@
     View the list of banned accounts. Requires admin permissions.
 
     [[./doc/img/listspam.jpg]]
+
     View the list of banned users and proactively unban them.
 *** =/feedspam=
     Feed spam messages for training. No permissions required. Can be used in private chat or in-group.
