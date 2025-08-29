@@ -282,6 +282,27 @@ class TelegramBotter
         Rails.logger.info "is_spam:#{is_spam}, spam_score: #{spam_score}, ham_score: #{ham_score}, username_is_spam:#{username_is_spam}, username_spam_score:#{username_spam_score}, username_ham_score:#{username_ham_score}"
 
         if (is_spam || username_is_spam)
+          if is_spam
+            TrainedMessage.create!(
+              group_id: message.chat.id,
+              group_name: message.chat.title,
+              message: message.txt,
+              training_target: :message_content,
+              sender_chat_id: message.from.id,
+              sender_user_name: username,
+              message_type: :untrained
+            )
+          elsif username_is_spam
+            TrainedMessage.create!(
+              group_id: message.chat.id,
+              group_name: message.chat.title,
+              message: username,
+              training_target: :user_name,
+              sender_chat_id: message.from.id,
+              sender_user_name: username,
+              message_type: :untrained
+            )
+          end
           bot.api.delete_message(chat_id: message.chat.id, message_id: message.message_id)
           alert_msg = I18n.t('telegram_bot.handle_regular_message.alert_message', user_name: username, message: message)
           bot.api.send_message(chat_id: message.chat.id, text: alert_msg, parse_mode: 'Markdown')
