@@ -4,6 +4,46 @@ class TrainedMessagesController < ApplicationController
   # GET /trained_messages or /trained_messages.json
   def index
     @trained_messages = TrainedMessage.all
+    
+    if params[:message_type].present? && params[:message_type] != 'all'
+      @trained_messages = @trained_messages.where(message_type: params[:message_type])
+    end
+    
+    if params[:training_target].present? && params[:training_target] != 'all'
+      @trained_messages = @trained_messages.where(training_target: params[:training_target])
+    end
+    
+    if params[:group_name].present? && params[:group_name] != 'all'
+      @trained_messages = @trained_messages.where(group_name: params[:group_name])
+    end
+    
+    if params[:search].present?
+      @trained_messages = @trained_messages.where("message ILIKE ?", "%#{params[:search]}%")
+    end
+    
+    # Sorting
+    sort_by = params[:sort] || 'created_at'
+    sort_direction = params[:direction] || 'desc'
+    @trained_messages = @trained_messages.order("#{sort_by} #{sort_direction}")
+    
+    # Pagination
+    @per_page = (params[:per_page] || 10).to_i
+    @per_page = 10 if @per_page < 1 || @per_page > 100
+    
+    @total_count = @trained_messages.count
+    @page = (params[:page] || 1).to_i
+    @page = 1 if @page < 1
+    
+    offset = (@page - 1) * @per_page
+    @trained_messages = @trained_messages.limit(@per_page).offset(offset)
+    
+    # Calculate pagination info
+    @total_pages = (@total_count.to_f / @per_page).ceil
+    
+    # Get filter options
+    @message_types = TrainedMessage.distinct.pluck(:message_type).compact
+    @training_targets = TrainedMessage.distinct.pluck(:training_target).compact
+    @group_names = TrainedMessage.distinct.pluck(:group_name).compact.sort
   end
 
   # GET /trained_messages/1 or /trained_messages/1.json
@@ -65,6 +105,6 @@ class TrainedMessagesController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def trained_message_params
-      params.expect(trained_message: [ :group_id, :message, :message_type, :sender_chat_id ])
+      params.expect(trained_message: [ :group_id, :message, :message_type, :sender_chat_id, :sender_user_name, :group_name, :training_target ])
     end
 end
