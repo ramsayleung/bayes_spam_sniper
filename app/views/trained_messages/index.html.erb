@@ -9,7 +9,7 @@
   <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
     <div>
       <h1 class="font-bold text-4xl mb-2">Trained Messages</h1>
-      <p class="text-gray-600">Showing <%= @trained_messages.count %> of <%= @total_count %> messages</p>
+      <p class="text-gray-600">Showing <%= @trained_messages.length %> of <%= @total_count %> messages</p>
     </div>
     <%= link_to "New trained message", new_trained_message_path, class: "mt-4 sm:mt-0 rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white block font-medium" %>
   </div>
@@ -135,7 +135,7 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <% if @trained_messages.any? %>
+          <% if !@trained_messages.empty? %>
             <% @trained_messages.each do |trained_message| %>
               <tr class="hover:bg-gray-50">
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -148,7 +148,7 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <% if trained_message.training_target %>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= trained_message.training_target == 'spam' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' %>">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ">
                       <%= trained_message.training_target.humanize %>
                     </span>
                   <% else %>
@@ -157,14 +157,15 @@
                     </span>
                   <% end %>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500
+                           <%= trained_message.message_type == 'spam' ? 'bg-red-100 text-red-800' : trained_message.message_type == 'ham' ? 'bg-green-100 text-green-800' :  'bg-yellow-100 text-green-800'%>">
                   <%= trained_message.message_type&.humanize || 'Unknown' %>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <%= trained_message.sender_user_name || 'Unknown' %>
+                  <%= trained_message.sender_user_name || 'Admin Imported' %>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <%= trained_message.group_name || 'Unknown' %>
+                  <%= trained_message.group_name || 'Imported' %>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <%= time_ago_in_words(trained_message.created_at) %> ago
