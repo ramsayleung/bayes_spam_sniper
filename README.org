@@ -31,6 +31,11 @@
    [[./doc/img/command_auto_completion.jpg]]
 *** =/markspam=
     Delete spam messages and ban the user. Requires admin permissions.
+    Reply ="/markspam"= to the message you want to ban, and the bot will automatically delete that message and ban the user.
+
+    [[./doc/img/markspam_2.jpg]]
+
+    (Message has been deleted)
 
     [[./doc/img/markspam.jpg]]
 
@@ -76,3 +81,8 @@
    2. Contribute training data in bulk via [[./data/training_data.csv]].
    3. Join the [[https://t.me/+i8fy3qOtiNAyODZl][BSS Support Group]] or the author's [[https://t.me/pipeapplebun][private channel]], and post ads in the group.
    4. [[https://github.com/sponsors/ramsayleung][Sponsor the author]].
+** Q&A
+*** If it's so powerful, why are some spam in my group still not being detected?
+    The Bayesian algorithm is fundamentally a probability-based algorithm. If it hasn't encountered similar spam before, it cannot determine whether they are spam :(
+
+    All you need to do is use the =/markspam= command to delete the message and ban the user. This action helps train the bot, and all users of this bot will benefit from it.
