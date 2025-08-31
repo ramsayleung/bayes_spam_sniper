@@ -7,7 +7,7 @@ class TrainedMessagesTest < ApplicationSystemTestCase
 
   test "visiting the index" do
     visit trained_messages_url
-    assert_selector "h1", text: "Trained messages"
+    assert_selector "h1", text: "Trained Messages"
   end
 
   test "should create trained message" do
@@ -16,7 +16,8 @@ class TrainedMessagesTest < ApplicationSystemTestCase
 
     fill_in "Group", with: @trained_message.group_id
     fill_in "Message", with: @trained_message.message
-    fill_in "Message type", with: @trained_message.message_type
+    select "Spam", from: "Message type"
+    select "Message Content", from: "Training target"
     fill_in "Sender chat", with: @trained_message.sender_chat_id
     click_on "Create Trained message"
 
@@ -30,7 +31,8 @@ class TrainedMessagesTest < ApplicationSystemTestCase
 
     fill_in "Group", with: @trained_message.group_id
     fill_in "Message", with: @trained_message.message
-    fill_in "Message type", with: @trained_message.message_type
+    select "Spam", from: "Message type"
+    select "Message Content", from: "Training target"
     fill_in "Sender chat", with: @trained_message.sender_chat_id
     click_on "Update Trained message"
 

@@ -9,11 +9,11 @@
   </div>
   <div>
     <strong class="block font-medium mb-1">Spam counts:</strong>
-    <%= group_classifier_state.spam_counts %>
+    <%= JSON.pretty_generate(group_classifier_state.spam_counts) %>
   </div>
   <div>
     <strong class="block font-medium mb-1">Ham counts:</strong>
-    <%= group_classifier_state.ham_counts %>
+    <%= JSON.pretty_generate(group_classifier_state.ham_counts) %>
   </div>
   <div>
     <strong class="block font-medium mb-1">Total spam words:</strong>
