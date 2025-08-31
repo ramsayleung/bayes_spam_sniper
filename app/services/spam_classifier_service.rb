@@ -1,8 +1,8 @@
-require 'jieba_rb'
+require "jieba_rb"
 
 class SpamClassifierService
   # A spam message classifier based on Naive Bayes Theorem
-  
+
   attr_reader :group_id, :classifier_state, :group_name
 
   def initialize(group_id, group_name)
@@ -52,7 +52,7 @@ class SpamClassifierService
     # P(Spam|Words) = P(Words|Spam) * P(Spam) / P(Words)
     # Return false if the model isn't trained enough
     @classifier_state.reload
-    return [false, 0.0, 0.0] if @classifier_state.total_ham_messages == 0 || @classifier_state.total_spam_messages == 0
+    return [ false, 0.0, 0.0 ] if @classifier_state.total_ham_messages == 0 || @classifier_state.total_spam_messages == 0
 
     tokens = tokenize(message_text)
     total_messages = @classifier_state.total_spam_messages + @classifier_state.total_ham_messages
@@ -64,7 +64,7 @@ class SpamClassifierService
 
     spam_score = prob_spam_prior
     ham_score = prob_ham_prior
-    
+
     vocab_size = @classifier_state.vocabulary_size
 
     tokens.each do |token|
@@ -75,9 +75,9 @@ class SpamClassifierService
       ham_count = @classifier_state.ham_counts.fetch(token, 0) + 1
       ham_score += Math.log(ham_count.to_f / (@classifier_state.total_ham_words + vocab_size))
     end
-    
+
     is_spam = spam_score > ham_score
-    [is_spam, spam_score, ham_score]
+    [ is_spam, spam_score, ham_score ]
   end
 
   class << self
@@ -86,14 +86,14 @@ class SpamClassifierService
       service.rebuild_classifier
     end
   end
-  
+
   def rebuild_classifier
     Rails.logger.info "Rebuild classifier for group_id: #{group_id}"
     messages_to_train = if group_id == GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID
                           TrainedMessage.trainable.for_user_name
-                        else
+    else
                           TrainedMessage.trainable.for_message_content
-                        end
+    end
 
     ActiveRecord::Base.transaction do
       classifier_state.update!(
@@ -106,7 +106,7 @@ class SpamClassifierService
         total_ham_messages: 0,
         vocabulary_size: 0
       )
-    
+
       # Retrain from all trainable messages
       messages_to_train.find_each do |message|
         train_only(message)
@@ -117,23 +117,23 @@ class SpamClassifierService
 
   def tokenize(text)
     cleaned_text = clean_text(text)
-    
+
     raw_tokens = @jieba.cut(cleaned_text)
-    
+
     processed_tokens = raw_tokens
                          .reject(&:blank?)                    # Remove empty strings
                          .reject { |token| pure_punctuation?(token) } # Remove pure punctuation
                          .reject { |token| pure_numbers?(token) }     # Remove pure numbers
                          .map(&:downcase)                     # Normalize case (for mixed content)
-    
+
     processed_tokens
   end
 
   def clean_text(text)
     return "" if text.nil?
-  
+
     cleaned = text.to_s.strip
-  
+
     # Step 1: Handle anti-spam separators
     # This still handles the cases like "合-约" -> "合约"
     previous = ""
@@ -141,7 +141,7 @@ class SpamClassifierService
       previous = cleaned.dup
       cleaned = cleaned.gsub(/([一-龯A-Za-z0-9])[^一-龯A-Za-z0-9\s]+([一-龯A-Za-z0-9])/, '\1\2')
     end
-  
+
     # Step 2: Handle anti-spam SPACES between Chinese characters
     # This specifically targets the "想 赚 钱" -> "想赚钱" case.
     # We run it in a loop to handle multiple spaces, e.g., "社 区" -> "社区"
@@ -156,10 +156,10 @@ class SpamClassifierService
     # This helps jieba segment properly, e.g., "社区ETH" -> "社区 ETH"
     cleaned = cleaned.gsub(/([一-龯])([A-Za-z0-9])/, '\1 \2')
     cleaned = cleaned.gsub(/([A-Za-z0-9])([一-龯])/, '\1 \2')
-  
+
     # Step 4: Remove excessive space
-    cleaned = cleaned.gsub(/\s+/, ' ').strip
-  
+    cleaned = cleaned.gsub(/\s+/, " ").strip
+
     cleaned
   end
 

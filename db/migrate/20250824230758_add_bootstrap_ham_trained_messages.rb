@@ -16,10 +16,8 @@ class AddBootstrapHamTrainedMessages < ActiveRecord::Migration[8.0]
         sender_user_name: "System"
       )
     end
-
-
   end
-  
+
   def down
     puts "Removing initial ham trained messages..."
     TrainedMessage.where(

@@ -1,5 +1,5 @@
 # test/services/spam_classifier_service_test.rb
-require 'test_helper'
+require "test_helper"
 
 class SpamClassifierServiceTest < ActiveSupport::TestCase
   def setup
@@ -39,7 +39,7 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
     assert_equal 1, state.total_spam_messages
     assert_equal 0, state.total_ham_messages
     assert_equal 5, state.total_spam_words
-    
+
     assert state.spam_counts["便宜"] >= 1
     assert_nil state.ham_counts["便宜"]
   end
@@ -55,7 +55,7 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
     )
 
     @service.train(trained_message)
-    
+
     state = @service.classifier_state.reload
 
     assert_equal 0, state.total_spam_messages
@@ -69,7 +69,7 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
       "合-约*报@单群组",
       "B#T@C$500点",
       "稳.赚.不.亏.的",
-      "联,系,我,们",
+      "联,系,我,们"
     ]
 
     expected_variants = [
@@ -78,14 +78,14 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
       "稳赚不亏的",
       "联系我们"
     ]
-  
+
     spam_variants.each_with_index do |variant, index|
       expected_text = expected_variants[index]
       cleaned_text = @service.clean_text(variant)
       puts "cleaned_text #{cleaned_text}"
       cleaned_text = @service.clean_text(variant)
       assert_equal expected_text, cleaned_text, "Failed on input: '#{variant}'"
-    
+
       # Should NOT contain separator characters
       refute cleaned_text.match?(/[*@#$,.-]/)
     end

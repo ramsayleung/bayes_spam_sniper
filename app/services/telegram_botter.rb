@@ -1,8 +1,7 @@
-require 'telegram/bot'
+require "telegram/bot"
 
 class TelegramBotter
   def start_bot(token)
-   
     Telegram::Bot::Client.run(token) do |bot|
       Rails.application.config.telegram_bot = bot
       # Get bot username for @ mentions
@@ -31,13 +30,13 @@ class TelegramBotter
 
   def handle_message(bot, message)
     Rails.logger.info "Handling message"
-  
+
     # Clean the message text and handle @botname mentions
     message_text = message.text&.strip || ""
     @lang_code = message.from.language_code || "en"
     # Remove @botname from the beginning if present
-    message_text = message_text.gsub(/^@#{@bot_username}\s+/, '') if @bot_username
-  
+    message_text = message_text.gsub(/^@#{@bot_username}\s+/, "") if @bot_username
+
     # Route to appropriate command handler
     case message_text
     when %r{^/start}
@@ -58,9 +57,9 @@ class TelegramBotter
   def handle_start_command(bot, message)
     keyboard = [
       [
-        { text: I18n.t('telegram_bot.buttons.user_guide', locale: @lang_code), 
+        { text: I18n.t("telegram_bot.buttons.user_guide", locale: @lang_code),
           callback_data: build_callback_data("user_guide", lang: @lang_code) },
-        { text: I18n.t('telegram_bot.buttons.add_to_group', locale: @lang_code), 
+        { text: I18n.t("telegram_bot.buttons.add_to_group", locale: @lang_code),
           url: "https://t.me/#{@bot_username}?startgroup=true" }
       ]
     ]
@@ -77,7 +76,7 @@ class TelegramBotter
       chat_id: message.chat.id,
       text: welcome_text,
       reply_markup: { inline_keyboard: keyboard }.to_json(),
-      parse_mode: 'Markdown'
+      parse_mode: "Markdown"
     )
   end
 
@@ -92,7 +91,7 @@ class TelegramBotter
       begin
         group_id = message.chat.id
         group_name = message.chat.title
-        user_name = [replied.from.first_name, replied.from.last_name].compact.join(" ")
+        user_name = [ replied.from.first_name, replied.from.last_name ].compact.join(" ")
         # 1. Save the traineded message, which will invoke ActiveModel
         # hook to train the model in the background job
         trained_message = TrainedMessage.create!(
@@ -106,7 +105,7 @@ class TelegramBotter
 
         # 2. Ban user and record the ban
         bot.api.ban_chat_member(chat_id: message.chat.id, user_id: replied.from.id)
-        banned_user_name = [replied.from.first_name, replied.from.last_name].compact.join(" ")
+        banned_user_name = [ replied.from.first_name, replied.from.last_name ].compact.join(" ")
         BannedUser.find_or_create_by!(
           group_name: group_name,
           group_id: message.chat.id,
@@ -119,32 +118,32 @@ class TelegramBotter
         bot.api.delete_message(chat_id: message.chat.id, message_id: replied.message_id)
 
         # 4. Confirm action
-        response_message = I18n.t('telegram_bot.markspam.success_message', banned_user_name: banned_user_name, replied: replied)
-        bot.api.send_message(chat_id: message.chat.id, text: response_message, parse_mode: 'Markdown')
+        response_message = I18n.t("telegram_bot.markspam.success_message", banned_user_name: banned_user_name, replied: replied)
+        bot.api.send_message(chat_id: message.chat.id, text: response_message, parse_mode: "Markdown")
       rescue => e
         Rails.logger.error "Error in markspam command: #{e.message}"
-        bot.api.send_message(chat_id: message.chat.id, text: I18n.t('telegram_bot.markspam.failure_message'))
+        bot.api.send_message(chat_id: message.chat.id, text: I18n.t("telegram_bot.markspam.failure_message"))
       end
     end
   end
 
   def handle_feedspam_command(bot, message, message_text)
     # Extract everything after /feedspam command, preserving multiline content
-    spam_text = message_text.sub(%r{^/feedspam\s*}, '').strip
-  
+    spam_text = message_text.sub(%r{^/feedspam\s*}, "").strip
+
     I18n.with_locale(@lang_code) do
       if spam_text.empty?
         help_message = <<~TEXT
       #{I18n.t('telegram_bot.feedspam.help_message')}
     TEXT
-        bot.api.send_message(chat_id: message.chat.id, text: help_message, parse_mode: 'Markdown')
+        bot.api.send_message(chat_id: message.chat.id, text: help_message, parse_mode: "Markdown")
         return
       end
 
       Rails.logger.info "spam message: #{message_text}"
 
       begin
-        user_name = [message.from.first_name, message.from.last_name].compact.join(" ")
+        user_name = [ message.from.first_name, message.from.last_name ].compact.join(" ")
         group_name = message.chat.title
 
         # Save the traineded message, which will invoke ActiveModel
@@ -157,11 +156,11 @@ class TelegramBotter
           sender_user_name: user_name,
           message_type: :untrained
         )
-    
+
         # Show a preview of what was learned (truncated if too long)
         preview = spam_text.length > 100 ? "#{spam_text[0..100]}..." : spam_text
-        response_message = I18n.t('telegram_bot.feedspam.success_message', preview: preview)
-        bot.api.send_message(chat_id: message.chat.id, text: response_message, parse_mode: 'Markdown')
+        response_message = I18n.t("telegram_bot.feedspam.success_message", preview: preview)
+        bot.api.send_message(chat_id: message.chat.id, text: response_message, parse_mode: "Markdown")
       rescue => e
         Rails.logger.error "Error in feedspam command: #{e.message}"
         bot.api.send_message(chat_id: message.chat.id, text: "#{I18n.t('telegram_bot.feedspam.failure_message')}")
@@ -175,7 +174,7 @@ class TelegramBotter
       unless is_admin_of_group?(bot: bot, user: message.from, group_id: message.chat.id)
         bot.api.send_message(
           chat_id: message.chat.id,
-          text: I18n.t('telegram_bot.is_admin.error_message'),
+          text: I18n.t("telegram_bot.is_admin.error_message"),
         )
         return false
       end
@@ -213,13 +212,13 @@ class TelegramBotter
             bot.api.send_message(
               chat_id: message.chat.id,
               text: "#{I18n.t('telegram_bot.listspam.no_banned_user_message')}",
-              parse_mode: 'Markdown'
+              parse_mode: "Markdown"
             )
           else
             bot.api.send_message(
               chat_id: message.chat.id,
-              text: I18n.t('telegram_bot.listspam.no_banned_on_page_x_message', group_title: group_title, page: page, target_group_id: target_group_id),
-              parse_mode: 'Markdown'
+              text: I18n.t("telegram_bot.listspam.no_banned_on_page_x_message", group_title: group_title, page: page, target_group_id: target_group_id),
+              parse_mode: "Markdown"
             )
           end
         else
@@ -230,25 +229,25 @@ class TelegramBotter
           banned_users.each do |user|
             # Truncate long spam messages for display
             spam_preview = user.spam_message.length > 50 ? "#{user.spam_message[0..50]}..." : user.spam_message
-      
+
             text += "**User:** #{user.sender_user_name}\n"
             text += "**Message:** #{spam_preview}\n"
             text += "**Banned:** #{user.created_at.strftime("%Y-%m-%d %H:%M")}\n\n"
 
             # Create an "unban" button for each user
-            callback_data = build_callback_data('unban', uid: user.id, group_id: target_group_id)
-            buttons << [{ text: "✅ #{I18n.t('telegram_bot.listspam.unban_message')} #{user.sender_user_name}", callback_data: callback_data }]
+            callback_data = build_callback_data("unban", uid: user.id, group_id: target_group_id)
+            buttons << [ { text: "✅ #{I18n.t('telegram_bot.listspam.unban_message')} #{user.sender_user_name}", callback_data: callback_data } ]
           end
 
           # Add pagination buttons if needed
           pagination_buttons = []
           if page > 1
-            pagination_buttons << { text: "⬅️ Previous", callback_data: build_callback_data('listspam_page', group_id: target_group_id, page: page - 1, lang: @lang_code) }
+            pagination_buttons << { text: "⬅️ Previous", callback_data: build_callback_data("listspam_page", group_id: target_group_id, page: page - 1, lang: @lang_code) }
           end
           if page < total_pages
-            pagination_buttons << { text: "Next ➡️", callback_data: build_callback_data('listspam_page', group_id: target_group_id, page: page + 1, lang: @lang_code) }
+            pagination_buttons << { text: "Next ➡️", callback_data: build_callback_data("listspam_page", group_id: target_group_id, page: page + 1, lang: @lang_code) }
           end
-    
+
           buttons << pagination_buttons unless pagination_buttons.empty?
 
           reply_markup = { inline_keyboard: buttons }.to_json
@@ -257,7 +256,7 @@ class TelegramBotter
             chat_id: message.chat.id,
             text: text,
             reply_markup: reply_markup,
-            parse_mode: 'Markdown'
+            parse_mode: "Markdown"
           )
         end
       rescue => e
@@ -275,17 +274,17 @@ class TelegramBotter
         classifier = SpamClassifierService.new(message.chat.id, message.chat.title)
         spam_message_text = message.text
         is_spam, spam_score, ham_score = classifier.classify(spam_message_text)
-        # Spammer might leverage username as a way to send spam 
-        username = [message.from.first_name, message.from.last_name].compact.join(" ")
+        # Spammer might leverage username as a way to send spam
+        username = [ message.from.first_name, message.from.last_name ].compact.join(" ")
         username_classifier = SpamClassifierService.new(GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID, GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_NAME)
         username_is_spam, username_spam_score, username_ham_score = username_classifier.classify(username)
 
         Rails.logger.info "is_spam:#{is_spam}, spam_score: #{spam_score}, ham_score: #{ham_score}, username_is_spam:#{username_is_spam}, username_spam_score:#{username_spam_score}, username_ham_score:#{username_ham_score}"
 
-        if (is_spam || username_is_spam)
+        if is_spam || username_is_spam
           bot.api.delete_message(chat_id: message.chat.id, message_id: message.message_id)
-          alert_msg = I18n.t('telegram_bot.handle_regular_message.alert_message', user_name: username, user_id: message.from.id)
-          bot.api.send_message(chat_id: message.chat.id, text: alert_msg, parse_mode: 'Markdown')
+          alert_msg = I18n.t("telegram_bot.handle_regular_message.alert_message", user_name: username, user_id: message.from.id)
+          bot.api.send_message(chat_id: message.chat.id, text: alert_msg, parse_mode: "Markdown")
 
           # send spam message >= 3 times(including this time), ban it
           user_id = message.from.id
@@ -295,7 +294,7 @@ class TelegramBotter
           if spam_count >= 2
             Rails.logger.info "This user #{user_id} has sent spam message more than 3 times in group #{group_id}, ban it"
             bot.api.ban_chat_member(chat_id: group_id, user_id: user_id)
-            banned_user_name = [message.from.first_name, message.from.last_name].compact.join(" ")
+            banned_user_name = [ message.from.first_name, message.from.last_name ].compact.join(" ")
             BannedUser.find_or_create_by!(
               group_name: group_name,
               group_id: group_id,
@@ -304,9 +303,9 @@ class TelegramBotter
               spam_message: spam_message_text,
               message_id: message.message_id
             )
-            bot.api.send_message(chat_id: message.chat.id, text: I18n.t('telegram_bot.handle_regular_message.ban_user_message', user_name: username, user_id: message.from.id), parse_mode: 'Markdown')
+            bot.api.send_message(chat_id: message.chat.id, text: I18n.t("telegram_bot.handle_regular_message.ban_user_message", user_name: username, user_id: message.from.id), parse_mode: "Markdown")
           end
-        
+
           if is_spam
             TrainedMessage.create!(
               group_id: message.chat.id,
@@ -340,48 +339,48 @@ class TelegramBotter
   def is_group_chat?(bot, message)
     I18n.with_locale(@lang_code) do
       # Returns true if the chat type is 'group' or 'supergroup'
-      unless ['group', 'supergroup'].include?(message.chat.type)
-        bot.api.send_message(chat_id: message.chat.id, text: "#{I18n.t('telegram_bot.is_group_chat.error_message')}", parse_mode: 'Markdown')
+      unless [ "group", "supergroup" ].include?(message.chat.type)
+        bot.api.send_message(chat_id: message.chat.id, text: "#{I18n.t('telegram_bot.is_group_chat.error_message')}", parse_mode: "Markdown")
         return false
       end
       return true
     end
   end
-  
+
   def is_admin_of_group?(bot:, user:, group_id:)
     # If the admin is a bot
-    return true if user.is_bot && user.username == 'GroupAnonymousBot'
+    return true if user.is_bot && user.username == "GroupAnonymousBot"
 
     # TODO: This API call can be rate-limited. Cache results in production.
     begin
       admins = bot.api.get_chat_administrators(chat_id: group_id.to_s)
-    
-      return admins.any? { |admin| admin.user.id == user.id }
+
+      admins.any? { |admin| admin.user.id == user.id }
     rescue => e
       Rails.logger.error "Error during admin check for chat #{group_id}. Error: #{e.message}"
-      return false
+      false
     end
   end
 
   def handle_callback(bot, callback)
     Rails.logger.info "Handling callback"
-    
+
     callback_data = parse_callback_data(callback.data)
     action = callback_data[:a]
     user_id = callback_data[:uid]
-    @lang_code = callback_data[:lang] || 'en'
+    @lang_code = callback_data[:lang] || "en"
 
     chat_id = callback.message.chat.id
     message_id = callback.message.message_id
     I18n.with_locale(@lang_code) do
       case action
-      when 'user_guide'
+      when "user_guide"
         handle_user_guide_callback(bot, callback)
-      when 'unban'
+      when "unban"
         handle_unban_callback(bot, callback, chat_id, message_id, user_id)
-      when 'listspam'
+      when "listspam"
         handle_listspam_pagination_callback(bot, callback, user_id.to_i)
-      when 'back_to_main'
+      when "back_to_main"
         handle_back_to_main_callback(bot, callback)
       end
       rescue => e
@@ -397,45 +396,45 @@ class TelegramBotter
 
   def handle_user_guide_callback(bot, callback)
     I18n.with_locale(@lang_code) do
-      steps = I18n.t('telegram_bot.user_guide.steps', bot_username: @bot_username)
+      steps = I18n.t("telegram_bot.user_guide.steps", bot_username: @bot_username)
                 .map.with_index(1) { |step, i| "#{i}. #{step}" }
                 .join("\n")
 
-      features = I18n.t('telegram_bot.user_guide.features')
+      features = I18n.t("telegram_bot.user_guide.features")
                    .map { |feature| "• #{feature}" }
                    .join("\n")
 
-      commands = I18n.t('telegram_bot.user_guide.commands').values.join("\n")
+      commands = I18n.t("telegram_bot.user_guide.commands").values.join("\n")
 
       usage_text = <<~TEXT
       #{I18n.t('telegram_bot.user_guide.title')}
-      
+
       #{I18n.t('telegram_bot.user_guide.how_to_use')}
       #{steps}
-      
+
       #{I18n.t('telegram_bot.user_guide.basic_features')}
       #{features}
-      
+
       #{I18n.t('telegram_bot.user_guide.commands_title')}
       #{commands}
-      
+
       #{I18n.t('telegram_bot.user_guide.support')}
     TEXT
-      
+
       bot.api.edit_message_text(
         chat_id: callback.message.chat.id,
         message_id: callback.message.message_id,
         text: usage_text,
-        parse_mode: 'Markdown',
-        reply_markup: { 
-          inline_keyboard: [[
-                              { text: "← #{I18n.t('telegram_bot.buttons.back')}", 
+        parse_mode: "Markdown",
+        reply_markup: {
+          inline_keyboard: [ [
+                              { text: "← #{I18n.t('telegram_bot.buttons.back')}",
                                 callback_data: build_callback_data("back_to_main", lang: @lang_code) }
-                            ]]
+                            ] ]
         }.to_json()
       )
     end
-    
+
     bot.api.answer_callback_query(callback_query_id: callback.id)
   end
 
@@ -447,7 +446,7 @@ class TelegramBotter
       banned_user = BannedUser.find_by(id: banned_user_id)
       # The user is already unbanned
       unless banned_user
-        return edit_message_text(bot, chat_id, message_id, I18n.t('telegram_bot.unban.already_unbanned_message'))
+        return edit_message_text(bot, chat_id, message_id, I18n.t("telegram_bot.unban.already_unbanned_message"))
       end
 
       begin
@@ -465,8 +464,8 @@ class TelegramBotter
         user_name = banned_user.sender_user_name
         user_id = banned_user.sender_chat_id
         banned_user.destroy!
-    
-        edit_message_text(bot, chat_id, message_id, I18n.t('telegram_bot.unban.success_message', user_name: user_name, user_id:user_id))
+
+        edit_message_text(bot, chat_id, message_id, I18n.t("telegram_bot.unban.success_message", user_name: user_name, user_id: user_id))
       rescue => e
         Rails.logger.error "Error unbanning user: #{e.message}"
         edit_message_text(bot, chat_id, message_id, "#{I18n.t('telegram_bot.unban.failure_message')}")
@@ -488,10 +487,10 @@ class TelegramBotter
       chat: callback.message.chat,
       from: callback.from
     )
-  
+
     # Delete the old message
     bot.api.delete_message(chat_id: callback.message.chat.id, message_id: callback.message.message_id)
-  
+
     # Send new message with updated page
     handle_listspam_command(bot, fake_message)
   end
@@ -507,7 +506,7 @@ class TelegramBotter
     JSON.parse(callback_data).with_indifferent_access
   rescue JSON::ParserError
     # Fallback for old format "action:param"
-    parts = callback_data.split(':', 2)
+    parts = callback_data.split(":", 2)
     { action: parts[0], param: parts[1] }
   end
 
@@ -516,12 +515,12 @@ class TelegramBotter
       chat_id: chat_id,
       message_id: message_id,
       text: new_text,
-      parse_mode: 'Markdown'
+      parse_mode: "Markdown"
     )
   rescue => e
     Rails.logger.error "Error editing message: #{e.message}"
     # If editing fails, send a new message
-    bot.api.send_message(chat_id: chat_id, text: new_text, parse_mode: 'Markdown')
+    bot.api.send_message(chat_id: chat_id, text: new_text, parse_mode: "Markdown")
   end
 
   Signal.trap("TERM") do

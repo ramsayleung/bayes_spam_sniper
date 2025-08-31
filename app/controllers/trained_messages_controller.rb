@@ -4,45 +4,45 @@ class TrainedMessagesController < ApplicationController
   # GET /trained_messages or /trained_messages.json
   def index
     @trained_messages = TrainedMessage.all
-    
-    if params[:message_type].present? && params[:message_type] != 'all'
+
+    if params[:message_type].present? && params[:message_type] != "all"
       @trained_messages = @trained_messages.where(message_type: params[:message_type])
     end
-    
-    if params[:training_target].present? && params[:training_target] != 'all'
+
+    if params[:training_target].present? && params[:training_target] != "all"
       @trained_messages = @trained_messages.where(training_target: params[:training_target])
     end
-    
-    if params[:group_name].present? && params[:group_name] != 'all'
+
+    if params[:group_name].present? && params[:group_name] != "all"
       @trained_messages = @trained_messages.where(group_name: params[:group_name])
     end
-    
+
     if params[:search].present?
       @trained_messages = @trained_messages.where("message ILIKE ?", "%#{params[:search]}%")
     end
-    
+
     # Sorting
-    sort_by = params[:sort] || 'created_at'
-    sort_direction = params[:direction] || 'desc'
+    sort_by = params[:sort] || "created_at"
+    sort_direction = params[:direction] || "desc"
     @trained_messages = @trained_messages.order("#{sort_by} #{sort_direction}")
-    
+
     # Pagination
     @per_page = (params[:per_page] || 10).to_i
     @per_page = 10 if @per_page < 1 || @per_page > 100
-    
+
     @total_count = @trained_messages.count
     @page = (params[:page] || 1).to_i
     @page = 1 if @page < 1
-    
+
     offset = (@page - 1) * @per_page
     @trained_messages = @trained_messages.limit(@per_page).offset(offset)
-    
+
     # Calculate pagination info
     @total_pages = (@total_count.to_f / @per_page).ceil
 
     # Using unscoped ensures we get all possible options, not just the filtered ones.
     filter_data = TrainedMessage.unscoped.distinct.pluck(:message_type, :training_target, :group_name)
-    
+
     # Get filter options
     @message_types = filter_data.map(&:first).uniq.compact.sort
     @training_targets = filter_data.map(&:second).uniq.compact.sort
