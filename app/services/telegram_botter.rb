@@ -34,7 +34,7 @@ class TelegramBotter
   
     # Clean the message text and handle @botname mentions
     message_text = message.text&.strip || ""
-    lang_code = message.from.language_code || "en"
+    @lang_code = message.from.language_code || "en"
     # Remove @botname from the beginning if present
     message_text = message_text.gsub(/^@#{@bot_username}\s+/, '') if @bot_username
   
