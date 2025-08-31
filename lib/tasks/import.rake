@@ -27,7 +27,7 @@ namespace :import do
           training_target: training_target
         ) do |trained_message|
           # These attributes are only set if a new record is being created
-          trained_message.message_type = row['type'].strip.downcase
+          trained_message.message_type = row['type']&.strip&.downcase || "spam"
           trained_message.sender_chat_id = 0
           trained_message.sender_user_name = "CSV Import"
         end
