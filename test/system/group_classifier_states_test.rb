@@ -7,12 +7,12 @@ class GroupClassifierStatesTest < ApplicationSystemTestCase
 
   test "visiting the index" do
     visit group_classifier_states_url
-    assert_selector "h1", text: "Group classifier states"
+    assert_selector "h1", text: "Group classifier"
   end
 
   test "should create group classifier state" do
     visit group_classifier_states_url
-    click_on "New group classifier state"
+    click_on "New Group Classifier"
 
     fill_in "Group", with: @group_classifier_state.group_id
     fill_in "Ham counts", with: @group_classifier_state.ham_counts

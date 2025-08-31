@@ -92,10 +92,10 @@
                 </td>
 
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  <%= group_classifier_state.spam_counts&.keys&.count || 0 %>
+                    <%= group_classifier_state.spam_counts.is_a?(Hash) ? group_classifier_state.spam_counts&.keys&.count || 0 : group_classifier_state.spam_counts %>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  <%= group_classifier_state.ham_counts&.keys&.count || 0 %>
+                    <%= group_classifier_state.ham_counts.is_a?(Hash) ? group_classifier_state.ham_counts&.keys&.count || 0 : group_classifier_state.ham_counts %>
                 </td>
 
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">

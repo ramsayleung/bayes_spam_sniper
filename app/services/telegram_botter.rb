@@ -146,7 +146,7 @@ class TelegramBotter
         user_name = [ message.from.first_name, message.from.last_name ].compact.join(" ")
         chat_type = message.chat.type
         group_name = ""
-        if chat_type == 'private'
+        if chat_type == "private"
           group_name = "Private: " + user_name
         else
           group_name = message.chat.title
