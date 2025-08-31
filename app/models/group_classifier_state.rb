@@ -7,4 +7,7 @@ class GroupClassifierState < ApplicationRecord
   USER_NAME_CLASSIFIER_GROUP_ID = 0
   USER_NAME_CLASSIFIER_GROUP_NAME = "User Name Classifier"
   scope :username, -> { where(group_id: USER_NAME_CLASSIFIER_GROUP_ID) }
+  # private chat is positive id, group/channel chat is negative id
+  # find all classifiers for public, including group and username
+  scope :for_public, -> {where(arel_table[:group_id].lteq(0))}
 end

@@ -144,7 +144,13 @@ class TelegramBotter
 
       begin
         user_name = [ message.from.first_name, message.from.last_name ].compact.join(" ")
-        group_name = message.chat.title
+        chat_type = message.chat.type
+        group_name = ""
+        if chat_type == 'private'
+          group_name = "Private: " + user_name
+        else
+          group_name = message.chat.title
+        end
 
         # Save the traineded message, which will invoke ActiveModel
         # hook to train the model in the background job
@@ -428,9 +434,9 @@ class TelegramBotter
         parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: [ [
-                              { text: "← #{I18n.t('telegram_bot.buttons.back')}",
-                                callback_data: build_callback_data("back_to_main", lang: @lang_code) }
-                            ] ]
+                               { text: "← #{I18n.t('telegram_bot.buttons.back')}",
+                                 callback_data: build_callback_data("back_to_main", lang: @lang_code) }
+                             ] ]
         }.to_json()
       )
     end
