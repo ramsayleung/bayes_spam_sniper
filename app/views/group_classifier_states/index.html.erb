@@ -5,25 +5,140 @@
     <p class="py-2 px-3 bg-green-50 mb-5 text-green-500 font-medium rounded-md inline-block" id="notice"><%= notice %></p>
   <% end %>
 
-  <div class="flex justify-between items-center">
-    <h1 class="font-bold text-4xl">Group classifier states</h1>
-    <%= link_to "New group classifier state", new_group_classifier_state_path, class: "rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white block font-medium" %>
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+    <div>
+      <h1 class="font-bold text-4xl mb-2">Group classifier</h1>
+      <p class="text-gray-600">Showing <%= @group_classifier_states.length %> of <%= @total_count %> messages</p>
+    </div>
+    <%= link_to "New Group Classifier", new_group_classifier_state_path, class: "mt-4 sm:mt-0 rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white block font-medium" %>
   </div>
 
-  <div id="group_classifier_states" class="min-w-full divide-y divide-gray-200 space-y-5">
-    <% if @group_classifier_states.any? %>
-      <% @group_classifier_states.each do |group_classifier_state| %>
-        <div class="flex flex-col sm:flex-row justify-between items-center pb-5 sm:pb-0">
-          <%= render group_classifier_state %>
-          <div class="w-full sm:w-auto flex flex-col sm:flex-row space-x-2 space-y-2">
-            <%= link_to "Show", group_classifier_state, class: "w-full sm:w-auto text-center rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
-            <%= link_to "Edit", edit_group_classifier_state_path(group_classifier_state), class: "w-full sm:w-auto text-center rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
-            <%= button_to "Destroy", group_classifier_state, method: :delete, class: "w-full sm:w-auto rounded-md px-3.5 py-2.5 text-white bg-red-600 hover:bg-red-500 font-medium cursor-pointer", data: { turbo_confirm: "Are you sure?" } %>
-          </div>
-        </div>
-      <% end %>
-    <% else %>
-      <p class="text-center my-10">No group classifier states found.</p>
-    <% end %>
+  <!-- Table -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <%= link_to group_classifier_states_path(params.permit!.merge(sort: 'id', direction: params[:sort] == 'id' && params[:direction] == 'asc' ? 'desc' : 'asc')), class: "hover:text-gray-700 flex items-center space-x-1" do %>
+                <span>ID</span>
+                <% if params[:sort] == 'id' %>
+                  <span><%= params[:direction] == 'asc' ? '↑' : '↓' %></span>
+                <% end %>
+              <% end %>
+            </th>
+
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Telegram Group Id
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <%= link_to group_classifier_states_path(params.permit!.merge(sort: 'group_name', direction: params[:sort] == 'group_name' && params[:direction] == 'asc' ? 'desc' : 'asc')), class: "hover:text-gray-700 flex items-center space-x-1" do %>
+                <span>Group</span>
+                <% if params[:sort] == 'group_name' %>
+                  <span><%= params[:direction] == 'asc' ? '↑' : '↓' %></span>
+                <% end %>
+              <% end %>
+            </th>
+
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Spam Words Count
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Ham Words Count
+            </th>
+
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Total spam words
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Total ham words
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Total spam messages
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Total ham messages
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Vocabulary size
+            </th>
+
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <%= link_to group_classifier_states_path(params.permit!.merge(sort: 'created_at', direction: params[:sort] == 'created_at' && params[:direction] == 'asc' ? 'desc' : 'asc')), class: "hover:text-gray-700 flex items-center space-x-1" do %>
+                <span>Created</span>
+                <% if params[:sort] == 'created_at' %>
+                  <span><%= params[:direction] == 'asc' ? '↑' : '↓' %></span>
+                <% end %>
+              <% end %>
+            </th>
+            <th scope="col" class="relative px-6 py-3">
+              <span class="sr-only">Actions</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <% if !@group_classifier_states.empty? %>
+            <% @group_classifier_states.each do |group_classifier_state| %>
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <%= group_classifier_state.id %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <%= group_classifier_state.group_id %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <%= group_classifier_state.group_name || 'Private' %>
+                </td>
+
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <%= group_classifier_state.spam_counts&.keys&.count || 0 %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <%= group_classifier_state.ham_counts&.keys&.count || 0 %>
+                </td>
+
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <%= group_classifier_state.total_spam_words %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <%= group_classifier_state.total_ham_words %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <%= group_classifier_state.total_spam_messages %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <%= group_classifier_state.total_ham_messages %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <%= group_classifier_state.vocabulary_size %>
+                </td>
+
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <%= time_ago_in_words(group_classifier_state.created_at) %> ago
+                </td>
+
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div class="flex space-x-2">
+                    <%= link_to "View", group_classifier_state, class: "text-indigo-600 hover:text-indigo-900" %>
+                    <%= link_to "Edit", edit_group_classifier_state_path(group_classifier_state), class: "text-indigo-600 hover:text-indigo-900" %>
+                    <%= link_to "Delete", group_classifier_state, method: :delete, 
+                        class: "text-red-600 hover:text-red-900", 
+                        data: { turbo_confirm: "Are you sure?" } %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          <% else %>
+            <tr>
+              <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                No group classifier found matching your criteria.
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
   </div>
+
 </div>

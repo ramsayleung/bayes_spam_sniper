@@ -4,6 +4,25 @@ class GroupClassifierStatesController < ApplicationController
   # GET /group_classifier_states or /group_classifier_states.json
   def index
     @group_classifier_states = GroupClassifierState.all
+
+    # Sorting
+    sort_by = params[:sort] || "created_at"
+    sort_direction = params[:direction] || "desc"
+    @group_classifier_states = @group_classifier_states.order("#{sort_by} #{sort_direction}")
+
+    # Pagination
+    @per_page = (params[:per_page] || 10).to_i
+    @per_page = 10 if @per_page < 1 || @per_page > 100
+
+    @total_count = @group_classifier_states.count
+    @page = (params[:page] || 1).to_i
+    @page = 1 if @page < 1
+
+    offset = (@page - 1) * @per_page
+    @group_classifier_states = @group_classifier_states.limit(@per_page).offset(offset)
+
+    # Calculate pagination info
+    @total_pages = (@total_count.to_f / @per_page).ceil
   end
 
   # GET /group_classifier_states/1 or /group_classifier_states/1.json
