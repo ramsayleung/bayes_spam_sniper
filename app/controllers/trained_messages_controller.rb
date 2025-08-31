@@ -39,11 +39,14 @@ class TrainedMessagesController < ApplicationController
     
     # Calculate pagination info
     @total_pages = (@total_count.to_f / @per_page).ceil
+
+    # Using unscoped ensures we get all possible options, not just the filtered ones.
+    filter_data = TrainedMessage.unscoped.distinct.pluck(:message_type, :training_target, :group_name)
     
     # Get filter options
-    @message_types = TrainedMessage.distinct.pluck(:message_type).compact
-    @training_targets = TrainedMessage.distinct.pluck(:training_target).compact
-    @group_names = TrainedMessage.distinct.pluck(:group_name).compact.sort
+    @message_types = filter_data.map(&:first).uniq.compact.sort
+    @training_targets = filter_data.map(&:second).uniq.compact.sort
+    @group_names = filter_data.map(&:third).uniq.compact.sort
   end
 
   # GET /trained_messages/1 or /trained_messages/1.json
@@ -98,13 +101,13 @@ class TrainedMessagesController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_trained_message
-      @trained_message = TrainedMessage.find(params.expect(:id))
-    end
+  # Use callbacks to share common setup or constraints between actions.
+  def set_trained_message
+    @trained_message = TrainedMessage.find(params.expect(:id))
+  end
 
-    # Only allow a list of trusted parameters through.
-    def trained_message_params
-      params.expect(trained_message: [ :group_id, :message, :message_type, :sender_chat_id, :sender_user_name, :group_name, :training_target ])
-    end
+  # Only allow a list of trusted parameters through.
+  def trained_message_params
+    params.expect(trained_message: [ :group_id, :message, :message_type, :sender_chat_id, :sender_user_name, :group_name, :training_target ])
+  end
 end
