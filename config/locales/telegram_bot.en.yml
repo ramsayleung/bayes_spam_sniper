@@ -2,7 +2,7 @@ en:
   telegram_bot:
     welcome:
       title: "🤖 Welcome to the machine learning-based spam detection bot!"
-      description: "This bot is powered by passion, and its code is [open source](https://github.com/ramsayleung/)"
+      description: "This bot is powered by passion, and its code is [open source](https://github.com/ramsayleung/bayes_spam_sniper)"
       select_option: "Please select an option below:"
     buttons:
       user_guide: "📖User Guide"

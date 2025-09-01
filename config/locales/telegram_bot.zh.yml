@@ -2,7 +2,7 @@ zh:
   telegram_bot:
     welcome:
       title: "🤖 欢迎使用基于机器学习算法的垃圾信息检测机器人！"
-      description: "本机器人用爱发电，代码[开源地址](https://github.com/ramsayleung/)"
+      description: "本机器人用爱发电，代码[开源地址](https://github.com/ramsayleung/bayes_spam_sniper)"
       select_option: "请选择下面的选项："
     buttons:
       user_guide: "📖使用说明"
