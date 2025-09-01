@@ -10,5 +10,5 @@ class GroupClassifierState < ApplicationRecord
   # private chat is positive id, group/channel chat is negative id
   # find all classifiers for public, including group and username
   scope :for_public, -> { where(arel_table[:group_id].lteq(0)) }
-  scope :for_group, -> { where('group_id < 0') }
+  scope :for_group, -> { where("group_id < 0") }
 end

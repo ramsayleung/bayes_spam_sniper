@@ -1,0 +1,5 @@
+# Enable pre-commit hooks
+PreCommit:
+  RuboCop:
+    enabled: true
+    on_warn: fail # Fails the commit even on warnings
