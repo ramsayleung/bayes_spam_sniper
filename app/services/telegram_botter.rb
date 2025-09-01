@@ -255,10 +255,10 @@ class TelegramBotter
           # Add pagination buttons if needed
           pagination_buttons = []
           if page > 1
-            pagination_buttons << { text: "⬅️ Previous", callback_data: build_callback_data("listspam_page", CallbackConstants::GROUP_ID => target_group_id, CallbackConstants::PAGE => page - 1, CallbackConstants::LANGUAGE => @lang_code) }
+            pagination_buttons << { text: I18n.t("telegram_bot.listspam.previous_page"), callback_data: build_callback_data("listspam_page", CallbackConstants::GROUP_ID => target_group_id, CallbackConstants::PAGE => page - 1, CallbackConstants::LANGUAGE => @lang_code) }
           end
           if page < total_pages
-            pagination_buttons << { text: "Next ➡️", callback_data: build_callback_data("listspam_page", CallbackConstants::GROUP_ID => target_group_id, CallbackConstants::PAGE => page + 1, CallbackConstants::LANGUAGE => @lang_code) }
+            pagination_buttons << { text: I18n.t("telegram_bot.listspam.next_page"), callback_data: build_callback_data("listspam_page", CallbackConstants::GROUP_ID => target_group_id, CallbackConstants::PAGE => page + 1, CallbackConstants::LANGUAGE => @lang_code) }
           end
 
           buttons << pagination_buttons unless pagination_buttons.empty?

@@ -47,6 +47,8 @@ en:
       no_banned_on_page_x_message: "No banned users found on page %{page} for group `%{group_title}`. Try `/listspam %{target_group_id} 1` to see the first page."
       unban_message: "Unban"
       failure_message: "❌ Failed to retrieve banned users list."
+      previous_page: "⬅️ Previous"
+      next_page: "Next ➡️"
     handle_callback:
       error_message: "❌ An error occurred while processing your request."
     is_group_chat:

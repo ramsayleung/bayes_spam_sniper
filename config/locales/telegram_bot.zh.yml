@@ -47,6 +47,8 @@ zh:
       no_banned_on_page_x_message: "在群组 %{group_title} 的第 %{page} 页未找到被封禁用户。请尝试 /listspam %{target_group_id} 1 查看第一页内容"
       unban_message: "解禁"
       failure_message: "❌ 获取封禁用户列表异常."
+      previous_page: "⬅️ 上一页"
+      next_page: "下一页 ➡️"
     handle_callback:
       error_message: "❌ 处理消息异常"
     is_group_chat:
