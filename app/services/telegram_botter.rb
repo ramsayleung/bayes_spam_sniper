@@ -8,6 +8,13 @@ class TelegramBotter
     PAGE     = :p
     LANGUAGE = :l
   end
+
+  module CallbackAction
+    USER_GUIDE = "user_guide"
+    BACK_TO_MAIN = "back_to_main"
+    LISTSPAM_PAGE = "listspam_page"
+    UNBAN = "unban"
+  end
   def start_bot(token)
     Telegram::Bot::Client.run(token) do |bot|
       Rails.application.config.telegram_bot = bot
@@ -65,7 +72,7 @@ class TelegramBotter
     keyboard = [
       [
         { text: I18n.t("telegram_bot.buttons.user_guide", locale: @lang_code),
-          callback_data: build_callback_data("user_guide", lang: @lang_code) },
+          callback_data: build_callback_data(CallbackAction::USER_GUIDE, lang: @lang_code) },
         { text: I18n.t("telegram_bot.buttons.add_to_group", locale: @lang_code),
           url: "https://t.me/#{@bot_username}?startgroup=true" }
       ]
@@ -249,17 +256,17 @@ class TelegramBotter
             text += "**Banned:** #{user.created_at.strftime("%Y-%m-%d %H:%M")}\n\n"
 
             # Create an "unban" button for each user
-            callback_data = build_callback_data("unban", CallbackConstants::USER_ID => user.id, CallbackConstants::GROUP_ID=> target_group_id)
+            callback_data = build_callback_data(CallbackAction::UNBAN, CallbackConstants::USER_ID => user.id, CallbackConstants::GROUP_ID=> target_group_id)
             buttons << [ { text: "✅ #{I18n.t('telegram_bot.listspam.unban_message')} #{user.sender_user_name}", callback_data: callback_data } ]
           end
 
           # Add pagination buttons if needed
           pagination_buttons = []
           if page > 1
-            pagination_buttons << { text: I18n.t("telegram_bot.listspam.previous_page"), callback_data: build_callback_data("listspam_page", CallbackConstants::GROUP_ID => target_group_id, CallbackConstants::PAGE => page - 1, CallbackConstants::LANGUAGE => @lang_code) }
+            pagination_buttons << { text: I18n.t("telegram_bot.listspam.previous_page"), callback_data: build_callback_data(CallbackAction::LISTSPAM_PAGE, CallbackConstants::GROUP_ID => target_group_id, CallbackConstants::PAGE => page - 1, CallbackConstants::LANGUAGE => @lang_code) }
           end
           if page < total_pages
-            pagination_buttons << { text: I18n.t("telegram_bot.listspam.next_page"), callback_data: build_callback_data("listspam_page", CallbackConstants::GROUP_ID => target_group_id, CallbackConstants::PAGE => page + 1, CallbackConstants::LANGUAGE => @lang_code) }
+            pagination_buttons << { text: I18n.t("telegram_bot.listspam.next_page"), callback_data: build_callback_data(CallbackAction::LISTSPAM_PAGE, CallbackConstants::GROUP_ID => target_group_id, CallbackConstants::PAGE => page + 1, CallbackConstants::LANGUAGE => @lang_code) }
           end
 
           buttons << pagination_buttons unless pagination_buttons.empty?
@@ -376,7 +383,6 @@ class TelegramBotter
 
   def handle_callback(bot, callback)
     Rails.logger.info "Handling callback"
-    puts "callback: #{callback.inspect}"
 
     callback_data = parse_callback_data(callback.data)
     action = callback_data[CallbackConstants::ACTION]
@@ -388,13 +394,13 @@ class TelegramBotter
     message_id = callback.message.message_id
     I18n.with_locale(@lang_code) do
       case action
-      when "user_guide"
+      when CallbackAction::USER_GUIDE
         handle_user_guide_callback(bot, callback)
-      when "unban"
+      when CallbackAction::UNBAN
         handle_unban_callback(bot, callback, chat_id, message_id, user_id)
-      when "listspam_page"
+      when CallbackAction::LISTSPAM_PAGE
         handle_listspam_pagination_callback(bot, callback, page)
-      when "back_to_main"
+      when CallbackAction::BACK_TO_MAIN
         handle_back_to_main_callback(bot, callback)
       end
       rescue => e
@@ -443,7 +449,7 @@ class TelegramBotter
         reply_markup: {
           inline_keyboard: [ [
                                { text: "← #{I18n.t('telegram_bot.buttons.back')}",
-                                 callback_data: build_callback_data("back_to_main", CallbackConstants::LANGUAGE => @lang_code) }
+                                 callback_data: build_callback_data(CallbackAction::BACK_TO_MAIN, CallbackConstants::LANGUAGE => @lang_code) }
                              ] ]
         }.to_json()
       )
