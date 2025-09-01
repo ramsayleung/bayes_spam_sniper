@@ -10,7 +10,7 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
 
   test "should initialize a new classifier state for a new group" do
     assert_difference "GroupClassifierState.count", 1 do
-      SpamClassifierService.new(99999, @group_name)
+      SpamClassifierService.new(99999, "new group")
     end
 
     assert_equal @group_id, @service.group_id
@@ -22,6 +22,32 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
     assert_no_difference "GroupClassifierState.count" do
       SpamClassifierService.new(@group_id, @group_name)
     end
+  end
+
+  test "it creates a new classifier from the most recent template if one exists" do
+    _old_template = GroupClassifierState.create!(
+      group_id: -100, group_name: "Old Public Group", total_spam_words: 10,
+      updated_at: 2.days.ago
+    )
+    recent_template = GroupClassifierState.create!(
+      group_id: -200, group_name: "Recent Public Group",
+      total_spam_words: 99, spam_counts: { "viagra" => 10 },
+      updated_at: 1.day.ago
+    )
+
+    service = nil
+    assert_difference "GroupClassifierState.count", 1 do
+      service = SpamClassifierService.new(456, "New Derived Group")
+    end
+
+    new_classifier = service.classifier_state
+    assert_equal 456, new_classifier.group_id
+    assert_equal "New Derived Group", new_classifier.group_name
+    assert_equal recent_template.total_spam_words, new_classifier.total_spam_words
+    assert_equal recent_template.spam_counts, new_classifier.spam_counts
+
+    # Assert that the hash is a copy, not the same object.
+    refute_same recent_template.spam_counts, new_classifier.spam_counts
   end
 
   test "#train should correctly update state for a new spam message" do

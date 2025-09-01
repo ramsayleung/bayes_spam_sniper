@@ -8,15 +8,29 @@ class SpamClassifierService
   def initialize(group_id, group_name)
     @group_id = group_id
     @group_name = group_name
-    @classifier_state = GroupClassifierState.find_or_create_by!(group_id: @group_id) do |state|
-      state.group_name = group_name
-      state.spam_counts = {}
-      state.ham_counts = {}
-      state.total_spam_words = 0
-      state.total_ham_words = 0
-      state.total_spam_messages = 0
-      state.total_ham_messages = 0
-      state.vocabulary_size = 0
+    @classifier_state = GroupClassifierState.find_or_create_by!(group_id: @group_id) do |new_state|
+      # Find the most recently updated classifier for group to use as a template.
+      template = GroupClassifierState.for_group.order(updated_at: :desc).first
+      if template
+        new_state.spam_counts         = template.spam_counts.dup
+        new_state.ham_counts          = template.ham_counts.dup
+        new_state.total_spam_words    = template.total_spam_words
+        new_state.total_ham_words     = template.total_ham_words
+        new_state.total_spam_messages = template.total_spam_messages
+        new_state.total_ham_messages  = template.total_ham_messages
+        new_state.vocabulary_size     = template.vocabulary_size
+      else
+        # If no template exists, initialize an empty state.
+        new_state.spam_counts         = {}
+        new_state.ham_counts          = {}
+        new_state.total_spam_words    = 0
+        new_state.total_ham_words     = 0
+        new_state.total_spam_messages = 0
+        new_state.total_ham_messages  = 0
+        new_state.vocabulary_size     = 0
+      end
+
+      new_state.group_name = group_name
     end
   end
 
@@ -90,9 +104,9 @@ class SpamClassifierService
     Rails.logger.info "Rebuild classifier for group_id: #{group_id}"
     messages_to_train = if group_id == GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID
                           TrainedMessage.trainable.for_user_name
-    else
+                        else
                           TrainedMessage.trainable.for_message_content
-    end
+                        end
 
     ActiveRecord::Base.transaction do
       classifier_state.update!(
