@@ -108,7 +108,6 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
     spam_variants.each_with_index do |variant, index|
       expected_text = expected_variants[index]
       cleaned_text = @service.clean_text(variant)
-      puts "cleaned_text #{cleaned_text}"
       cleaned_text = @service.clean_text(variant)
       assert_equal expected_text, cleaned_text, "Failed on input: '#{variant}'"
 
@@ -121,7 +120,6 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
     cleaned_text = @service.clean_text(spam_message)
     tokens = @service.tokenize(spam_message)
 
-    puts "spam_message: #{spam_message}, cleaned_text: #{cleaned_text}, tokens: #{tokens}"
     assert_includes tokens, "🚘"
     assert_includes tokens, "扛单" # user-defined dictionary
     assert_equal 12, tokens.filter { |t| t =="🚘" }.length()
@@ -137,6 +135,14 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
     assert_includes tokens, "报单"
     assert_includes tokens, "群组"
     assert_includes tokens, "大饼"
+  end
+
+  test "#tokenize should handle user-defined dictionary correct" do
+    spam_message ="在 币圈 想 赚 钱，那 你 不关 注 这 个 王 牌 社 区，真的太可惜了，真 心 推 荐，每 天 都 有 免 费 策 略"
+    cleaned_text = @service.clean_text(spam_message)
+    tokens = @service.tokenize(spam_message)
+    # 币圈 is user-defined word
+    assert_includes tokens, "币圈"
   end
 
   test "#classify should return false if the model is not trained" do
