@@ -207,7 +207,7 @@ class TelegramBotter
     page = command_parts[1].to_i > 0 ? command_parts[1].to_i : 1
     page = 1 if page < 1
 
-    items_per_page = 10
+    items_per_page = Rails.application.config.items_per_page
     offset = (page - 1) * items_per_page
 
     I18n.with_locale(@lang_code) do
@@ -239,9 +239,10 @@ class TelegramBotter
           text += "Total banned users: #{total_count}\n\n"
           buttons = []
 
+          max_spam_preview_length = Rails.application.config.max_spam_preview_length
           banned_users.each do |user|
             # Truncate long spam messages for display
-            spam_preview = user.spam_message.length > 50 ? "#{user.spam_message[0..50]}..." : user.spam_message
+            spam_preview = user.spam_message.length > max_spam_preview_length ? "#{user.spam_message[0..max_spam_preview_length]}..." : user.spam_message
 
             text += "**User:** *#{user.sender_user_name}*\n"
             text += "**Message:** `#{spam_preview}`\n"
@@ -297,12 +298,12 @@ class TelegramBotter
           alert_msg = I18n.t("telegram_bot.handle_regular_message.alert_message", user_name: username, user_id: message.from.id)
           bot.api.send_message(chat_id: message.chat.id, text: alert_msg, parse_mode: "Markdown")
 
-          # send spam message >= 3 times(including this time), ban it
+          spam_ban_threshold = Rails.application.config.spam_ban_threshold
           user_id = message.from.id
           group_id = message.chat.id
           group_name = message.chat.title
           spam_count = TrainedMessage.where(group_id: group_id, sender_chat_id: user_id, message_type: :spam).count
-          if spam_count >= 2
+          if spam_count >= (spam_ban_threshold - 1)
             Rails.logger.info "This user #{user_id} has sent spam message more than 3 times in group #{group_id}, ban it"
             bot.api.ban_chat_member(chat_id: group_id, user_id: user_id)
             banned_user_name = [ message.from.first_name, message.from.last_name ].compact.join(" ")
