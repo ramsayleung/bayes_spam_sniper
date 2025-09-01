@@ -98,7 +98,7 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
     puts "spam_message: #{spam_message}, cleaned_text: #{cleaned_text}, tokens: #{tokens}"
     assert_includes tokens, "🚘"
     assert_includes tokens, "扛单" # user-defined dictionary
-    assert_equal 12, tokens.filter{|t| t =="🚘"}.length()
+    assert_equal 12, tokens.filter { |t| t =="🚘" }.length()
   end
 
   test "#toenize should handle punctuation correctly" do

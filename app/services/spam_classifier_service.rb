@@ -90,9 +90,9 @@ class SpamClassifierService
     Rails.logger.info "Rebuild classifier for group_id: #{group_id}"
     messages_to_train = if group_id == GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID
                           TrainedMessage.trainable.for_user_name
-                        else
+    else
                           TrainedMessage.trainable.for_message_content
-                        end
+    end
 
     ActiveRecord::Base.transaction do
       classifier_state.update!(
