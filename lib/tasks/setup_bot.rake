@@ -1,6 +1,6 @@
 namespace :bot do
   desc "Set commands for the Telegram bot"
-  task set_commands: :environment do
+  task setup_bot: :environment do
     token = Rails.application.credentials.dig(:telegram_bot_token)
 
     unless token
@@ -30,8 +30,23 @@ namespace :bot do
       if response
         puts "Succeed to set menu"
       else
-        puts "Failed to set commands: #{response['description']}"
+        puts "Failed to set menu: #{response['description']}"
       end
+
+      new_bio = <<~TEXT
+      A machine learning-based spam detection bot that auto-block spam
+
+      基于机器学习的广告拦截机器人，自动拦截广告, 用爱发电，代码开源: github.com/ramsayleung/bayes_spam_sniper
+      TEXT
+
+      response = api.set_my_description(description: new_bio)
+      if response
+        puts "Succeed to set description: #{response}"
+      else
+        puts "Failed to set description: #{response['description']}"
+      end
+
+      # To set profile bio, must use @BotFather /setabouttext
     rescue => e
       puts "An error occurred: #{e.message}"
     end
