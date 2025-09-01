@@ -18,7 +18,6 @@ class SpamClassifierService
       state.total_ham_messages = 0
       state.vocabulary_size = 0
     end
-    @jieba = JiebaRb::Segment.new
   end
 
   def train_only(trained_message)
@@ -91,9 +90,9 @@ class SpamClassifierService
     Rails.logger.info "Rebuild classifier for group_id: #{group_id}"
     messages_to_train = if group_id == GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID
                           TrainedMessage.trainable.for_user_name
-    else
+                        else
                           TrainedMessage.trainable.for_message_content
-    end
+                        end
 
     ActiveRecord::Base.transaction do
       classifier_state.update!(
@@ -117,10 +116,27 @@ class SpamClassifierService
 
   def tokenize(text)
     cleaned_text = clean_text(text)
+    # This regex pre-tokenizes the string into 4 groups:
+    # 1. Emojis (one or more)
+    # 2. Chinese characters (one or more)
+    # 3. English words/numbers (one or more)
+    # 4. Punctuation/Symbols that we might want to discard later
+    pre_tokens = cleaned_text.scan(/(\p{Emoji_Presentation}+)|(\p{Han}+)|([a-zA-Z0-9]+)|([[:punct:]。、，！？]+)/).flatten.compact
 
-    raw_tokens = @jieba.cut(cleaned_text)
+    processed_tokens = pre_tokens.flat_map do |token|
+      if token.match?(/\p{Emoji_Presentation}/)
+        # Split sequences of emojis into individual characters
+        # 🚘🚘🚘 => "🚘", "🚘", "🚘"
+        token.chars
+      elsif token.match?(/\p{Han}/)
+        # Only send pure Chinese text to Jieba for segmentation
+        JIEBA.cut(token)
+      else
+        token
+      end
+    end
 
-    processed_tokens = raw_tokens
+    processed_tokens = processed_tokens
                          .reject(&:blank?)                    # Remove empty strings
                          .reject { |token| pure_punctuation?(token) } # Remove pure punctuation
                          .reject { |token| pure_numbers?(token) }     # Remove pure numbers

@@ -90,6 +90,16 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
       refute cleaned_text.match?(/[*@#$,.-]/)
     end
   end
+  test "#toenize should handle emoji correctly" do
+    spam_message =" 🚘🚘🚘还在死扛单 🚘🚘🚘 这里策略准到爆 进群免费体验 @hakaoer 🚘🚘🚘不满意随便喷🚘🚘🚘 "
+    cleaned_text = @service.clean_text(spam_message)
+    tokens = @service.tokenize(spam_message)
+
+    puts "spam_message: #{spam_message}, cleaned_text: #{cleaned_text}, tokens: #{tokens}"
+    assert_includes tokens, "🚘"
+    assert_includes tokens, "扛单" # user-defined dictionary
+    assert_equal 12, tokens.filter{|t| t =="🚘"}.length()
+  end
 
   test "#toenize should handle punctuation correctly" do
     spam_message = "这人简-介挂的 合-约-报单群组挺牛的ETH500点，大饼5200点！ + @BTCETHl6666"
