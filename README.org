@@ -6,7 +6,7 @@
 - [[./README_zh.org][中文版本]]
 - [[https://ramsayleung.github.io/en/post/2025/a_telegram_spam_blocker_bot_based_on_bayesian][Blog Post: A Telegram Spam Blocker Bot Based On Bayesian Algorithm]]
 * A Bayesian Algorithm-Based Telegram spam-blocking Bot
-  BSS Intelligent Ad-blocking Bot ([[https://t.me/BayesSpamSniperBot?start=ad_7202424896][@BayesSpamSniperBot]]) is an open-source Telegram ad-blocking bot with self-learning capabilities, implemented based on Bayes' theorem.
+  BSS ([[https://t.me/BayesSpamSniperBot?start=ad_7202424896][@BayesSpamSniperBot]]) is an open-source Telegram spam-blocking bot with self-learning capabilities, implemented based on Bayesian theorem.
 ** Features
    Most common Telegram ad bots are keyword-based, blocking messages by matching keywords, which can be easily bypassed by spammers.
 

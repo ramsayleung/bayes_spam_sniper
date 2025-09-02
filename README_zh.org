@@ -6,7 +6,7 @@
 - [[./README.org][English Version]]
 - [[https://ramsayleung.github.io/zh/post/2025/一个自学习的telegram广告拦截机器人/][博客文章：一个自学习的Telegram广告拦截机器人]]
 * 基于贝叶斯算法的 Telegram广告拦截机器人
-  BSS智能广告拦截机器人([[https://t.me/BayesSpamSniperBot?start=ad_7202424896][@BayesSpamSniperBot]]), 一个具备自学习能力的，基于贝叶斯定理实现的开源 Telegram 广告拦截机器人
+  BSS([[https://t.me/BayesSpamSniperBot?start=ad_7202424896][@BayesSpamSniperBot]]) 是一个具备自学习能力的，基于贝叶斯定理实现的开源 Telegram 广告拦截机器人
 ** 特点
    常见的 Telegram 广告机器人是大多是基于关键字的，通过匹配关键字进行文本拦截，非常容易被发垃圾广告的人绕过。
 
