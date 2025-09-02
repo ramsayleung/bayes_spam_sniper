@@ -36,7 +36,7 @@
 /app/assets/builds/*
 !/app/assets/builds/.keep
 
-data/training_data.csv
+/db/data
 
 /config/credentials/development.key
 

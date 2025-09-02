@@ -7,7 +7,8 @@ image: samrayleung/telegram_spam_sniper_bot
 # Deploy to these servers.
 servers:
   web:
-    - 192.168.1.188
+    hosts:
+      - 192.168.1.188
   # job:
   #   hosts:
   #     - 192.168.0.1
@@ -67,7 +68,6 @@ aliases:
 volumes:
   - "telegram_spam_sniper_bot_storage:/rails/storage"
 
-
 # Bridge fingerprinted assets, like JS and CSS, between versions to avoid
 # hitting 404 on in-flight requests. Combines all files from new and old
 # version inside the asset_path.
@@ -92,7 +92,18 @@ builder:
 #   user: app
 
 # Use accessory services (secrets come from .kamal/secrets).
-# accessories:
+accessories:
+  migrator:
+    host: 192.168.1.188
+    image: samrayleung/telegram_spam_sniper_bot
+    cmd: bin/rails import:migrate_from_csv
+    env:
+      secret:
+        - RAILS_MASTER_KEY
+    volumes:
+      - "/tmp/db_migration_data.csv:/rails/db/data/db_migration_data.csv:ro"
+      # Mount the SAME storage volume as the main app to access the database
+      - "telegram_spam_sniper_bot_storage:/rails/storage"
 #   db:
 #     image: mysql:8.0
 #     host: 192.168.0.2
