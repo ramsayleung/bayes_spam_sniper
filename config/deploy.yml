@@ -101,7 +101,7 @@ accessories:
       secret:
         - RAILS_MASTER_KEY
     volumes:
-      - "/tmp/db_migration_data.csv:/rails/db/data/db_migration_data.csv:ro"
+      - "/tmp/migration_data/db_migration_data.csv:/rails/db/data/db_migration_data.csv:ro"
       # Mount the SAME storage volume as the main app to access the database
       - "telegram_spam_sniper_bot_storage:/rails/storage"
 #   db:
