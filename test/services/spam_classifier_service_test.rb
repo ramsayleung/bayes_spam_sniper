@@ -5,20 +5,21 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
   def setup
     @group_id = 12345
     @group_name = "test group"
-    @service = SpamClassifierService.new(@group_id, @group_name)
   end
 
   test "should initialize a new classifier state for a new group" do
+    service = SpamClassifierService.new(@group_id, @group_name)
     assert_difference "GroupClassifierState.count", 1 do
       SpamClassifierService.new(99999, "new group")
     end
 
-    assert_equal @group_id, @service.group_id
-    assert_not_nil @service.classifier_state
-    assert_equal 0, @service.classifier_state.total_spam_messages
+    assert_equal @group_id, service.group_id
+    assert_not_nil service.classifier_state
+    assert_equal 0, service.classifier_state.total_spam_messages
   end
 
   test "should not create a new classifier state if one already exists" do
+    _service = SpamClassifierService.new(@group_id, @group_name)
     assert_no_difference "GroupClassifierState.count" do
       SpamClassifierService.new(@group_id, @group_name)
     end
@@ -27,12 +28,10 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
   test "it creates a new classifier from the most recent template if one exists" do
     _old_template = GroupClassifierState.create!(
       group_id: -100, group_name: "Old Public Group", total_spam_words: 10,
-      updated_at: 2.seconds.ago
     )
     recent_template = GroupClassifierState.create!(
       group_id: -200, group_name: "Recent Public Group",
       total_spam_words: 99, spam_counts: { "viagra" => 10 },
-      updated_at: 1.seconds.ago
     )
 
     service = nil
@@ -60,8 +59,10 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
       sender_chat_id: 111,
       sender_user_name: "Spammer"
     )
-    @service.train(trained_message)
-    state = @service.classifier_state.reload
+
+    service = SpamClassifierService.new(@group_id, @group_name)
+    service.train(trained_message)
+    state = service.classifier_state.reload
 
     assert_equal 1, state.total_spam_messages
     assert_equal 0, state.total_ham_messages
@@ -81,9 +82,10 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
       sender_user_name: "Teammate"
     )
 
-    @service.train(trained_message)
+    service = SpamClassifierService.new(@group_id, @group_name)
+    service.train(trained_message)
 
-    state = @service.classifier_state.reload
+    state = service.classifier_state.reload
 
     assert_equal 0, state.total_spam_messages
     assert_equal 1, state.total_ham_messages
@@ -106,10 +108,11 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
       "联系我们"
     ]
 
+    service = SpamClassifierService.new(@group_id, @group_name)
     spam_variants.each_with_index do |variant, index|
       expected_text = expected_variants[index]
-      cleaned_text = @service.clean_text(variant)
-      cleaned_text = @service.clean_text(variant)
+      cleaned_text = service.clean_text(variant)
+      cleaned_text = service.clean_text(variant)
       assert_equal expected_text, cleaned_text, "Failed on input: '#{variant}'"
 
       # Should NOT contain separator characters
@@ -117,9 +120,10 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
     end
   end
   test "#toenize should handle emoji correctly" do
+    service = SpamClassifierService.new(@group_id, @group_name)
     spam_message =" 🚘🚘🚘还在死扛单 🚘🚘🚘 这里策略准到爆 进群免费体验 @hakaoer 🚘🚘🚘不满意随便喷🚘🚘🚘 "
-    cleaned_text = @service.clean_text(spam_message)
-    tokens = @service.tokenize(spam_message)
+    cleaned_text = service.clean_text(spam_message)
+    tokens = service.tokenize(spam_message)
 
     assert_includes tokens, "🚘"
     assert_includes tokens, "扛单" # user-defined dictionary
@@ -127,10 +131,11 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
   end
 
   test "#toenize should handle punctuation correctly" do
+    service = SpamClassifierService.new(@group_id, @group_name)
     spam_message = "这人简-介挂的 合-约-报单群组挺牛的ETH500点，大饼5200点！ + @BTCETHl6666"
-    cleaned_text = @service.clean_text(spam_message)
+    cleaned_text = service.clean_text(spam_message)
     assert_equal "这人简介挂的合约报单群组挺牛的 ETH500 点大饼 5200 点！ + @BTCETHl6666", cleaned_text
-    tokens = @service.tokenize(spam_message)
+    tokens = service.tokenize(spam_message)
     assert_includes tokens, "简介"
     assert_includes tokens, "合约"
     assert_includes tokens, "报单"
@@ -139,76 +144,79 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
   end
 
   test "#tokenize should handle user-defined dictionary correct" do
+    service = SpamClassifierService.new(@group_id, @group_name)
     spam_message ="在 币圈 想 赚 钱，那 你 不关 注 这 个 王 牌 社 区，真的太可惜了，真 心 推 荐，每 天 都 有 免 费 策 略"
-    cleaned_text = @service.clean_text(spam_message)
-    tokens = @service.tokenize(spam_message)
+    cleaned_text = service.clean_text(spam_message)
+    tokens = service.tokenize(spam_message)
     # 币圈 is user-defined word
     assert_includes tokens, "币圈"
   end
 
   test "#classify should return false if the model is not trained" do
-    is_spam, _, _ = @service.classify("some random message")
+    service = SpamClassifierService.new(@group_id, @group_name)
+    is_spam, _, _ = service.classify("some random message")
     assert_not is_spam
   end
 
   test "#classify should correctly identify a message as spam" do
-    @service.train(TrainedMessage.new(
-                     group_id: @group_id,
-                     message: "便宜的伟哥现在买",
-                     message_type: :spam,
-                     sender_chat_id: 1,
-                     sender_user_name: "s"
-                   ))
-    @service.train(TrainedMessage.new(
-                     group_id: @group_id,
-                     message: "免费点击这里",
-                     message_type: :spam,
-                     sender_chat_id: 1,
-                     sender_user_name: "s"
-                   ))
-    @service.train(TrainedMessage.new(
-                     group_id: @group_id,
-                     message: "你好，今天天气不错",
-                     message_type: :ham,
-                     sender_chat_id: 2,
-                     sender_user_name: "s"
-                   ))
+    service = SpamClassifierService.new(@group_id, @group_name)
+    service.train(TrainedMessage.new(
+                    group_id: @group_id,
+                    message: "便宜的伟哥现在买",
+                    message_type: :spam,
+                    sender_chat_id: 1,
+                    sender_user_name: "s"
+                  ))
+    service.train(TrainedMessage.new(
+                    group_id: @group_id,
+                    message: "免费点击这里",
+                    message_type: :spam,
+                    sender_chat_id: 1,
+                    sender_user_name: "s"
+                  ))
+    service.train(TrainedMessage.new(
+                    group_id: @group_id,
+                    message: "你好，今天天气不错",
+                    message_type: :ham,
+                    sender_chat_id: 2,
+                    sender_user_name: "s"
+                  ))
 
-    is_spam, spam_score, ham_score = @service.classify("点击这里买伟哥")
+    is_spam, spam_score, ham_score = service.classify("点击这里买伟哥")
 
     assert is_spam, "Message should be classified as spam"
     assert spam_score > ham_score, "Spam score should be higher than ham score"
   end
 
   test "#classify should correctly identify a message as ham" do
-    @service.train(TrainedMessage.new(
-                     group_id: @group_id,
-                     message: "便宜的伟哥现在买",
-                     message_type: :spam,
-                     sender_chat_id: 1,
-                     sender_user_name: "s"
-                   ))
-    @service.train(TrainedMessage.new(
-                     group_id: @group_id,
-                     message: "你好，今天天气不错",
-                     message_type: :ham,
-                     sender_chat_id: 1,
-                     sender_user_name: "s"
-                   ))
-    @service.train(TrainedMessage.new(
-                     group_id: @group_id,
-                     message: "我们明天开会",
-                     message_type: :ham,
-                     sender_chat_id: 2,
-                     sender_user_name: "s"
-                   ))
+    service = SpamClassifierService.new(@group_id, @group_name)
+    service.train(TrainedMessage.new(
+                    group_id: @group_id,
+                    message: "便宜的伟哥现在买",
+                    message_type: :spam,
+                    sender_chat_id: 1,
+                    sender_user_name: "s"
+                  ))
+    service.train(TrainedMessage.new(
+                    group_id: @group_id,
+                    message: "你好，今天天气不错",
+                    message_type: :ham,
+                    sender_chat_id: 1,
+                    sender_user_name: "s"
+                  ))
+    service.train(TrainedMessage.new(
+                    group_id: @group_id,
+                    message: "我们明天开会",
+                    message_type: :ham,
+                    sender_chat_id: 2,
+                    sender_user_name: "s"
+                  ))
 
-    is_spam, spam_score, ham_score = @service.classify("我们明天见")
+    is_spam, spam_score, ham_score = service.classify("我们明天见")
 
-    state = @service.classifier_state
+    state = service.classifier_state
 
     assert_not is_spam, "Message should be classified as ham"
-    puts "ham_score: #{ham_score}, spam_score: #{spam_score} spam_counts: #{state.spam_counts}, ham_counts: #{state.ham_counts}"
     assert ham_score > spam_score, "Ham score should be higher than spam score"
   end
 end
