@@ -58,7 +58,7 @@ namespace :import do
       puts "The transaction has been rolled back. No data was changed."
   end
 
-  desc "Migrates all records from the db_migration_data.csv file"
+  desc "Migrates all records from the db_migration_data.csv file using message_hash for uniqueness."
   task migrate_from_csv: :environment do
     require "csv"
     filepath = Rails.root.join("db", "data", "db_migration_data.csv")
@@ -73,25 +73,33 @@ namespace :import do
     imported_count = 0
     skipped_count = 0
 
+    # If any record fails to import, the whole process will be rolled back.
     ActiveRecord::Base.transaction do
       CSV.foreach(filepath, headers: true, header_converters: :symbol) do |row|
-        # Since the export includes the original ID, we can use it to check for existence.
-        record_id = row[:id]
+        # 1. Calculate the message_hash from the message content in the row.
+        message_text = row[:message].to_s
+        message_hash = Digest::SHA256.hexdigest(message_text)
 
-        if TrainedMessage.exists?(record_id)
+        # 2. Check for existence using the calculated message_hash.
+        if TrainedMessage.exists?(message_hash: message_hash)
           skipped_count += 1
-          print "x"
+          print "x" # 'x' for skipped
         else
-          # Create a new record using all data from the row
-          TrainedMessage.create!(row.to_h)
+          # 3. Prepare the attributes, ensuring the old ID is removed
+          #    and the new message_hash is included.
+          attributes = row.to_h
+          attributes.delete(:id) # Let the database assign a new primary key.
+          attributes[:message_hash] = message_hash
+
+          TrainedMessage.create!(attributes)
           imported_count += 1
-          print "."
+          print "." # '.' for imported
         end
       end
     end
 
     puts "\n\n Migration complete!"
     puts "Imported: #{imported_count} new records."
-    puts "Skipped: #{skipped_count} existing records."
+    puts "Skipped:  #{skipped_count} existing records (based on message_hash)."
   end
 end

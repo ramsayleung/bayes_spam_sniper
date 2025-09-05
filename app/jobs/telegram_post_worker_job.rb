@@ -1,6 +1,5 @@
 class TelegramPostWorkerJob < ApplicationJob
   queue_as :low_priority
-  @bot = Rails.application.config.telegram_bot
 
   module PostAction
     BAN_USER = "ban_user"

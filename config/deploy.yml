@@ -104,6 +104,16 @@ accessories:
       - "/tmp/migration_data/db_migration_data.csv:/rails/db/data/db_migration_data.csv:ro"
       # Mount the SAME storage volume as the main app to access the database
       - "telegram_spam_sniper_bot_storage:/rails/storage"
+  backfiller:
+    host: 192.168.1.188
+    image: samrayleung/telegram_spam_sniper_bot
+    cmd: bin/rails data_migration:backfill_message_hashes
+    env:
+      secret:
+        - RAILS_MASTER_KEY
+    volumes:
+      # Mount the SAME storage volume as the main app to access the database
+      - "telegram_spam_sniper_bot_storage:/rails/storage"
 #   db:
 #     image: mysql:8.0
 #     host: 192.168.0.2
