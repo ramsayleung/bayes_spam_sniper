@@ -19,3 +19,25 @@ two:
   total_spam_messages: 1
   total_ham_messages: 1
   vocabulary_size: 1
+
+main_group_state:
+  group_id: -100123456789
+  group_name: "Test Group"
+  spam_counts: '{"word5": 2, "word6": 8}'
+  ham_counts: '{"word7": 4, "word8": 6}'
+  total_spam_words: 0
+  total_ham_words: 0
+  total_spam_messages: 0
+  total_ham_messages: 0
+  vocabulary_size: 0
+
+username_classifier_state:
+  group_id: <%= GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID %>
+  group_name: <%= GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_NAME %>
+  spam_counts: '{"word5": 2, "spam_last_name": 8}'
+  ham_counts: '{"word7": 4, "word8": 6}'
+  total_spam_words: 0
+  total_ham_words: 0
+  total_spam_messages: 0
+  total_ham_messages: 0
+  vocabulary_size: 0

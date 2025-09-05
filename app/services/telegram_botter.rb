@@ -289,71 +289,21 @@ class TelegramBotter
 
   def handle_regular_message(bot, message)
     return if message.text.nil? || message.text.strip.empty?
-
+    Rails.logger.info "Handle regular message"
     I18n.with_locale(@lang_code) do
       begin
-        classifier = SpamClassifierService.new(message.chat.id, message.chat.title)
-        spam_message_text = message.text
-        is_spam, spam_score, ham_score = classifier.classify(spam_message_text)
-        # Spammer might leverage username as a way to send spam
-        username = [ message.from.first_name, message.from.last_name ].compact.join(" ")
-        username_classifier = SpamClassifierService.new(GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID, GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_NAME)
-        username_is_spam, username_spam_score, username_ham_score = username_classifier.classify(username)
-
-        Rails.logger.info "spam_message: #{spam_message_text}, is_spam: #{is_spam}, spam_score: #{spam_score}, ham_score: #{ham_score}\n username: #{username}, user_name_is_spam: #{username_is_spam}, user_name_spam_score: #{username_spam_score}, username_ham_score: #{username_ham_score}"
-
-        if is_spam || username_is_spam
+        spam_detection_service = SpamDetectionService.new(message)
+        result = spam_detection_service.process
+        if result.is_spam
           bot.api.delete_message(chat_id: message.chat.id, message_id: message.message_id)
+          username = [ message.from.first_name, message.from.last_name ].compact.join(" ")
           alert_msg = I18n.t("telegram_bot.handle_regular_message.alert_message", user_name: username, user_id: message.from.id)
           bot.api.send_message(chat_id: message.chat.id, text: alert_msg, parse_mode: "Markdown")
-
-          spam_ban_threshold = Rails.application.config.spam_ban_threshold
-          user_id = message.from.id
-          group_id = message.chat.id
-          group_name = message.chat.title
-          spam_count = TrainedMessage.where(group_id: group_id, sender_chat_id: user_id, message_type: :spam).count
-          if spam_count >= (spam_ban_threshold - 1)
-            Rails.logger.info "This user #{user_id} has sent spam message more than 3 times in group #{group_id}, ban it"
-            bot.api.ban_chat_member(chat_id: group_id, user_id: user_id)
-            banned_user_name = [ message.from.first_name, message.from.last_name ].compact.join(" ")
-            BannedUser.find_or_create_by!(
-              group_name: group_name,
-              group_id: group_id,
-              sender_chat_id: user_id,
-              sender_user_name: banned_user_name,
-              spam_message: spam_message_text,
-              message_id: message.message_id
-            )
-            bot.api.send_message(chat_id: message.chat.id, text: I18n.t("telegram_bot.handle_regular_message.ban_user_message", user_name: username, user_id: message.from.id), parse_mode: "Markdown")
-          end
-
-          if is_spam
-            TrainedMessage.create!(
-              group_id: message.chat.id,
-              group_name: message.chat.title,
-              message: spam_message_text,
-              training_target: :message_content,
-              sender_chat_id: message.from.id,
-              sender_user_name: username,
-              message_type: :untrained,
-              message_id: message.message_id
-            )
-          elsif username_is_spam
-            TrainedMessage.create!(
-              group_id: message.chat.id,
-              group_name: message.chat.title,
-              message: username,
-              training_target: :user_name,
-              sender_chat_id: message.from.id,
-              sender_user_name: username,
-              message_type: :untrained,
-              message_id: message.message_id
-            )
-          end
         end
+
+      end
       rescue => e
         Rails.logger.error "Error processing regular message: #{e.message}"
-      end
     end
   end
 

@@ -18,3 +18,19 @@ two:
   group_name: "Test Group 2"
   training_target: "user_name"            
   message_id: 1002
+
+pre_existing_spam:
+  group_id: -100123456789
+  message: "a pre-existing spam message"
+  message_hash: <%= Digest::SHA256.hexdigest("a pre-existing spam message") %>
+  message_type: <%= TrainedMessage.message_types[:spam] %>
+  training_target: <%= TrainedMessage.training_targets[:message_content] %>
+  sender_chat_id: 987654321
+
+pre_existing_ham:
+  group_id: -100123789456
+  message: "a pre-existing ham message"
+  message_hash: <%= Digest::SHA256.hexdigest("a pre-existing ham message") %>
+  message_type: <%= TrainedMessage.message_types[:ham] %>
+  training_target: <%= TrainedMessage.training_targets[:message_content] %>
+  sender_chat_id: 765498321
