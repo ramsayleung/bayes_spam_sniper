@@ -27,12 +27,12 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
   test "it creates a new classifier from the most recent template if one exists" do
     _old_template = GroupClassifierState.create!(
       group_id: -100, group_name: "Old Public Group", total_spam_words: 10,
-      updated_at: 2.days.ago
+      updated_at: 2.seconds.ago
     )
     recent_template = GroupClassifierState.create!(
       group_id: -200, group_name: "Recent Public Group",
       total_spam_words: 99, spam_counts: { "viagra" => 10 },
-      updated_at: 1.day.ago
+      updated_at: 1.seconds.ago
     )
 
     service = nil
@@ -40,6 +40,7 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
       service = SpamClassifierService.new(456, "New Derived Group")
     end
 
+    puts "recent_template: #{recent_template.inspect}"
     new_classifier = service.classifier_state
     assert_equal 456, new_classifier.group_id
     assert_equal "New Derived Group", new_classifier.group_name
