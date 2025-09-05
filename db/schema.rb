@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_29_013518) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_04_163946) do
   create_table "banned_users", force: :cascade do |t|
     t.integer "group_id"
     t.integer "sender_chat_id"
@@ -48,7 +48,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_29_013518) do
     t.string "group_name"
     t.integer "training_target", default: 0, null: false
     t.integer "message_id", default: 0, null: false
+    t.string "message_hash", limit: 64
     t.index ["group_id"], name: "index_trained_messages_on_group_id"
+    t.index ["message_hash"], name: "index_trained_messages_on_message_hash"
     t.index ["sender_chat_id"], name: "index_trained_messages_on_sender_chat_id"
   end
 end
