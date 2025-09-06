@@ -62,6 +62,29 @@ class TrainedMessagesController < ApplicationController
   def edit
   end
 
+  def bulk_update
+    message_ids = params[:trained_message_ids]
+    if message_ids.blank?
+      redirect_to trained_messages_path(request.query_parameters), alter: "You must select at least one message."
+      return
+    end
+
+    messages = TrainedMessage.where(id: message_ids)
+    update_count = messages.count
+    case params[:commit]
+    when "Mark as Ham"
+      messages.update_all(message_type: :ham)
+      flash[:notice] = "Successfully marked #{update_count} messages as Ham"
+    when "Mark as Spam"
+      messages.update_all(message_type: :spam)
+      flash[:notice] = "Successfully marked #{update_count} messages as Spam"
+    else
+      flash[:alert] = "Invalid action."
+    end
+
+    redirect_to trained_messages_path(request.query_parameters)
+  end
+
   # POST /trained_messages or /trained_messages.json
   def create
     @trained_message = TrainedMessage.new(trained_message_params)
