@@ -49,12 +49,6 @@
             </th>
 
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Total spam words
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Total ham words
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Total spam messages
             </th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -98,12 +92,6 @@
                     <%= group_classifier_state.ham_counts.is_a?(Hash) ? group_classifier_state.ham_counts&.keys&.count || 0 : group_classifier_state.ham_counts %>
                 </td>
 
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  <%= group_classifier_state.total_spam_words %>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  <%= group_classifier_state.total_ham_words %>
-                </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   <%= group_classifier_state.total_spam_messages %>
                 </td>
