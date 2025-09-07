@@ -4,6 +4,24 @@ class BannedUsersController < ApplicationController
   # GET /banned_users or /banned_users.json
   def index
     @banned_users = BannedUser.all
+
+    # Sorting
+    sort_by = params[:sort] || "created_at"
+    sort_direction = params[:direction] || "desc"
+    @banned_users = @banned_users.order("#{sort_by} #{sort_direction}")
+
+    # Pagination
+    @per_page = (params[:per_page] || 10).to_i
+    @per_page = 10 if @per_page < 1 || @per_page > 100
+
+    @total_count = @banned_users.count
+    @page = (params[:page] || 1).to_i
+    @page = 1 if @page < 1
+
+    offset = (@page - 1) * @per_page
+    @banned_users = @banned_users.limit(@per_page).offset(offset)
+
+    @total_pages = (@total_count.to_f/ @per_page).ceil
   end
 
   # GET /banned_users/1 or /banned_users/1.json

@@ -5,25 +5,198 @@
     <p class="py-2 px-3 bg-green-50 mb-5 text-green-500 font-medium rounded-md inline-block" id="notice"><%= notice %></p>
   <% end %>
 
-  <div class="flex justify-between items-center">
-    <h1 class="font-bold text-4xl">Banned users</h1>
-    <%= link_to "New banned user", new_banned_user_path, class: "rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white block font-medium" %>
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+    <div>
+      <h1 class="font-bold text-4xl mb-2">Banned users</h1>
+      <p class="text-gray-600">Showing <%= @banned_users.length %> of <%= @total_count %> Users</p>
+    </div>
+    <%= link_to "New banned user", new_banned_user_path, class: "mt-4 sm:mt-0 rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white block font-medium" %>
   </div>
 
-  <div id="banned_users" class="min-w-full divide-y divide-gray-200 space-y-5">
-    <% if @banned_users.any? %>
-      <% @banned_users.each do |banned_user| %>
-        <div class="flex flex-col sm:flex-row justify-between items-center pb-5 sm:pb-0">
-          <%= render banned_user %>
-          <div class="w-full sm:w-auto flex flex-col sm:flex-row space-x-2 space-y-2">
-            <%= link_to "Show", banned_user, class: "w-full sm:w-auto text-center rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
-            <%= link_to "Edit", edit_banned_user_path(banned_user), class: "w-full sm:w-auto text-center rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
-            <%= button_to "Destroy", banned_user, method: :delete, class: "w-full sm:w-auto rounded-md px-3.5 py-2.5 text-white bg-red-600 hover:bg-red-500 font-medium cursor-pointer", data: { turbo_confirm: "Are you sure?" } %>
-          </div>
+  <!-- Table -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <%= link_to banned_users_path(params.permit!.merge(sort: 'id', direction: params[:sort] == 'id' && params[:direction] == 'asc' ? 'desc' : 'asc')), class: "hover:text-gray-700 flex items-center space-x-1" do %>
+                  <span>ID</span>
+                  <% if params[:sort] == 'id' %>
+                    <span><%= params[:direction] == 'asc' ? '↑' : '↓' %></span>
+                  <% end %>
+                <% end %>
+              </th>
+  
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Telegram Group Id
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <%= link_to banned_users_path(params.permit!.merge(sort: 'group_name', direction: params[:sort] == 'group_name' && params[:direction] == 'asc' ? 'desc' : 'asc')), class: "hover:text-gray-700 flex items-center space-x-1" do %>
+                  <span>Group</span>
+                  <% if params[:sort] == 'group_name' %>
+                    <span><%= params[:direction] == 'asc' ? '↑' : '↓' %></span>
+                  <% end %>
+                <% end %>
+              </th>
+  
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Sender user id
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Sender user name
+              </th>
+  
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Spam message
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Message Id
+              </th>
+  
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <%= link_to banned_users_path(params.permit!.merge(sort: 'created_at', direction: params[:sort] == 'created_at' && params[:direction] == 'asc' ? 'desc' : 'asc')), class: "hover:text-gray-700 flex items-center space-x-1" do %>
+                  <span>Created</span>
+                  <% if params[:sort] == 'created_at' %>
+                    <span><%= params[:direction] == 'asc' ? '↑' : '↓' %></span>
+                  <% end %>
+                <% end %>
+              </th>
+              <th scope="col" class="relative px-6 py-3">
+                <span class="sr-only">Actions</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <% if !@banned_users.empty? %>
+              <% @banned_users.each do |banned_user| %>
+                <tr class="hover:bg-gray-50">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <%= banned_user.id %>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <%= banned_user.group_id %>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <%= banned_user.group_name || 'Private' %>
+                  </td>
+  
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <%= banned_user.sender_chat_id %>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <%= banned_user.sender_user_name %>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <%= banned_user.spam_message %>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <%= banned_user.message_id %>
+                  </td>
+  
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <%= time_ago_in_words(banned_user.created_at) %> ago
+                  </td>
+  
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex space-x-2">
+                      <%= link_to "View", banned_user, class: "text-indigo-600 hover:text-indigo-900" %>
+                      <%= link_to "Edit", edit_banned_user_path(banned_user), class: "text-indigo-600 hover:text-indigo-900" %>
+                      <%= link_to "Delete", banned_user, method: :delete, 
+                          class: "text-red-600 hover:text-red-900", 
+                          data: { turbo_confirm: "Are you sure?" } %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            <% else %>
+              <tr>
+                <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                  No banned users found matching your criteria.
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  <!-- Pagination -->
+  <% if @total_pages > 1 %>
+    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-4 rounded-lg shadow-sm">
+      <div class="flex-1 flex justify-between sm:hidden">
+        <% if @page > 1 %>
+          <%= link_to "Previous", banned_users_path(params.permit!.merge(page: @page - 1)), 
+              class: "relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50" %>
+        <% end %>
+        <% if @page < @total_pages %>
+          <%= link_to "Next", banned_users_path(params.permit!.merge(page: @page + 1)), 
+              class: "ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50" %>
+        <% end %>
+      </div>
+      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm text-gray-700">
+            Showing page <span class="font-medium"><%= @page %></span> of 
+            <span class="font-medium"><%= @total_pages %></span>
+            (<span class="font-medium"><%= @total_count %></span> total results)
+          </p>
         </div>
-      <% end %>
-    <% else %>
-      <p class="text-center my-10">No banned users found.</p>
-    <% end %>
-  </div>
+        <div>
+          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            <!-- Previous Button -->
+            <% if @page > 1 %>
+              <%= link_to banned_users_path(params.permit!.merge(page: @page - 1)), 
+                  class: "relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50" do %>
+                <span class="sr-only">Previous</span>
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+              <% end %>
+            <% else %>
+              <span class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-gray-50 text-sm font-medium text-gray-300 cursor-not-allowed">
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+              </span>
+            <% end %>
+
+            <!-- Page Numbers -->
+            <% start_page = [1, @page - 2].max %>
+            <% end_page = [start_page + 4, @total_pages].min %>
+            <% start_page = [end_page - 4, 1].max if end_page - start_page < 4 %>
+
+            <% (start_page..end_page).each do |page_num| %>
+              <% if page_num == @page %>
+                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                  <%= page_num %>
+                </span>
+              <% else %>
+                <%= link_to page_num, banned_users_path(params.permit!.merge(page: page_num)), 
+                    class: "relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50" %>
+              <% end %>
+            <% end %>
+
+            <!-- Next Button -->
+            <% if @page < @total_pages %>
+              <%= link_to banned_users_path(params.permit!.merge(page: @page + 1)), 
+                  class: "relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50" do %>
+                <span class="sr-only">Next</span>
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+              <% end %>
+            <% else %>
+              <span class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-gray-50 text-sm font-medium text-gray-300 cursor-not-allowed">
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+              </span>
+            <% end %>
+          </nav>
+        </div>
+      </div>
+    </div>
+  <% end %>
 </div>
