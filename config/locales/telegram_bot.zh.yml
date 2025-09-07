@@ -54,5 +54,5 @@ zh:
     is_group_chat:
       error_message: "❌ 当前聊天不是群组" 
     handle_regular_message:
-      alert_message: "⚠️ 检测到来自 @[%{user_name}](tg://user?id=%{user_id})的广告，已自动删除" 
+      alert_message: "⚠️ 已自动删除检来自 @[%{user_name}](tg://user?id=%{user_id})的广告（此消息%{delete_message_delay}分钟内会自动删除）" 
       ban_user_message: "✅ 用户 @[%{user_name}](tg://user?id=%{user_id}) 发广告超过3次，已被封禁."

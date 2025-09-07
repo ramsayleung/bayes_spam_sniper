@@ -37,7 +37,7 @@ class TrainedMessage < ApplicationRecord
     if spam_count >= spam_ban_threshold
       Rails.logger.info "user: #{self.sender_user_name} sent more than 3 spam messages in group: #{self.group_id}, ban this user from group"
       TelegramPostWorkerJob.perform_later(
-        action: TelegramPostWorkerJob::PostAction::BAN_USER,
+        action: PostAction::BAN_USER,
         trained_message: self
       )
     end

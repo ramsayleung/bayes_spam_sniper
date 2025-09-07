@@ -1,18 +1,24 @@
+module PostAction
+  BAN_USER = "ban_user"
+  # Automatically delete alert message to avoid polluting the group chat
+  DELETE_ALERT_MESSAGE = "delete_alert_msg"
+end
+
 class TelegramPostWorkerJob < ApplicationJob
   "background worker to execute job after specific event"
   queue_as :low_priority
 
-  module PostAction
-    BAN_USER = "ban_user"
-  end
-
   def perform(args)
     action = args.fetch(:action)
-    trained_message = args.fetch(:trained_message)
 
     case action
     when PostAction::BAN_USER
+      trained_message = args.fetch(:trained_message)
       ban_user_in_group(trained_message: trained_message)
+    when PostAction::DELETE_ALERT_MESSAGE
+      chat_id = args.fetch(:chat_id)
+      message_id = args.fetch(:message_id)
+      delete_message(chat_id: chat_id, message_id: message_id)
     end
   end
 
@@ -20,6 +26,14 @@ class TelegramPostWorkerJob < ApplicationJob
 
   def bot
     @bot ||= Rails.application.config.telegram_bot
+  end
+
+  def delete_message(chat_id:, message_id:)
+    begin
+      bot.api.delete_message(chat_id: chat_id, message_id: message_id)
+    rescue Telegram::Bot::Exceptions::ResponseError => e
+      Rails.logger.warn "Faile to delete alert message #{message_id} in chat #{chat_id}"
+    end
   end
 
   def ban_user_in_group(trained_message:)

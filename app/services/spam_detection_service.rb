@@ -55,10 +55,10 @@ class SpamDetectionService
     case existing_message.message_type
     when "spam"
       @is_confident = true
-      Rails.logger.info "Same message exists and already marked as spam: #{existing_message.message}"
+      Rails.logger.info "Same message exists and already marked as spam: #{existing_message.message}, training target: #{existing_message.training_target}"
       ClassificationResult.new(is_spam: true, target: existing_message.training_target)
     when "ham"
-      Rails.logger.info "Same message exists and already marked as ham: #{existing_message.message}"
+      Rails.logger.info "Same message exists and already marked as ham: #{existing_message.message}, training target: #{existing_message.training_target}"
       non_spam_result
     when "untrained"
       # Signal that this is not a definitive result

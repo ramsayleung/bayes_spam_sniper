@@ -27,5 +27,7 @@ module TelegramSpamSniperBot
     config.max_spam_preview_length =  50
     # a user will be banned if send spam message >= 3 times
     config.spam_ban_threshold =  3
+    # Delete the warning message in x minutes to keep chat clean
+    config.delete_message_delay = 5
   end
 end

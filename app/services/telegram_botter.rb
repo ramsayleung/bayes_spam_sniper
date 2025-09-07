@@ -295,10 +295,21 @@ class TelegramBotter
         spam_detection_service = SpamDetectionService.new(message)
         result = spam_detection_service.process
         if result.is_spam
+          # 1. Delete the original spam message
           bot.api.delete_message(chat_id: message.chat.id, message_id: message.message_id)
+
+          # 2. Send the warning message and capture the response
           username = [ message.from.first_name, message.from.last_name ].compact.join(" ")
-          alert_msg = I18n.t("telegram_bot.handle_regular_message.alert_message", user_name: username, user_id: message.from.id)
-          bot.api.send_message(chat_id: message.chat.id, text: alert_msg, parse_mode: "Markdown")
+          delete_message_delay = Rails.application.config.delete_message_delay
+          alert_msg = I18n.t("telegram_bot.handle_regular_message.alert_message", user_name: username, user_id: message.from.id, delete_message_delay: delete_message_delay)
+          sent_warning_message = bot.api.send_message(chat_id: message.chat.id, text: alert_msg, parse_mode: "Markdown")
+
+          # 3. Schedule a background job to delete the warning message
+          # to avoid polluting the group chat
+          TelegramPostWorkerJob.set(wait: delete_message_delay.minutes).perform_later(
+            action: PostAction::DELETE_ALERT_MESSAGE,
+            chat_id: sent_warning_message.chat.id,
+            message_id: sent_warning_message.message_id)
         end
 
       end
