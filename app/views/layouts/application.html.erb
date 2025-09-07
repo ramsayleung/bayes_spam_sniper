@@ -27,7 +27,13 @@
             <!-- Logo/Brand -->
             <div class="flex-shrink-0 flex items-center">
               <%= link_to root_path, class: "text-xl font-bold text-gray-800 hover:text-gray-600" do %>
-                🎯 Telegram Spam Sniper
+                🔫 Telegram Spam Sniper
+              <% end %>
+
+              <% unless Rails.env.production? %>
+                  <span class="ml-2 text-sm text-green-500 font-semibold">
+                      (<%= Rails.env.upcase %>)
+                  </span>
               <% end %>
             </div>
             
