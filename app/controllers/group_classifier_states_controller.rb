@@ -86,4 +86,10 @@ class GroupClassifierStatesController < ApplicationController
     def group_classifier_state_params
       params.expect(group_classifier_state: [ :group_id, :spam_counts, :ham_counts, :total_spam_words, :total_ham_words, :total_spam_messages, :total_ham_messages, :vocabulary_size ])
     end
+
+  def index_params
+    params.permit(:per_page, :sort, :direction, :page)
+  end
+
+  helper_method :index_params
 end

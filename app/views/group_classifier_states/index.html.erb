@@ -120,7 +120,7 @@
 
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div class="flex space-x-2">
-                    <%= link_to "View", group_classifier_state, class: "text-indigo-600 hover:text-indigo-900" %>
+                    <%= link_to "View", group_classifier_state_path(group_classifier_state, request.query_parameters), class: "text-indigo-600 hover:text-indigo-900" %>
                     <%= link_to "Edit", edit_group_classifier_state_path(group_classifier_state), class: "text-indigo-600 hover:text-indigo-900" %>
                     <%= link_to "Delete", group_classifier_state, method: :delete, 
                         class: "text-red-600 hover:text-red-900", 

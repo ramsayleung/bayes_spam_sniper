@@ -85,4 +85,10 @@ class BannedUsersController < ApplicationController
     def banned_user_params
       params.expect(banned_user: [ :group_id, :sender_chat_id, :sender_user_name, :spam_message ])
     end
+
+  def index_params
+    params.permit(:per_page, :sort, :direction, :page)
+  end
+
+  helper_method :index_params
 end
