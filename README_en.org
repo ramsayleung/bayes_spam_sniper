@@ -1,0 +1,88 @@
+#+LATEX_CLASS: ramsay-org-article
+#+LATEX_CLASS_OPTIONS: [oneside,A4paper,12pt]
+#+AUTHOR: Ramsay Leung
+#+EMAIL: ramsayleung@gmail.com
+#+DATE: 2025-08-28 Thu 23:16
+- [[./README_zh.org][中文版本]]
+- [[https://ramsayleung.github.io/en/post/2025/a_telegram_spam_blocker_bot_based_on_bayesian][Blog Post: A Telegram Spam Blocker Bot Based On Bayesian Algorithm]]
+* A Bayesian Algorithm-Based Telegram spam-blocking Bot
+  BSS ([[https://t.me/BayesSpamSniperBot?start=ad_7202424896][@BayesSpamSniperBot]]) is an open-source Telegram spam-blocking bot with self-learning capabilities, implemented based on Bayesian theorem.
+** Features
+   Most common Telegram ad bots are keyword-based, blocking messages by matching keywords, which can be easily bypassed by spammers.
+
+   This reminds me of the situation described by Paul Graham in his 2002 essay "Hackers and Painters":
+
+   Back when email was rising in popularity, there was also a lot of spam. The common methods of blocking spam were keyword matching and blacklisting email addresses, but these were inefficient and easily circumvented.
+
+   Paul Graham creatively used Bayes' theorem to implement a [[https://paulgraham.com/spam.html][spam blocker]], and the results were surprisingly effective.
+
+   Isn't this a similar problem for Telegram spam? Then it's likely I could use a similar solution to tackle Telegram ads
+** How to Use
+   - [[https://t.me/BayesSpamSniperBot?startgroup=true][Add the bot to your group]]
+   - Grant the bot admin permissions (delete messages, ban users)
+   - The bot will start working automatically
+
+   The bot will automatically identify ads in the group, then delete the text messages. If a user sends spam more than 3 times, they will be banned.
+
+   [[./doc/img/detect_spam_and_ban_user.jpg]]
+
+   The design philosophy of this bot is to minimize disruption to admins and users, provide simple commands, and maximize automation.
+   Therefore, this bot only offers the following three commands (supporting auto-completion with "/"):
+
+   [[./doc/img/command_auto_completion.jpg]]
+*** =/markspam=
+    Delete spam messages and ban the user. Requires admin permissions.
+    Reply ="/markspam"= to the message you want to ban, and the bot will automatically delete that message and ban the user.
+
+    [[./doc/img/markspam_2.jpg]]
+
+    (Message has been deleted)
+
+    [[./doc/img/markspam.jpg]]
+
+    Unlike common group management bots, this command not only deletes the spam and bans the user, but also marks the message as spam with very high confidence. The system then uses this spam text as training data to update the model in real-time.
+
+    Similar messages will not only be identified in the future, but all groups using this bot will benefit, as similar texts will also be marked as spam.
+*** =/listspam=
+    View the list of banned accounts. Requires admin permissions.
+
+    [[./doc/img/listspam.jpg]]
+
+    View the list of banned users and proactively unban them.
+*** =/feedspam=
+    Feed spam messages for training. No permissions required. Can be used in private chat or in-group.
+
+    Feeding in private chat:
+
+    [[./doc/img/feedspam.jpg]]
+
+    Feeding in-group:
+
+    [[./doc/img/feedspam2.jpg]]
+** Architecture Design
+   Telegram Bot supports two modes of interacting with Telegram servers:
+   1. Webhook: Telegram servers actively callback a previously registered URL when the bot receives a new message. The bot server only needs to handle the callback messages.
+   2. Long Polling: The bot server continuously polls Telegram servers to check for new messages and processes them if any. This project uses this mode.
+
+   [[./doc/img/webhook_vs_long_polling.jpg]]
+*** Message Analysis
+    [[./doc/img/spam_analyze.jpg]]
+
+    After the Bot Server receives a message, it dispatches it to a separate =telegram_bot_worker= for processing. Then, based on the pre-trained model, it determines whether the text is spam. If it is, it calls the bot API to delete the message.
+*** Ban and Train
+    [[./doc/img/mark_spam_and_ban_user.jpg]]
+
+    After the Bot Server receives a message, it dispatches it to a separate =telegram_bot_worker= for processing. The =telegram_bot_worker= calls the bot API to delete the message and ban the user, and inserts a training data record marked as spam.
+
+    Saving the training data triggers a hook, creating a training message that is delivered to the =training= message queue. A separate worker, =classifier_trainer=, subscribes to the =training= messages and uses the new data to retrain and update the model.
+** How to Contribute
+   This project is purely powered by love. If you want to support it, you can contribute in the following ways:
+
+   1. Feed training data using the =/feedspam= command.
+   2. Join the [[https://t.me/+i8fy3qOtiNAyODZl][BSS Support Group]] or the author's [[https://t.me/pipeapplebun][private channel]], and post ads in the group.
+   3. [[https://github.com/sponsors/ramsayleung][Sponsor the author]].
+** Q&A
+*** If it's so powerful, why are some spam in my group still not being detected?
+    The Bayesian algorithm is fundamentally a probability-based algorithm. If it hasn't encountered similar spam before, it cannot determine whether they are spam :(
+
+    All you need to do is use the =/markspam= command to delete the message and ban the user. This action helps train the bot, and all users of this bot will benefit from it.

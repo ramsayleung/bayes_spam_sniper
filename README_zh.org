@@ -3,7 +3,7 @@
 #+AUTHOR: Ramsay Leung
 #+EMAIL: ramsayleung@gmail.com
 #+DATE: 2025-08-28 Thu 23:16
-- [[./README.org][English Version]]
+- [[./README_en.org][English Version]]
 - [[https://ramsayleung.github.io/zh/post/2025/一个自学习的telegram广告拦截机器人/][博客文章：一个自学习的Telegram广告拦截机器人]]
 * 基于贝叶斯算法的 Telegram广告拦截机器人
   BSS([[https://t.me/BayesSpamSniperBot?start=ad_7202424896][@BayesSpamSniperBot]]) 是一个具备自学习能力的，基于贝叶斯定理实现的开源 Telegram 广告拦截机器人
