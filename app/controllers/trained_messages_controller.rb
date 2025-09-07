@@ -133,4 +133,10 @@ class TrainedMessagesController < ApplicationController
   def trained_message_params
     params.expect(trained_message: [ :group_id, :message, :message_type, :sender_chat_id, :sender_user_name, :group_name, :training_target ])
   end
+
+  def index_params
+    params.permit(:search, :message_type, :training_target, :group_name, :per_page, :sort, :direction, :page)
+  end
+
+  helper_method :index_params
 end
