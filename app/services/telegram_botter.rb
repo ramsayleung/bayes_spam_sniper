@@ -174,7 +174,7 @@ class TelegramBotter
           message: spam_text,
           sender_chat_id: message.from.id,
           sender_user_name: user_name,
-          message_type: :untrained
+          message_type: :maybe_spam
         )
 
         # Show a preview of what was learned (truncated if too long)

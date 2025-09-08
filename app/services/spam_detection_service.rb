@@ -95,7 +95,7 @@ class SpamDetectionService
       training_target: target,
       sender_chat_id: @user_id,
       sender_user_name: @username,
-      message_type: @is_confident ? :spam : :untrained,
+      message_type: @is_confident ? :spam : :maybe_spam,
       message_id: @tg_message_struct.message_id
     )
   end

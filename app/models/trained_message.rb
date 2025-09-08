@@ -1,11 +1,14 @@
 class TrainedMessage < ApplicationRecord
-  enum :message_type, { spam: 0, ham: 1, untrained: 2 }
+  enum :message_type, { spam: 0, ham: 1, untrained: 2, maybe_spam: 3, maybe_ham: 4 }
   # New enum for what is being trained
   enum :training_target, { message_content: 0, user_name: 1 }
   module MessageType
     SPAM = "spam"
     HAM = "ham"
     UNTRAINED = "untrained"
+    # classified as spam, but need to confirm
+    MAYBE_SPAM = "maybe_spam"
+    MAYBE_HAM = "maybe_ham"
   end
   module TrainingTarget
     MESSAGE_CONTENT = "message_content"
