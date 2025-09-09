@@ -69,4 +69,4 @@ gem "telegram-bot-ruby", "~> 2.4"
 
 gem "jieba_rb", "~> 0.0.5"
 
-gem "tdlib-ruby", "0.9.4"
+gem "ffi"
