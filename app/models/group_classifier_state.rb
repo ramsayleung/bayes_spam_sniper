@@ -4,6 +4,8 @@ class GroupClassifierState < ApplicationRecord
   serialize :spam_counts, coder: JSON
   serialize :ham_counts, coder: JSON
 
+  TELEGRAM_DATA_COLLECTOR_GROUP_ID = -1
+  TELEGRAM_DATA_COLLECTOR_GROUP_NAME = "Telegram Data Collector Group"
   USER_NAME_CLASSIFIER_GROUP_ID = 0
   USER_NAME_CLASSIFIER_GROUP_NAME = "User Name Classifier"
   scope :username, -> { where(group_id: USER_NAME_CLASSIFIER_GROUP_ID) }

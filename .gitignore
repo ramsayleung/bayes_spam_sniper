@@ -44,3 +44,4 @@
 
 /config/credentials/test.key
 .DS_Store
+/tdlib-db/

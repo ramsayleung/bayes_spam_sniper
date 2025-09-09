@@ -107,6 +107,8 @@ GEM
       reline (>= 0.3.8)
     dotenv (3.1.8)
     drb (2.2.3)
+    dry-configurable (0.7.0)
+      concurrent-ruby (~> 1.0)
     dry-core (1.1.0)
       concurrent-ruby (~> 1.0)
       logger
@@ -378,6 +380,8 @@ GEM
     tailwindcss-ruby (4.1.12-x86_64-darwin)
     tailwindcss-ruby (4.1.12-x86_64-linux-gnu)
     tailwindcss-ruby (4.1.12-x86_64-linux-musl)
+    tdlib-ruby (0.9.4)
+      dry-configurable (~> 0.7)
     telegram-bot-ruby (2.4.0)
       dry-struct (~> 1.6)
       faraday (~> 2.0)
@@ -447,6 +451,7 @@ DEPENDENCIES
   sqlite3 (>= 2.1)
   stimulus-rails
   tailwindcss-rails
+  tdlib-ruby (= 0.9.4)
   telegram-bot-ruby (~> 2.4)
   thruster
   turbo-rails
