@@ -82,7 +82,9 @@ class TrainedMessagesController < ApplicationController
       flash[:alert] = "Invalid action."
     end
 
-    redirect_to trained_messages_path(request.query_parameters)
+    redirect_to trained_messages_path(
+                  params.except(:commit, :trained_message_ids, :authenticity_token, :controller, :action).to_unsafe_h
+                )
   end
 
   # POST /trained_messages or /trained_messages.json
