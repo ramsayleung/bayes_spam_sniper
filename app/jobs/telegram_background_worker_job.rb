@@ -43,12 +43,12 @@ class TelegramBackgroundWorkerJob < ApplicationJob
     group_id = trained_message.group_id
     if group_id in [ TELEGRAM_DATA_COLLECTOR_GROUP_ID, USER_NAME_CLASSIFIER_GROUP_ID ]
       Rails.logger.info "Skip banning user in data imported group"
-      next
+      return
     end
 
     if user_id in [ 0 ]
       Rails.logger.info "Skip banning user for import trained data set"
-      next
+      return
     end
 
     begin
