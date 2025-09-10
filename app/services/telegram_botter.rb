@@ -306,7 +306,7 @@ class TelegramBotter
 
           # 3. Schedule a background job to delete the warning message
           # to avoid polluting the group chat
-          TelegramPostWorkerJob.set(wait: delete_message_delay.minutes).perform_later(
+          TelegramBackgroundWorkerJob.set(wait: delete_message_delay.minutes).perform_later(
             action: PostAction::DELETE_ALERT_MESSAGE,
             chat_id: sent_warning_message.chat.id,
             message_id: sent_warning_message.message_id)

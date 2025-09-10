@@ -4,7 +4,7 @@ module PostAction
   DELETE_ALERT_MESSAGE = "delete_alert_msg"
 end
 
-class TelegramPostWorkerJob < ApplicationJob
+class TelegramBackgroundWorkerJob < ApplicationJob
   "background worker to execute job after specific event"
   queue_as :low_priority
 
