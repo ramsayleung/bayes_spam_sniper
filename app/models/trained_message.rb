@@ -35,6 +35,16 @@ class TrainedMessage < ApplicationRecord
 
 
   def should_ban_user
+    if [ GroupClassifierState::TELEGRAM_DATA_COLLECTOR_GROUP_ID, GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID ].include? self.group_id
+      Rails.logger.info "Shouldn't ban user in non-existing group"
+      return
+    end
+    # imported trained data set from CSV
+    if [ 0 ].include? self.sender_chat_id
+      Rails.logger.info "Shouldn't ban non-existing user"
+      return
+    end
+
     spam_ban_threshold = Rails.application.config.spam_ban_threshold
     spam_count = TrainedMessage.where(group_id: self.group_id, sender_chat_id: self.sender_chat_id, message_type: :spam).count
     if spam_count >= spam_ban_threshold

@@ -9,6 +9,7 @@ class TelegramBackgroundWorkerJob < ApplicationJob
   queue_as :low_priority
 
   def perform(args)
+    Rails.logger.info "Performing telegram background job: #{args}"
     action = args.fetch(:action)
 
     case action
