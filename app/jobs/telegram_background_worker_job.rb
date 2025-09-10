@@ -29,10 +29,11 @@ class TelegramBackgroundWorkerJob < ApplicationJob
   end
 
   def delete_message(chat_id:, message_id:)
+    Rails.logger.info "Deleting message for chat_id: #{chat_id}, message_id: #{message_id}"
     begin
       bot.api.delete_message(chat_id: chat_id, message_id: message_id)
     rescue Telegram::Bot::Exceptions::ResponseError => e
-      Rails.logger.warn "Faile to delete alert message #{message_id} in chat #{chat_id}"
+      Rails.logger.warn "Faile to delete alert message #{e} #{message_id} in chat #{chat_id}"
     end
   end
 
@@ -40,7 +41,18 @@ class TelegramBackgroundWorkerJob < ApplicationJob
     user_name = trained_message.sender_user_name
     user_id = trained_message.sender_chat_id
     group_id = trained_message.group_id
-    I18n.with_locale("en") do
+    if group_id in [ TELEGRAM_DATA_COLLECTOR_GROUP_ID, USER_NAME_CLASSIFIER_GROUP_ID ]
+      Rails.logger.info "Skip banning user in data imported group"
+      next
+    end
+
+    if user_id in [ 0 ]
+      Rails.logger.info "Skip banning user for import trained data set"
+      next
+    end
+
+    begin
+      I18n.with_locale("en") do
       bot.api.ban_chat_member(chat_id: trained_message.group_id, user_id: trained_message.sender_chat_id)
       BannedUser.find_or_create_by!(
         group_id: group_id,
@@ -56,6 +68,9 @@ class TelegramBackgroundWorkerJob < ApplicationJob
         text: I18n.t("telegram_bot.handle_regular_message.ban_user_message", user_name: user_name, user_id: user_id),
         parse_mode: "Markdown"
       )
+    end
+    rescue Telegram::Bot::Exceptions::ResponseError => e
+      Rails.logger.error "Faile to ban user in a group #{e} #{user_id}:#{user_name} in chat #{group_id}"
     end
   end
 end
