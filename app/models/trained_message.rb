@@ -58,13 +58,7 @@ class TrainedMessage < ApplicationRecord
   def retrain_classifier
     return if untrained?
 
-    if user_name?
-      # Target is user_name
-      ClassifierTrainerJob.perform_later(GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID, GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_NAME)
-    else
-      # For efficiency, we could queue this as a background job
-      ClassifierTrainerJob.perform_later(group_id, group_name)
-    end
+    ClassifierTrainerJob.perform_later(self)
   end
 
   private
