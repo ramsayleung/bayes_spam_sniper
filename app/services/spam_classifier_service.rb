@@ -89,7 +89,16 @@ class SpamClassifierService
       ham_score += Math.log(ham_count.to_f / (@classifier_state.total_ham_words + vocab_size))
     end
 
-    is_spam = spam_score > ham_score
+    diff = spam_score - ham_score
+    # stable logistic conversion
+    p_spam = if diff.abs > 700
+               diff > 0 ? 1.0 : 0.0
+    else
+               1.0 / (1.0 + Math.exp(-diff))
+    end
+
+    confidence_threshold = Rails.application.config.probability_threshold
+    is_spam = p_spam >= confidence_threshold
     [ is_spam, spam_score, ham_score ]
   end
 
