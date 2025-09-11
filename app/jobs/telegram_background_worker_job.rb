@@ -10,15 +10,15 @@ class TelegramBackgroundWorkerJob < ApplicationJob
 
   def perform(args)
     Rails.logger.info "Performing telegram background job: #{args}"
-    action = args.fetch("action")
+    action = args.fetch(:action)
 
     case action
     when PostAction::BAN_USER
-      trained_message = args.fetch("trained_message")
+      trained_message = args.fetch(:trained_message)
       ban_user_in_group(trained_message: trained_message)
     when PostAction::DELETE_ALERT_MESSAGE
-      chat_id = args.fetch("chat_id")
-      message_id = args.fetch("message_id")
+      chat_id = args.fetch(:chat_id)
+      message_id = args.fetch(:message_id)
       delete_message(chat_id: chat_id, message_id: message_id)
     end
   end
