@@ -29,7 +29,6 @@ class TrainedMessage < ApplicationRecord
   # Automatically train classifier after creating/updating a message
   after_create :retrain_classifier, if: :trainable?
   after_update :retrain_classifier, if: :trainable_type_changed?
-  after_destroy :retrain_classifier, if: :trainable?
   after_create :should_ban_user, if: :trainable?
   after_update :should_ban_user, if: :trainable_type_changed?
 
