@@ -194,7 +194,7 @@
                     <div class="flex space-x-2">
                       <%= link_to "View", trained_message_path(trained_message, request.query_parameters), class: "text-indigo-600 hover:text-indigo-900" %>
                       <%= link_to "Edit", edit_trained_message_path(trained_message), class: "text-indigo-600 hover:text-indigo-900" %>
-                      <%= link_to "Delete", trained_message, method: :delete, 
+                      <%= link_to "Delete", trained_message_path(trained_message, return_url: request.original_url), method: :delete, 
                           class: "text-red-600 hover:text-red-900", 
                           data: { turbo_confirm: "Are you sure?" } %>
                     </div>
