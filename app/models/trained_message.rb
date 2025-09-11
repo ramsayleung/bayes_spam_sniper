@@ -57,7 +57,7 @@ class TrainedMessage < ApplicationRecord
   def retrain_classifier
     return if untrained?
 
-    ClassifierTrainerJob.perform_later(self)
+    ClassifierTrainerJob.perform_later([ self ])
   end
 
   private

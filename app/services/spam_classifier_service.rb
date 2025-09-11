@@ -61,6 +61,13 @@ class SpamClassifierService
     @classifier_state.save!
   end
 
+  def train_batch(trained_messages)
+    trained_messages.each do |trained_message|
+      train_only(trained_message)
+    end
+    @classifier_state.save!
+  end
+
   def classify(message_text)
     # P(Spam|Words) = P(Words|Spam) * P(Spam) / P(Words)
     # Return false if the model isn't trained enough

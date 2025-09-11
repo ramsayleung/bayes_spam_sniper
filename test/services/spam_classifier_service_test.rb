@@ -188,6 +188,37 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
     assert spam_score > ham_score, "Spam score should be higher than ham score"
   end
 
+  test "#train_batch train a list of messages and identify spam message correctly" do
+    service = SpamClassifierService.new(@group_id, @group_name)
+    service.train_batch([
+                          TrainedMessage.new(
+                            group_id: @group_id,
+                            message: "便宜的伟哥现在买",
+                            message_type: :spam,
+                            sender_chat_id: 1,
+                            sender_user_name: "s"
+                          ),
+                          TrainedMessage.new(
+                            group_id: @group_id,
+                            message: "免费点击这里",
+                            message_type: :spam,
+                            sender_chat_id: 1,
+                            sender_user_name: "s"
+                          ),
+                          TrainedMessage.new(
+                            group_id: @group_id,
+                            message: "你好，今天天气不错",
+                            message_type: :ham,
+                            sender_chat_id: 2,
+                            sender_user_name: "s"
+                          )
+                        ])
+    is_spam, spam_score, ham_score = service.classify("点击这里买伟哥")
+
+    assert is_spam, "Message should be classified as spam"
+    assert spam_score > ham_score, "Spam score should be higher than ham score"
+  end
+
   test "#classify should correctly identify a message as ham" do
     service = SpamClassifierService.new(@group_id, @group_name)
     service.train(TrainedMessage.new(
