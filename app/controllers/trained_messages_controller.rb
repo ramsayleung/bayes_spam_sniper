@@ -118,9 +118,10 @@ class TrainedMessagesController < ApplicationController
   # DELETE /trained_messages/1 or /trained_messages/1.json
   def destroy
     @trained_message.destroy!
+    return_url = params[:return_url] || trained_messages_path
 
     respond_to do |format|
-      format.html { redirect_to trained_messages_path, notice: "Trained message was successfully destroyed.", status: :see_other }
+      format.html { redirect_to return_url, notice: "Trained message was successfully destroyed.", status: :see_other }
       format.json { head :no_content }
     end
   end

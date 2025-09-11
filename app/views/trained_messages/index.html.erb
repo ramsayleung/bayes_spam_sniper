@@ -178,8 +178,7 @@
                       </span>
                     <% end %>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500
-                             <%= trained_message.message_type == 'spam' ? 'bg-red-100 text-red-800' : trained_message.message_type == 'ham' ? 'bg-green-100 text-green-800' :  'bg-yellow-100 text-green-800'%>">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 <%= message_type_classes(trained_message.message_type) %>">
                     <%= trained_message.message_type&.humanize || 'Unknown' %>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
