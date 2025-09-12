@@ -1,11 +1,10 @@
-require "telegram/bot"
+# Only run this code when the Rails server is starting.
+# This prevents it from running during `assets:precompile`, `db:migrate`, etc.
 
-# Set up the telegram bot configuration for all Rails processes
-Rails.application.configure do
-  token = Rails.application.credentials.dig(:telegram_bot_token)
-  if token
-    config.telegram_bot = Telegram::Bot::Client.new(token)
-  else
-    Rails.logger.warn "Telegram bot token not found in credentials"
+if defined?(Rails::Server)
+  require "telegram/bot"
+  Rails.application.config.after_initialize do
+    token = Rails.application.credentials.dig(:telegram_bot_token)
+    TelegramBotWorkerJob.perform_later(token) if token
   end
 end
