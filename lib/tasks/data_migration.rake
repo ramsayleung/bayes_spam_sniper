@@ -34,4 +34,10 @@ namespace :data_migration do
 
     puts "\n Successfully backfilled message_hash for #{total_count} records."
   end
+  desc "Retrain all classifier"
+  task retrain_all_classifier: :environment do
+    GroupClassifierState.for_public.find_each do |classifier|
+      SpamClassifierService.rebuild_for_group(classifier.group_id, classifier.group_name)
+    end
+  end
 end
