@@ -1,3 +1,4 @@
+require "solid_queue_dashboard"
 Rails.application.routes.draw do
   resources :group_classifier_states
   resources :banned_users
@@ -16,4 +17,6 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   root "trained_messages#index"
+
+  mount SolidQueueDashboard::Engine, at: "/solid-queue"
 end

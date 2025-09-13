@@ -4,7 +4,8 @@ require "json"
 # Minimal TDLib FFI wrapper, tdlib-ruby is conflict with
 # telegram-bot-ruby as they depends on dry-core
 module TDJson
-  if Rails.env.development?
+  tdlib_path = ENV["TDLIB_PATH"]
+  if Rails.env.development? && tdlib_path && !tdlib_path.empty?
     extend FFI::Library
     lib_name = "tdjson"
     if FFI::Platform.windows?
