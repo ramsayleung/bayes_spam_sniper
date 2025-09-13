@@ -24,7 +24,7 @@ module TDJson
   end
 end
 
-class TDClient
+class TdlibClient
   def initialize
     @client = TDJson.td_json_client_create
     @request_queue = {}
