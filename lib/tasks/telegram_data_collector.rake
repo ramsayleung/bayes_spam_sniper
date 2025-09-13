@@ -1,85 +1,3 @@
-require "ffi"
-require "json"
-
-# Minimal TDLib FFI wrapper, tdlib-ruby is conflict with
-# telegram-bot-ruby as they depends on dry-core
-module TDJson
-  tdlib_path = ENV["TDLIB_PATH"]
-  if Rails.env.development? && tdlib_path && !tdlib_path.empty?
-    extend FFI::Library
-    lib_name = "tdjson"
-    if FFI::Platform.windows?
-      ffi_lib File.join(ENV.fetch("TDLIB_PATH"), "#{lib_name}.dll")
-    elsif FFI::Platform.mac?
-      ffi_lib File.join(ENV.fetch("TDLIB_PATH"), "lib#{lib_name}.dylib")
-    else
-      ffi_lib File.join(ENV.fetch("TDLIB_PATH"), "lib#{lib_name}.so")
-    end
-
-    attach_function :td_json_client_create, [], :pointer
-    attach_function :td_json_client_send, [ :pointer, :string ], :void
-    attach_function :td_json_client_receive, [ :pointer, :double ], :string
-    attach_function :td_json_client_execute, [ :pointer, :string ], :string
-    attach_function :td_json_client_destroy, [ :pointer ], :void
-  end
-end
-
-class TDClient
-  def initialize
-    @client = TDJson.td_json_client_create
-    @request_queue = {}
-  end
-
-  def send_async(query, &block)
-    request_id = SecureRandom.uuid
-    @request_queue[request_id] = block
-    query["@extra"] = { request_id: request_id }.to_json
-    TDJson.td_json_client_send(@client, JSON.dump(query))
-  end
-
-  def receive(timeout = 1.0)
-    raw = TDJson.td_json_client_receive(@client, timeout)
-    return unless raw
-
-    update = JSON.parse(raw)
-    if update["@extra"]
-      extra = JSON.parse(update["@extra"])
-      if extra["request_id"]
-        callback = @request_queue.delete(extra["request_id"])
-        callback.call(update) if callback
-      end
-    end
-    update
-  end
-
-  def execute(query)
-    raw = TDJson.td_json_client_execute(@client, JSON.dump(query))
-    raw && JSON.parse(raw)
-  end
-
-  def send(query)
-    TDJson.td_json_client_send(@client, JSON.dump(query))
-  end
-
-  def close
-    TDJson.td_json_client_destroy(@client)
-  end
-
-  def get_chat(chat_id)
-    execute({
-              "@type" => "getChat",
-              "chat_id" => chat_id
-            })
-  end
-
-  def get_user(user_id)
-    execute({
-              "@type" => "getUser",
-              "user_id" => user_id
-            })
-  end
-end
-
 namespace :telegram do
   desc "Starts the TDLib client to listen for telegram messages"
   task listen: :environment do
@@ -181,28 +99,59 @@ namespace :telegram do
 end
 
 def process_message(message_content, group_id, group_name, user_id, user_name)
+  # Memoize the classifier to avoid creating it twice
   classifier = SpamClassifierService.new(group_id, group_name)
+
   message_hash = Digest::SHA256.hexdigest(message_content.to_s)
   existing_message = TrainedMessage.find_by(message_hash: message_hash)
+
   if existing_message
     puts "Message already exists, skipping"
     return
   end
 
-  spam_count = TrainedMessage.where(message_type: [ :spam, :maybe_spam ]).count
-  ham_count = TrainedMessage.where(message_type: [ :ham, :maybe_ham ]).count
+  # Process message content
+  train_message_if_needed(
+    classifier,
+    message_content,
+    :message_content,
+    group_id,
+    group_name,
+    user_id,
+    user_name
+  )
 
-  # Having reasonably balanced datasets is generally beneficial for
-  # reduces bias and improves accuracy
-  is_spam, spam_score, ham_score = classifier.classify(message_content)
-  puts "classified result: #{is_spam ? "maybe_spam": "maybe_ham"}"
-  if (spam_count > ham_count && !is_spam) || (spam_count <= ham_count && is_spam)
+  # Process user name
+  train_message_if_needed(
+    classifier,
+    user_name,
+    :user_name,
+    group_id,
+    group_name,
+    user_id,
+    user_name
+  )
+end
+
+def train_message_if_needed(classifier, text_to_classify, training_target, group_id, group_name, user_id, user_name)
+  is_spam, _, _ = classifier.classify(text_to_classify)
+
+  puts "#{training_target} classified result: #{is_spam ? 'maybe_spam' : 'maybe_ham'}"
+
+  spam_count = TrainedMessage.where(message_type: [ :spam, :maybe_spam ], training_target: training_target).count
+  ham_count  = TrainedMessage.where(message_type: [ :ham, :maybe_ham ], training_target: training_target).count
+
+  # Logic to balance the dataset
+  should_create = (spam_count > ham_count && !is_spam) || (spam_count <= ham_count && is_spam)
+
+  if should_create
     TrainedMessage.create!(
       group_id: group_id,
       group_name: group_name,
-      message: message_content,
+      message: text_to_classify,
       message_type: is_spam ? :maybe_spam : :maybe_ham,
       sender_user_name: user_name || "Telegram collector",
+      training_target: training_target,
       sender_chat_id: user_id
     )
   end
