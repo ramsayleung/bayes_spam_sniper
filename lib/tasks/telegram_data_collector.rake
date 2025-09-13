@@ -4,21 +4,23 @@ require "json"
 # Minimal TDLib FFI wrapper, tdlib-ruby is conflict with
 # telegram-bot-ruby as they depends on dry-core
 module TDJson
-  extend FFI::Library
-  lib_name = "tdjson"
-  if FFI::Platform.windows?
-    ffi_lib File.join(ENV.fetch("TDLIB_PATH"), "#{lib_name}.dll")
-  elsif FFI::Platform.mac?
-    ffi_lib File.join(ENV.fetch("TDLIB_PATH"), "lib#{lib_name}.dylib")
-  else
-    ffi_lib File.join(ENV.fetch("TDLIB_PATH"), "lib#{lib_name}.so")
-  end
+  if Rails.env.development?
+    extend FFI::Library
+    lib_name = "tdjson"
+    if FFI::Platform.windows?
+      ffi_lib File.join(ENV.fetch("TDLIB_PATH"), "#{lib_name}.dll")
+    elsif FFI::Platform.mac?
+      ffi_lib File.join(ENV.fetch("TDLIB_PATH"), "lib#{lib_name}.dylib")
+    else
+      ffi_lib File.join(ENV.fetch("TDLIB_PATH"), "lib#{lib_name}.so")
+    end
 
-  attach_function :td_json_client_create, [], :pointer
-  attach_function :td_json_client_send, [ :pointer, :string ], :void
-  attach_function :td_json_client_receive, [ :pointer, :double ], :string
-  attach_function :td_json_client_execute, [ :pointer, :string ], :string
-  attach_function :td_json_client_destroy, [ :pointer ], :void
+    attach_function :td_json_client_create, [], :pointer
+    attach_function :td_json_client_send, [ :pointer, :string ], :void
+    attach_function :td_json_client_receive, [ :pointer, :double ], :string
+    attach_function :td_json_client_execute, [ :pointer, :string ], :string
+    attach_function :td_json_client_destroy, [ :pointer ], :void
+  end
 end
 
 class TDClient
