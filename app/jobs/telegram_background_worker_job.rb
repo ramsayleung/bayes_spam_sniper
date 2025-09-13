@@ -26,7 +26,7 @@ class TelegramBackgroundWorkerJob < ApplicationJob
   private
 
   def bot
-    @bot ||= Rails.application.config.telegram_bot
+    @bot ||= Telegram::Bot::Client.new(Rails.application.credentials.dig(:telegram_bot_token))
   end
 
   def delete_message(chat_id:, message_id:)
