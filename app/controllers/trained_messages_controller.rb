@@ -18,7 +18,7 @@ class TrainedMessagesController < ApplicationController
     end
 
     if params[:search].present?
-      @trained_messages = @trained_messages.where("message ILIKE ?", "%#{params[:search]}%")
+      @trained_messages = @trained_messages.where("message LIKE ?", "%#{params[:search]}%")
     end
 
     # Sorting
