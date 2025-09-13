@@ -71,20 +71,34 @@ class TrainedMessagesController < ApplicationController
 
     messages = TrainedMessage.where(id: message_ids)
     update_count = messages.count
-    case params[:commit]
-    when "Mark as Ham"
-      messages.update_all(message_type: :ham)
-      flash[:notice] = "Successfully marked #{update_count} messages as Ham"
-    when "Mark as Spam"
-      messages.update_all(message_type: :spam)
-      flash[:notice] = "Successfully marked #{update_count} messages as Spam"
+
+    new_message_type_symbol = case params[:commit]
+    when "Mark as Ham" then :ham
+    when "Mark as Spam" then :spam
     else
-      flash[:alert] = "Invalid action."
+                                flash[:alert] = "Invalid action."
+                                redirect_to trained_messages_path(params.except(:commit, :trained_message_ids, :authenticity_token, :controller, :action).to_unsafe_h)
+                                return
     end
 
-    redirect_to trained_messages_path(
-                  params.except(:commit, :trained_message_ids, :authenticity_token, :controller, :action).to_unsafe_h
-                )
+    messages.update_all(message_type: new_message_type_symbol)
+
+    messages.each do |message|
+      if message.spam? || message.ham?
+        BatchProcessor.add_to_batch(
+          "classifier_training_batch_key",
+          "ClassifierTrainerJob",
+          message,
+          {},
+          batch_size: 100,
+          batch_window: 5.minutes
+        )
+      end
+    end
+
+    message_type_name = TrainedMessage.message_types[new_message_type_symbol]
+    flash[:notice] = "Successfully marked #{update_count} messages as #{message_type_name}"
+    redirect_to trained_messages_path(params.except(:commit, :trained_message_ids, :authenticity_token, :controller, :action).to_unsafe_h)
   end
 
   # POST /trained_messages or /trained_messages.json
