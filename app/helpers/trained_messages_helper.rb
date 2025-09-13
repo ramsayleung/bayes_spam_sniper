@@ -15,4 +15,15 @@ module TrainedMessagesHelper
       "bg-gray-100 text-gray-800"
     end
   end
+
+  def training_target_classes(training_target)
+    case training_target
+    when "message_content"
+      "bg-blue-100 text-blue-800"
+    when "user_name"
+      "bg-purple-100 text-purple-800"
+    else
+      "bg-yellow-100 text-yellow-800"
+    end
+  end
 end

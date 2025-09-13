@@ -96,7 +96,7 @@ class TrainedMessagesController < ApplicationController
       end
     end
 
-    message_type_name = TrainedMessage.message_types[new_message_type_symbol]
+    message_type_name = new_message_type_symbol.to_s
     flash[:notice] = "Successfully marked #{update_count} messages as #{message_type_name}"
     redirect_to trained_messages_path(params.except(:commit, :trained_message_ids, :authenticity_token, :controller, :action).to_unsafe_h)
   end
