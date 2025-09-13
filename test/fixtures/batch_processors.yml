@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  batch_key: <%= "fixture_one_#{SecureRandom.hex(16)}" %>
+  job_class: MyString
+  shared_args_json: MyText
+  pending_items_json: MyText
+  pending_count: 1
+  batch_size: 1
+  batch_window_in_seconds: 1
+  last_processed_at: <%= 5.minutes.ago %>
+
+two:
+  batch_key: <%= "fixture_two_#{SecureRandom.hex(16)}" %>
+  job_class: MyString
+  shared_args_json: MyText
+  pending_items_json: MyText
+  pending_count: 1
+  batch_size: 1
+  batch_window_in_seconds: 1
+  last_processed_at: <%= 5.minutes.ago %>

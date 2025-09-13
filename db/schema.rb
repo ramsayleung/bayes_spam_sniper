@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_04_163946) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_12_081630) do
   create_table "banned_users", force: :cascade do |t|
     t.integer "group_id"
     t.integer "sender_chat_id"
@@ -20,6 +20,21 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_04_163946) do
     t.text "spam_message"
     t.string "group_name"
     t.integer "message_id", default: 0, null: false
+  end
+
+  create_table "batch_processors", force: :cascade do |t|
+    t.string "batch_key", null: false
+    t.string "job_class", null: false
+    t.text "shared_args_json", default: "{}"
+    t.text "pending_items_json", default: "[]"
+    t.integer "pending_count", default: 0
+    t.integer "batch_size", default: 100
+    t.integer "batch_window_in_seconds", default: 30
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "last_processed_at"
+    t.index ["batch_key"], name: "index_batch_processors_on_batch_key", unique: true
+    t.index ["updated_at"], name: "index_batch_processors_on_updated_at"
   end
 
   create_table "group_classifier_states", force: :cascade do |t|

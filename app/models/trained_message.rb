@@ -54,10 +54,18 @@ class TrainedMessage < ApplicationRecord
       )
     end
   end
+
   def retrain_classifier
     return if untrained?
 
-    ClassifierTrainerJob.perform_later([ self ])
+    BatchProcessor.add_to_batch(
+      "classifier_training_batch_key",
+      "ClassifierTrainerJob",
+      self,                     # pass trainedMessage as item_data
+      {},                        # no shared_args needed
+      batch_size: 100,
+      batch_window: 5.minutes
+    )
   end
 
   private
