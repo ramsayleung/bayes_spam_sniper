@@ -1,3 +1,81 @@
+require "ffi"
+require "json"
+
+# Minimal TDLib FFI wrapper, tdlib-ruby is conflict with
+# telegram-bot-ruby as they depends on dry-core
+module TDJson
+  extend FFI::Library
+  lib_name = "tdjson"
+  if FFI::Platform.windows?
+    ffi_lib File.join(ENV.fetch("TDLIB_PATH"), "#{lib_name}.dll")
+  elsif FFI::Platform.mac?
+    ffi_lib File.join(ENV.fetch("TDLIB_PATH"), "lib#{lib_name}.dylib")
+  else
+    ffi_lib File.join(ENV.fetch("TDLIB_PATH"), "lib#{lib_name}.so")
+  end
+
+  attach_function :td_json_client_create, [], :pointer
+  attach_function :td_json_client_send, [ :pointer, :string ], :void
+  attach_function :td_json_client_receive, [ :pointer, :double ], :string
+  attach_function :td_json_client_execute, [ :pointer, :string ], :string
+  attach_function :td_json_client_destroy, [ :pointer ], :void
+end
+
+class TDClient
+  def initialize
+    @client = TDJson.td_json_client_create
+    @request_queue = {}
+  end
+
+  def send_async(query, &block)
+    request_id = SecureRandom.uuid
+    @request_queue[request_id] = block
+    query["@extra"] = { request_id: request_id }.to_json
+    TDJson.td_json_client_send(@client, JSON.dump(query))
+  end
+
+  def receive(timeout = 1.0)
+    raw = TDJson.td_json_client_receive(@client, timeout)
+    return unless raw
+
+    update = JSON.parse(raw)
+    if update["@extra"]
+      extra = JSON.parse(update["@extra"])
+      if extra["request_id"]
+        callback = @request_queue.delete(extra["request_id"])
+        callback.call(update) if callback
+      end
+    end
+    update
+  end
+
+  def execute(query)
+    raw = TDJson.td_json_client_execute(@client, JSON.dump(query))
+    raw && JSON.parse(raw)
+  end
+
+  def send(query)
+    TDJson.td_json_client_send(@client, JSON.dump(query))
+  end
+
+  def close
+    TDJson.td_json_client_destroy(@client)
+  end
+
+  def get_chat(chat_id)
+    execute({
+              "@type" => "getChat",
+              "chat_id" => chat_id
+            })
+  end
+
+  def get_user(user_id)
+    execute({
+              "@type" => "getUser",
+              "user_id" => user_id
+            })
+  end
+end
 
 namespace :telegram do
   desc "Starts the TDLib client to listen for telegram messages"
@@ -21,53 +99,6 @@ namespace :telegram do
       TEXT
       puts "TDLIB_PATH not set. Skipping Telegram listener."
       next
-    end
-
-    require "ffi"
-    require "json"
-
-    # Minimal TDLib FFI wrapper, tdlib-ruby is conflict with
-    # telegram-bot-ruby as they depends on dry-core
-    module TDJson
-      extend FFI::Library
-      lib_name = "tdjson"
-      if FFI::Platform.windows?
-        ffi_lib File.join(ENV.fetch("TDLIB_PATH"), "#{lib_name}.dll")
-      elsif FFI::Platform.mac?
-        ffi_lib File.join(ENV.fetch("TDLIB_PATH"), "lib#{lib_name}.dylib")
-      else
-        ffi_lib File.join(ENV.fetch("TDLIB_PATH"), "lib#{lib_name}.so")
-      end
-
-      attach_function :td_json_client_create, [], :pointer
-      attach_function :td_json_client_send, [ :pointer, :string ], :void
-      attach_function :td_json_client_receive, [ :pointer, :double ], :string
-      attach_function :td_json_client_execute, [ :pointer, :string ], :string
-      attach_function :td_json_client_destroy, [ :pointer ], :void
-    end
-
-    class TDClient
-      def initialize
-        @client = TDJson.td_json_client_create
-      end
-
-      def send(query)
-        TDJson.td_json_client_send(@client, JSON.dump(query))
-      end
-
-      def receive(timeout = 1.0)
-        raw = TDJson.td_json_client_receive(@client, timeout)
-        raw && JSON.parse(raw)
-      end
-
-      def execute(query)
-        raw = TDJson.td_json_client_execute(@client, JSON.dump(query))
-        raw && JSON.parse(raw)
-      end
-
-      def close
-        TDJson.td_json_client_destroy(@client)
-      end
     end
 
     client = TDClient.new
@@ -131,34 +162,8 @@ namespace :telegram do
         else
           puts "Unhandled authorization state: #{new_state}"
         end
-
       when "updateNewMessage"
-        message = update["message"]
-        chat_id = message["chat_id"]
-        content = message["content"]
-
-        if content["@type"] == "messageText"
-          message_content = content["text"]["text"]
-          process_message(message_content)
-          puts "Chat ID: #{chat_id} | Text: #{message_content}"
-        else
-          puts "Chat ID: #{chat_id} | Type: #{content['@type']}"
-        end
-        puts "----------------------"
-
-      when "updateMessageContent"
-        chat_id = update["chat_id"]
-        new_content = update["new_content"]
-
-        if new_content["@type"] == "messageText"
-          message_content = new_content["text"]["text"]
-          process_message(message_content)
-          puts "Chat ID: #{chat_id} | New Text: #{message_content}"
-        else
-          puts "Chat ID: #{chat_id} | New Type: #{new_content['@type']}"
-        end
-        puts "----------------------"
-
+        handleUpdateNewMessage(update, client)
       else
         # ignore other updates
       end
@@ -172,9 +177,7 @@ namespace :telegram do
   end
 end
 
-def process_message(message_content)
-  group_id = GroupClassifierState::TELEGRAM_DATA_COLLECTOR_GROUP_ID
-  group_name = GroupClassifierState::TELEGRAM_DATA_COLLECTOR_GROUP_NAME
+def process_message(message_content, group_id, group_name, user_id, user_name)
   classifier = SpamClassifierService.new(group_id, group_name)
   message_hash = Digest::SHA256.hexdigest(message_content.to_s)
   existing_message = TrainedMessage.find_by(message_hash: message_hash)
@@ -190,30 +193,51 @@ def process_message(message_content)
   # reduces bias and improves accuracy
   is_spam, spam_score, ham_score = classifier.classify(message_content)
   puts "classified result: #{is_spam ? "maybe_spam": "maybe_ham"}"
-  if spam_count > ham_count
-    # only interested in ham
-    if !is_spam
-      TrainedMessage.create!(
-        group_id: group_id,
-        group_name: group_name,
-        message: message_content,
-        message_type: :maybe_ham,
-        sender_chat_id: 0,
-        sender_user_name: "Telegram collector"
-      )
-    end
+  if (spam_count > ham_count && !is_spam) || (spam_count <= ham_count && is_spam)
+    TrainedMessage.create!(
+      group_id: group_id,
+      group_name: group_name,
+      message: message_content,
+      message_type: is_spam ? :maybe_spam : :maybe_ham,
+      sender_user_name: user_name || "Telegram collector",
+      sender_chat_id: user_id
+    )
+  end
+end
 
-  else
-    # interested in spam
-    if is_spam
-      TrainedMessage.create!(
-        group_id: group_id,
-        group_name: group_name,
-        message: message_content,
-        message_type: :maybe_spam,
-        sender_chat_id: 0,
-        sender_user_name: "Telegram collector"
-      )
+def handleUpdateNewMessage(update, client)
+  message = update["message"]
+  chat_id = message["chat_id"]
+  sender_id = message["sender_id"]["user_id"] rescue nil
+  content = message["content"]
+  user_name = "Unknown User"
+  message_content = content["text"]["text"] if content["@type"] == "messageText"
+
+  # Send asynchronous requests for chat and user data
+  client.send_async({ "@type" => "getChat", "chat_id" => chat_id }) do |chat_update|
+    chat = chat_update
+    group_name = chat["title"] || "Unknown Group"
+
+    if sender_id
+      client.send_async({ "@type" => "getUser", "user_id" => sender_id }) do |user_update|
+        user = user_update
+        user_name = user["first_name"]
+        user_name += " " + user["last_name"] if user["last_name"]
+        user_name = user["username"] if user["username"]
+
+        unless message_content.blank?
+          process_message(message_content, chat_id, group_name, sender_id, user_name)
+          puts "Group(#{chat_id}): #{group_name} | User: #{user_name} | Text: #{message_content}"
+          puts "----------------------"
+        end
+      end
+    else
+      # Handle cases where there's no sender_id (e.g., channel posts)
+      unless message_content.blank?
+        process_message(message_content, chat_id, group_name, sender_id, user_name)
+        puts "Group: #{group_name} | User: #{user_name} | Text: #{message_content}"
+        puts "----------------------"
+      end
     end
   end
 end
