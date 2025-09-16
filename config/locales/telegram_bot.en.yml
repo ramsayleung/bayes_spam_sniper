@@ -30,7 +30,9 @@ en:
     errors:
       processing: "An error occurred while processing your request."
     markspam:
-      success_message: "✅ User @[%{banned_user_name}](tg://user?id=%{replied.from.id}) has been banned and the message marked as spam."
+      success_message: "✅ User @[%{banned_user_name}](tg://user?id=%{user_id}) has been banned and the message marked as spam."
+      delete_message_only_success_message: "✅ Message from user @[%{banned_user_name}](tg://user?id=%{user_id}) has been marked as spam."
+      insufficient_permission_to_delete_message: "❌ Insufficient permission to delete message."
       failure_message: "❌ Failed to process the spam marking request."
     feedspam:
       help_message: "Please provide the spam message text after the command. Examples: `/feedspam FREE IPHONE`"

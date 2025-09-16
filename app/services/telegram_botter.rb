@@ -19,7 +19,9 @@ class TelegramBotter
     Telegram::Bot::Client.run(token) do |bot|
       Rails.application.config.telegram_bot = bot
       # Get bot username for @ mentions
-      @bot_username ||= bot.api.get_me.username
+      get_me_result ||= bot.api.get_me
+      @bot_username ||= get_me_result.username
+      @bot_id ||= get_me_result.id
       Rails.application.config.telegram_bot_name = @bot_username
       # Get latest message
       bot.api.get_updates(offset: -1)
@@ -96,14 +98,16 @@ class TelegramBotter
 
   def handle_markspam_command(bot, message)
     return unless is_group_chat?(bot, message)
-    return unless is_admin?(bot, message) && message.reply_to_message
+    group_id = message.chat.id
+    chat_member = bot.api.get_chat_member(chat_id: group_id, user_id: @bot_id)
+    # return if it's not admin
+    return unless [ "administrator", "creator" ].include?(chat_member.status) && message.reply_to_message
 
     replied = message.reply_to_message
     return if replied.text.nil? || replied.text.empty?
 
     I18n.with_locale(@lang_code) do
       begin
-        group_id = message.chat.id
         group_name = message.chat.title
         user_name = [ replied.from.first_name, replied.from.last_name ].compact.join(" ")
         # 1. Save the traineded message, which will invoke ActiveModel
@@ -116,23 +120,37 @@ class TelegramBotter
           sender_user_name: user_name,
           message_type: :spam
         )
+        can_delete_messages = chat_member.can_delete_messages
+        can_restrict_members = chat_member.can_restrict_members
 
-        # 2. Ban user and record the ban
-        bot.api.ban_chat_member(chat_id: message.chat.id, user_id: replied.from.id)
-        banned_user_name = [ replied.from.first_name, replied.from.last_name ].compact.join(" ")
-        BannedUser.find_or_create_by!(
-          group_name: group_name,
-          group_id: message.chat.id,
-          sender_chat_id: replied.from.id,
-          sender_user_name: banned_user_name,
-          spam_message: replied.text
-        )
-
-        # 3. Delete the spam message
+        # 2. Delete the spam message
+        unless can_delete_messages
+          response_message = I18n.t("telegram_bot.markspam.insufficient_permission_to_delete_message")
+          bot.api.send_message(chat_id: message.chat.id, text: response_message, parse_mode: "Markdown")
+          return
+        end
         bot.api.delete_message(chat_id: message.chat.id, message_id: replied.message_id)
 
+        # 3. Ban user and record the ban
+        banned_user_name = [ replied.from.first_name, replied.from.last_name ].compact.join(" ")
+        if can_restrict_members
+          bot.api.ban_chat_member(chat_id: message.chat.id, user_id: replied.from.id)
+          BannedUser.find_or_create_by!(
+            group_name: group_name,
+            group_id: message.chat.id,
+            sender_chat_id: replied.from.id,
+            sender_user_name: banned_user_name,
+            spam_message: replied.text
+          )
+        end
+
         # 4. Confirm action
-        response_message = I18n.t("telegram_bot.markspam.success_message", banned_user_name: banned_user_name, replied: replied)
+        response_message = ""
+        if !can_restrict_members
+          response_message = I18n.t("telegram_bot.markspam.delete_message_only_success_message", banned_user_name: banned_user_name, user_id: replied.from.id)
+        else
+          response_message = I18n.t("telegram_bot.markspam.success_message", banned_user_name: banned_user_name, user_id: replied.from.id)
+        end
         bot.api.send_message(chat_id: message.chat.id, text: response_message, parse_mode: "Markdown")
       rescue => e
         Rails.logger.error "Error in markspam command: #{e.message}"

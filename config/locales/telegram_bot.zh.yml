@@ -31,6 +31,8 @@ zh:
       processing: "处理请求时出错。"
     markspam:
       success_message: "✅ 用户的消息 @[#{banned_user_name}](tg://user?id=%{replied.from.id}) 已被删除且封禁."
+      delete_message_only_success_message: "✅ 用户的消息 @[#{banned_user_name}](tg://user?id=%{replied.from.id}) 已被删除."
+      insufficient_permission_to_delete_message: "❌ 无权限删除消息"
       failure_message: "❌ 处理垃圾文本异常."
     feedspam:
       help_message: "请在此命令后提供垃圾信息文本。示例：`/feedspam 看我简介，免费送U`"
