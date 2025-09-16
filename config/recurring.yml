@@ -16,9 +16,9 @@ production:
 
   process_pending_batches:
     class: ProcessPendingBatchesJob
-    schedule: every 3 seconds
+    schedule: every 10 seconds
 
 development:
   process_pending_batches:
     class: ProcessPendingBatchesJob
-    schedule: every 3 seconds
+    schedule: every 10 seconds
