@@ -50,7 +50,7 @@ class BatchProcessor < ApplicationRecord
   def self.process_pending_batches
     where("pending_count > 0")
       .find_each do |batch|
-      if batch.last_processed_at < batch.batch_window_in_seconds.seconds.ago
+      if should_process_batch?(batch)
         process_batch(batch)
       end
     end
