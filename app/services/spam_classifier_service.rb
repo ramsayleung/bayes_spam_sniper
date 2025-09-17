@@ -106,6 +106,7 @@ class SpamClassifierService
 
     confidence_threshold = Rails.application.config.probability_threshold
     is_spam = p_spam >= confidence_threshold
+    Rails.logger.info "classified_result: #{is_spam ? "maybe_spam": "maybe_ham"}, p_spam: #{p_spam}, message_text: #{message_text}"
     [ is_spam, spam_score, ham_score ]
   end
 

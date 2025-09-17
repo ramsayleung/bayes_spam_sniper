@@ -45,10 +45,10 @@ class TelegramBotter
   private
 
   def handle_message(bot, message)
-    Rails.logger.info "Handling message"
+    message_text = message.text&.strip || ""
+    Rails.logger.info "Handling message #{message_text}"
 
     # Clean the message text and handle @botname mentions
-    message_text = message.text&.strip || ""
     @lang_code = (message.from&.language_code || "en").split("-").first
     # Remove @botname from the beginning if present
     message_text = message_text.gsub(/^@#{@bot_username}\s+/, "") if @bot_username
@@ -307,7 +307,7 @@ class TelegramBotter
 
   def handle_regular_message(bot, message)
     return if message.text.nil? || message.text.strip.empty?
-    Rails.logger.info "Handle regular message"
+    Rails.logger.info "Handle regular message: #{message.text}"
     I18n.with_locale(@lang_code) do
       begin
         spam_detection_service = SpamDetectionService.new(message)
