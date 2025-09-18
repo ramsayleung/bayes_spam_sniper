@@ -46,13 +46,28 @@ class TrainedMessage < ApplicationRecord
 
     spam_ban_threshold = Rails.application.config.spam_ban_threshold
     spam_count = TrainedMessage.where(group_id: self.group_id, sender_chat_id: self.sender_chat_id, message_type: :spam).count
-    if spam_count >= spam_ban_threshold
+    if spam_count >= spam_ban_threshold && is_bot_admin_of_group?(self.group_id)
       Rails.logger.info "user: #{self.sender_user_name} sent more than 3 spam messages in group: #{self.group_id}, ban this user from group"
       TelegramBackgroundWorkerJob.perform_later(
         action: PostAction::BAN_USER,
         trained_message: self
       )
     end
+  end
+
+  def is_bot_admin_of_group?(group_id)
+    bot_id = Rails.cache.fetch("bot_id", expires_in: 24.hours) do
+      bot.api.get_me.id
+    end
+    cache_key = "#{group_id}_group_chat_member"
+    chat_member = Rails.cache.fetch(cache_key, expires_in: 1.hours) do
+      bot.api.get_chat_member(chat_id: group_id, user_id: bot_id)
+      return [ "administrator", "creator" ].include?(chat_member.status) && chat_member.can_restrict_members
+    end
+  end
+
+  def bot
+    @bot ||= Telegram::Bot::Client.new(Rails.application.credentials.dig(:telegram_bot_token))
   end
 
   def retrain_classifier

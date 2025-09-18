@@ -20,8 +20,12 @@ class TelegramBotter
       Rails.application.config.telegram_bot = bot
       # Get bot username for @ mentions
       get_me_result ||= bot.api.get_me
-      @bot_username ||= get_me_result.username
-      @bot_id ||= get_me_result.id
+      @bot_username ||= Rails.cache.fetch("bot_username", expires_in: 24.hours) do
+        get_me_result.username
+      end
+      @bot_id ||= Rails.cache.fetch("bot_id", expires_in: 24.hours) do
+        get_me_result.id
+      end
       Rails.application.config.telegram_bot_name = @bot_username
       # Get latest message
       bot.api.get_updates(offset: -1)
@@ -99,7 +103,10 @@ class TelegramBotter
   def handle_markspam_command(bot, message)
     return unless is_group_chat?(bot, message)
     group_id = message.chat.id
-    chat_member = bot.api.get_chat_member(chat_id: group_id, user_id: @bot_id)
+    cache_key = "#{group_id}_group_chat_member"
+    chat_member = Rails.cache.fetch(cache_key, expires_in: 1.hours) do
+      bot.api.get_chat_member(chat_id: group_id, user_id: @bot_id)
+    end
     # return if it's not admin
     return unless [ "administrator", "creator" ].include?(chat_member.status) && message.reply_to_message
 
@@ -351,15 +358,22 @@ class TelegramBotter
     # If the admin is a bot
     return true if user.is_bot && user.username == "GroupAnonymousBot"
 
-    # TODO: This API call can be rate-limited. Cache results in production.
-    begin
-      admins = bot.api.get_chat_administrators(chat_id: group_id.to_s)
+    cache_key = "chat_administrators_#{group_id}"
+    cache_expiry = 1.hour
 
-      admins.any? { |admin| admin.user.id == user.id }
-    rescue => e
-      Rails.logger.error "Error during admin check for chat #{group_id}. Error: #{e.message}"
-      false
+    # Fetch from cache, or make the API call and cache the result
+    cached_admins = Rails.cache.fetch(cache_key, expires_in: cache_expiry) do
+      begin
+        bot.api.get_chat_administrators(chat_id: group_id.to_s)
+      rescue => e
+        Rails.logger.error "Error during admin check for chat #{group_id}. Error: #{e.message}"
+        nil
+      end
     end
+
+    return false unless cached_admins
+
+    cached_admins.any? { |admin| admin.user.id == user.id }
   end
 
   def handle_callback(bot, callback)
