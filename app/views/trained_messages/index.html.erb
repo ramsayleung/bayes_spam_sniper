@@ -139,9 +139,9 @@
                 <% end %>
               </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <%= link_to trained_messages_path(params.permit!.merge(sort: 'created_at', direction: params[:sort] == 'created_at' && params[:direction] == 'asc' ? 'desc' : 'asc')), class: "hover:text-gray-700 flex items-center space-x-1" do %>
-                  <span>Created</span>
-                  <% if params[:sort] == 'created_at' %>
+                <%= link_to trained_messages_path(params.permit!.merge(sort: 'updated_at', direction: params[:sort] == 'updated_at' && params[:direction] == 'asc' ? 'desc' : 'asc')), class: "hover:text-gray-700 flex items-center space-x-1" do %>
+                  <span>Updated</span>
+                  <% if params[:sort] == 'updated_at' %>
                     <span><%= params[:direction] == 'asc' ? '↑' : '↓' %></span>
                   <% end %>
                 <% end %>
@@ -187,7 +187,7 @@
                     <%= trained_message.group_name || 'Imported' %>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <%= time_ago_in_words(trained_message.created_at) %> ago
+                    <%= time_ago_in_words(trained_message.updated_at) %> ago
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div class="flex space-x-2">

@@ -22,7 +22,7 @@ class TrainedMessagesController < ApplicationController
     end
 
     # Sorting
-    sort_by = params[:sort] || "created_at"
+    sort_by = params[:sort] || "updated_at"
     sort_direction = params[:direction] || "desc"
     @trained_messages = @trained_messages.order("#{sort_by} #{sort_direction}")
 
