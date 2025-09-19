@@ -44,7 +44,7 @@ en:
       failure_message: "❌ Failed to unban user."
     is_admin:
       error_message: "❌ You are not an administrator of this group"
-    listspam:
+    listbanuser:
       no_banned_user_message: "There is no banned users in this group"
       no_banned_on_page_x_message: "No banned users found on page %{page} for group `%{group_title}`. Try `/listspam %{target_group_id} 1` to see the first page."
       unban_message: "Unban"

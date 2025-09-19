@@ -44,7 +44,7 @@ zh:
       failure_message: "❌ 封禁用户失败."
     is_admin:
       error_message: "❌ 你不是当前群组的管理员"
-    listspam:
+    listbanuser:
       no_banned_user_message: "当前群组无被禁言用户"
       no_banned_on_page_x_message: "在群组 %{group_title} 的第 %{page} 页未找到被封禁用户。请尝试 /listspam %{target_group_id} 1 查看第一页内容"
       unban_message: "解禁"
