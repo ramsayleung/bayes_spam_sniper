@@ -30,6 +30,13 @@ class TelegramBackgroundWorkerJob < ApplicationJob
   end
 
   def delete_message(chat_id:, message_id:)
+    chat_member = TelegramMemberFetcher.get_bot_chat_member(chat_id)
+    can_delete_messages = [ "administrator", "creator" ].include?(chat_member&.status) && chat_member&.can_delete_messages
+    unless can_delete_messages
+      Rails.logger.info "Skip deleting message due to insufficient permission of group: #{chat_id}"
+      return
+    end
+
     Rails.logger.info "Deleting message for chat_id: #{chat_id}, message_id: #{message_id}"
     begin
       bot.api.delete_message(chat_id: chat_id, message_id: message_id)
@@ -42,6 +49,13 @@ class TelegramBackgroundWorkerJob < ApplicationJob
     user_name = trained_message.sender_user_name
     user_id = trained_message.sender_chat_id
     group_id = trained_message.group_id
+
+    chat_member = TelegramMemberFetcher.get_bot_chat_member(group_id)
+    can_ban_user = [ "administrator", "creator" ].include?(chat_member&.status) && chat_member&.can_restrict_members
+    unless can_ban_user
+      Rails.logger.info "Skip banning user due to insufficient permission of group: #{group_id}"
+      return
+    end
     if group_id in [ TELEGRAM_DATA_COLLECTOR_GROUP_ID, USER_NAME_CLASSIFIER_GROUP_ID ]
       Rails.logger.info "Skip banning user in data imported group"
       return

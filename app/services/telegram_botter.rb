@@ -103,10 +103,7 @@ class TelegramBotter
   def handle_markspam_command(bot, message)
     return unless is_group_chat?(bot, message)
     group_id = message.chat.id
-    cache_key = "#{group_id}_group_chat_member"
-    chat_member = Rails.cache.fetch(cache_key, expires_in: 1.hours) do
-      bot.api.get_chat_member(chat_id: group_id, user_id: @bot_id)
-    end
+    chat_member = TelegramMemberFetcher.get_bot_chat_member(group_id)
     # return if it's not admin
     return unless [ "administrator", "creator" ].include?(chat_member.status) && message.reply_to_message
 
@@ -355,25 +352,9 @@ class TelegramBotter
   end
 
   def is_admin_of_group?(bot:, user:, group_id:)
-    # If the admin is a bot
-    return true if user.is_bot && user.username == "GroupAnonymousBot"
-
-    cache_key = "chat_administrators_#{group_id}"
-    cache_expiry = 1.hour
-
-    # Fetch from cache, or make the API call and cache the result
-    cached_admins = Rails.cache.fetch(cache_key, expires_in: cache_expiry) do
-      begin
-        bot.api.get_chat_administrators(chat_id: group_id.to_s)
-      rescue => e
-        Rails.logger.error "Error during admin check for chat #{group_id}. Error: #{e.message}"
-        nil
-      end
-    end
-
-    return false unless cached_admins
-
-    cached_admins.any? { |admin| admin.user.id == user.id }
+    user_id = user.id
+    chat_member = TelegramMemberFetcher.get_chat_member(group_id, user_id)
+    [ "administrator", "creator" ].include?(chat_member&.status)
   end
 
   def handle_callback(bot, callback)
@@ -476,7 +457,7 @@ class TelegramBotter
         begin
           bot.api.unban_chat_member(chat_id: chat_id, user_id: banned_user.sender_chat_id)
         rescue => e
-          Rails.logger.error "Failed to unbanning user #{banned_user.send_chat_id} due to: #{e.message}"
+          Rails.logger.error "Failed to unbanning user #{banned_user.sender_chat_id} due to: #{e.message}"
         end
 
         user_name = banned_user.sender_user_name
