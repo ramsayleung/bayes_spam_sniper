@@ -41,13 +41,23 @@ zh:
     unban:
       already_unbanned_message: "✅ 用户已被解禁"
       success_message: "✅ 用户 @[%{user_name}](tg://user?id=%{user_id}) 已被解禁."
-      failure_message: "❌ 封禁用户失败."
+      failure_message: "❌ 解禁用户失败."
+    markasham:
+      success_message: "✅ 来自用户 @[%{user_name}](tg://user?id=%{user_id}) 的消息已被标记为非广告."
+      failure_message: "❌ 标记消息为非广告失败."
     is_admin:
       error_message: "❌ 你不是当前群组的管理员"
     listbanuser:
       no_banned_user_message: "当前群组无被禁言用户"
-      no_banned_on_page_x_message: "在群组 %{group_title} 的第 %{page} 页未找到被封禁用户。请尝试 /listspam %{target_group_id} 1 查看第一页内容"
+      no_banned_on_page_x_message: "在群组 %{group_title} 的第 %{page} 页未找到被封禁用户。请尝试 /listbanuser %{target_group_id} 1 查看第一页内容"
       unban_message: "解禁"
+      failure_message: "❌ 获取封禁用户列表异常."
+      previous_page: "⬅️ 上一页"
+      next_page: "下一页 ➡️"
+    listspam:
+      no_spam_message: "当前群组无被禁言用户"
+      no_spam_on_page_x_message: "在群组 %{group_title} 的第 %{page} 页未找到被封禁用户。请尝试 /listspam %{target_group_id} 1 查看第一页内容"
+      mark_as_ham_message: "标记为正常"
       failure_message: "❌ 获取封禁用户列表异常."
       previous_page: "⬅️ 上一页"
       next_page: "下一页 ➡️"

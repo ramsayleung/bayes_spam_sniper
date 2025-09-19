@@ -7,13 +7,16 @@ class TelegramBotter
     USER_ID  = :uid
     PAGE     = :p
     LANGUAGE = :l
+    TRAINED_MESSAGE_ID = :tmid
   end
 
   module CallbackAction
-    USER_GUIDE = "user_guide"
-    BACK_TO_MAIN = "back_to_main"
-    LISTBANUSER_PAGE = "listbanuser_page"
+    USER_GUIDE = "ug"
+    BACK_TO_MAIN = "btm"
+    LISTBANUSER_PAGE = "lbp"
+    LISTSPAM_PAGE = "lsp"
     UNBAN = "unban"
+    MARK_AS_HAM = "mah"
   end
   def start_bot(token)
     Telegram::Bot::Client.run(token) do |bot|
@@ -67,6 +70,8 @@ class TelegramBotter
       handle_feedspam_command(bot, message, message_text)
     when %r{^/listbanuser}
       handle_listbanuser_command(bot, message)
+    when %r{^/listspam}
+      handle_listspam_command(bot, message)
     else
       handle_regular_message(bot, message)
     end
@@ -224,6 +229,103 @@ class TelegramBotter
     end
   end
 
+  def handle_listspam_command(bot, message)
+    return unless is_group_chat?(bot, message)
+    return unless is_admin?(bot, message)
+
+    # Parse the command: /listspam pageId
+    command_parts = message.text.strip.split(/\s+/)
+
+    target_group_id = message.chat.id
+    group_title = message.chat.title
+    page = command_parts[1].to_i > 0 ? command_parts[1].to_i : 1
+    page = 1 if page < 1
+
+    items_per_page = Rails.application.config.items_per_page
+    offset = (page - 1) * items_per_page
+
+    I18n.with_locale(@lang_code) do
+      begin
+        trained_messages = TrainedMessage.where(group_id: target_group_id, message_type: [ :spam, :maybe_spam ])
+                             .order(created_at: :desc)
+                             .offset(offset)
+                             .limit(items_per_page)
+
+        total_count = TrainedMessage.where(group_id: target_group_id, message_type: [ :spam, :maybe_spam ]).count
+        total_pages = (total_count.to_f / items_per_page).ceil
+
+        if trained_messages.empty?
+          if page == 1
+            bot.api.send_message(
+              chat_id: message.chat.id,
+              text: "#{I18n.t('telegram_bot.listspam.no_spam_message')}",
+              parse_mode: "Markdown"
+            )
+          else
+            bot.api.send_message(
+              chat_id: message.chat.id,
+              text: I18n.t("telegram_bot.listspam.no_spam_on_page_x_message", group_title: group_title, page: page, target_group_id: target_group_id),
+              parse_mode: "Markdown"
+            )
+          end
+        else
+          text = "🚫 **Spam Messages** (Page #{page}/#{total_pages})\n"
+          text += "Total spam messages: #{total_count}\n\n"
+          buttons = []
+
+          max_spam_preview_length = Rails.application.config.max_spam_preview_length
+          max_spam_preview_button_length = Rails.application.config.max_spam_preview_button_length
+          trained_messages.each_with_index do |message, index|
+            # Truncate long spam messages for display
+            spam_preview = message.message.length > max_spam_preview_length ? "#{message.message[0..max_spam_preview_length]}..." : message.message
+            spam_button_preview = message.message.length > max_spam_preview_button_length ? "#{message.message[0..max_spam_preview_button_length]}..." : message.message
+            text += "**#{index + 1}. User:** *#{message.sender_user_name}*\n"
+            text += "**Message:** `#{spam_preview}`\n"
+            text += "**SpamType:** *#{message.training_target}*\n"
+            text += "**Banned:** #{message.created_at.strftime("%Y-%m-%d %H:%M")}\n\n"
+
+            # Create an "mark as ham" button for each user
+            callback_data = build_callback_data(CallbackAction::MARK_AS_HAM,
+                                                CallbackConstants::TRAINED_MESSAGE_ID => message.id,
+                                                CallbackConstants::GROUP_ID=> target_group_id)
+            buttons << [ { text: "✅ #{I18n.t('telegram_bot.listspam.mark_as_ham_message')} #{index + 1}. #{spam_button_preview}", callback_data: callback_data } ]
+          end
+
+          # Add pagination buttons if needed
+          pagination_buttons = []
+          if page > 1
+            pagination_buttons << { text: I18n.t("telegram_bot.listspam.previous_page"),
+                                    callback_data: build_callback_data(CallbackAction::LISTSPAM_PAGE,
+                                                                       CallbackConstants::GROUP_ID => target_group_id,
+                                                                       CallbackConstants::PAGE => page - 1,
+                                                                       CallbackConstants::LANGUAGE => @lang_code) }
+          end
+          if page < total_pages
+            pagination_buttons << { text: I18n.t("telegram_bot.listspam.next_page"),
+                                    callback_data: build_callback_data(CallbackAction::LISTSPAM_PAGE,
+                                                                       CallbackConstants::GROUP_ID => target_group_id,
+                                                                       CallbackConstants::PAGE => page + 1,
+                                                                       CallbackConstants::LANGUAGE => @lang_code) }
+          end
+
+          buttons << pagination_buttons unless pagination_buttons.empty?
+
+          reply_markup = { inline_keyboard: buttons }.to_json
+
+          bot.api.send_message(
+            chat_id: message.chat.id,
+            text: text,
+            reply_markup: reply_markup,
+            parse_mode: "Markdown"
+          )
+        end
+      rescue => e
+        Rails.logger.error "Error in listspam command: #{e.message}"
+        bot.api.send_message(chat_id: message.chat.id, text: "#{I18n.t('telegram_bot.listspam.unban_message')}")
+      end
+    end
+  end
+
   def handle_listbanuser_command(bot, message)
     return unless is_group_chat?(bot, message)
     return unless is_admin?(bot, message)
@@ -285,10 +387,18 @@ class TelegramBotter
           # Add pagination buttons if needed
           pagination_buttons = []
           if page > 1
-            pagination_buttons << { text: I18n.t("telegram_bot.listbanuser.previous_page"), callback_data: build_callback_data(CallbackAction::LISTBANUSER_PAGE, CallbackConstants::GROUP_ID => target_group_id, CallbackConstants::PAGE => page - 1, CallbackConstants::LANGUAGE => @lang_code) }
+            pagination_buttons << { text: I18n.t("telegram_bot.listbanuser.previous_page"),
+                                    callback_data: build_callback_data(CallbackAction::LISTBANUSER_PAGE,
+                                                                       CallbackConstants::GROUP_ID => target_group_id,
+                                                                       CallbackConstants::PAGE => page - 1,
+                                                                       CallbackConstants::LANGUAGE => @lang_code) }
           end
           if page < total_pages
-            pagination_buttons << { text: I18n.t("telegram_bot.listbanuser.next_page"), callback_data: build_callback_data(CallbackAction::LISTBANUSER_PAGE, CallbackConstants::GROUP_ID => target_group_id, CallbackConstants::PAGE => page + 1, CallbackConstants::LANGUAGE => @lang_code) }
+            pagination_buttons << { text: I18n.t("telegram_bot.listbanuser.next_page"),
+                                    callback_data: build_callback_data(CallbackAction::LISTBANUSER_PAGE,
+                                                                       CallbackConstants::GROUP_ID => target_group_id,
+                                                                       CallbackConstants::PAGE => page + 1,
+                                                                       CallbackConstants::LANGUAGE => @lang_code) }
           end
 
           buttons << pagination_buttons unless pagination_buttons.empty?
@@ -363,6 +473,7 @@ class TelegramBotter
     callback_data = parse_callback_data(callback.data)
     action = callback_data[CallbackConstants::ACTION]
     user_id = callback_data[CallbackConstants::USER_ID]
+    trained_message_id = callback_data[CallbackConstants::TRAINED_MESSAGE_ID]
     @lang_code = callback_data[CallbackConstants::LANGUAGE] || "en"
     page = callback_data[CallbackConstants::PAGE] || 1
 
@@ -374,6 +485,10 @@ class TelegramBotter
         handle_user_guide_callback(bot, callback)
       when CallbackAction::UNBAN
         handle_unban_callback(bot, callback, chat_id, message_id, user_id)
+      when CallbackAction::MARK_AS_HAM
+        handle_mark_as_ham_callback(bot, callback, chat_id, message_id, trained_message_id)
+      when CallbackAction::LISTSPAM_PAGE
+        handle_listspam_pagination_callback(bot, callback, page)
       when CallbackAction::LISTBANUSER_PAGE
         handle_listbanuser_pagination_callback(bot, callback, page)
       when CallbackAction::BACK_TO_MAIN
@@ -434,6 +549,29 @@ class TelegramBotter
     bot.api.answer_callback_query(callback_query_id: callback.id)
   end
 
+  def handle_mark_as_ham_callback(bot, callback, chat_id, tg_message_id, trained_message_id)
+    # Only admin has permission to perform actions
+    return unless is_admin_of_group?(bot: bot, user: callback.from, group_id: callback.message.chat.id)
+
+    I18n.with_locale(@lang_code) do
+      trained_message = TrainedMessage.find_by(id: trained_message_id)
+      unless trained_message
+        return
+      end
+
+      begin
+        # This will trigger ActiveModel hook to automatically rebuild
+        # classifier in a background job
+        trained_message.update!(message_type: :ham)
+        user_name = trained_message.sender_user_name
+        user_id = trained_message.sender_chat_id
+        edit_message_text(bot, chat_id, tg_message_id, I18n.t("telegram_bot.markasham.success_message", user_name: user_name, user_id: user_id))
+      rescue => e
+        Rails.logger.error "Error mark message as ham: #{e.message}"
+      end
+    end
+  end
+
   def handle_unban_callback(bot, callback, chat_id, message_id, banned_user_id)
     # Only admin has permission to perform actions
     return unless is_admin_of_group?(bot: bot, user: callback.from, group_id: callback.message.chat.id)
@@ -469,6 +607,28 @@ class TelegramBotter
         Rails.logger.error "Error unbanning user: #{e.message}"
       end
     end
+  end
+
+  def handle_listspam_pagination_callback(bot, callback, page)
+    # Only admin has permission to perform actions
+    is_admin = is_admin_of_group?(bot: bot, user: callback.from, group_id: callback.message.chat.id)
+    return unless is_admin
+
+    # Simulate the listbanuser command with the new page
+    callback_data = parse_callback_data(callback.data)
+    group_id = callback_data[CallbackConstants::GROUP_ID]
+
+    fake_message = Struct.new(:text, :chat, :from).new(
+      text: "/listbanuser #{page}",
+      chat: callback.message.chat,
+      from: callback.from
+    )
+
+    # Delete the old message
+    bot.api.delete_message(chat_id: callback.message.chat.id, message_id: callback.message.message_id)
+
+    # Send new message with updated page
+    handle_listspam_command(bot, fake_message)
   end
 
   def handle_listbanuser_pagination_callback(bot, callback, page)

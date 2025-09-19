@@ -42,13 +42,23 @@ en:
       already_unbanned_message: "✅User already has been unbanned"
       success_message: "✅ User @[%{user_name}](tg://user?id=%{user_id}) has been unbanned and their messages marked as ham."
       failure_message: "❌ Failed to unban user."
+    markasham:
+      success_message: "✅ Message from user @[%{user_name}](tg://user?id=%{user_id}) has been marked as ham."
+      failure_message: "❌ Failed to mark message as ham."
     is_admin:
       error_message: "❌ You are not an administrator of this group"
     listbanuser:
       no_banned_user_message: "There is no banned users in this group"
-      no_banned_on_page_x_message: "No banned users found on page %{page} for group `%{group_title}`. Try `/listspam %{target_group_id} 1` to see the first page."
+      no_banned_on_page_x_message: "No banned users found on page %{page} for group `%{group_title}`. Try `/listbanuser %{target_group_id} 1` to see the first page."
       unban_message: "Unban"
       failure_message: "❌ Failed to retrieve banned users list."
+      previous_page: "⬅️ Previous"
+      next_page: "Next ➡️"
+    listspam:
+      no_spam_user_message: "There is no spam message in this group"
+      no_spam_on_page_x_message: "No spam found on page %{page} for group `%{group_title}`. Try `/listspam %{target_group_id} 1` to see the first page."
+      mark_as_ham_message: "Not Spam"
+      failure_message: "❌ Failed to retrieve spam list."
       previous_page: "⬅️ Previous"
       next_page: "Next ➡️"
     handle_callback:
