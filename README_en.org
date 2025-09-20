@@ -43,12 +43,18 @@
     Unlike common group management bots, this command not only deletes the spam and bans the user, but also marks the message as spam with very high confidence. The system then uses this spam text as training data to update the model in real-time.
 
     Similar messages will not only be identified in the future, but all groups using this bot will benefit, as similar texts will also be marked as spam.
-*** =/listspam=
+*** =/listbanuser=
     View the list of banned accounts. Requires admin permissions.
+
+    [[./doc/img/listbanuser.jpg]]
+
+    View the list of banned users and proactively unban them.
+*** =/listspam=
+    View the list of spam messages. Requires admin permissions.
 
     [[./doc/img/listspam.jpg]]
 
-    View the list of banned users and proactively unban them.
+    View the list of spam messages and mark false postive message as ham.
 *** =/feedspam=
     Feed spam messages for training. No permissions required. Can be used in private chat or in-group.
 
