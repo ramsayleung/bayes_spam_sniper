@@ -36,8 +36,6 @@ namespace :data_migration do
   end
   desc "Retrain all classifier"
   task retrain_all_classifier: :environment do
-    GroupClassifierState.for_public.find_each do |classifier|
-      SpamClassifierService.rebuild_for_group(classifier.group_id, classifier.group_name)
-    end
+      SpamClassifierService.rebuild_all_public
   end
 end

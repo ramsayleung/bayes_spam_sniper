@@ -5,10 +5,10 @@ class SpamClassifierService
 
   attr_reader :group_id, :classifier_state, :group_name
 
-  def initialize(group_id, group_name)
+  def initialize(group_id, group_name, classifier_state: nil)
     @group_id = group_id
     @group_name = group_name
-    @classifier_state = GroupClassifierState.find_or_create_by!(group_id: @group_id) do |new_state|
+    @classifier_state = classifier_state || GroupClassifierState.find_or_create_by!(group_id: @group_id) do |new_state|
       # Find the most recently updated classifier for group to use as a template.
       template = GroupClassifierState.for_group.order(updated_at: :desc).first
       if template
@@ -35,25 +35,28 @@ class SpamClassifierService
   end
 
   def train_only(trained_message)
+    # Lazily initialize the vocabulary set ONCE per service instance
+    @vocabulary ||= Set.new((@classifier_state.spam_counts.keys + @classifier_state.ham_counts.keys))
+
     tokens = tokenize(trained_message.message)
-    vocabulary = Set.new((@classifier_state.spam_counts.keys + @classifier_state.ham_counts.keys))
+
     if trained_message.spam?
       @classifier_state.total_spam_messages += 1
       @classifier_state.total_spam_words += tokens.size
       tokens.each do |token|
         @classifier_state.spam_counts[token] = @classifier_state.spam_counts.fetch(token, 0) + 1
-        vocabulary.add(token)
+        @vocabulary.add(token)
       end
     else # :ham
       @classifier_state.total_ham_messages += 1
       @classifier_state.total_ham_words += tokens.size
       tokens.each do |token|
         @classifier_state.ham_counts[token] = @classifier_state.ham_counts.fetch(token, 0) + 1
-        vocabulary.add(token)
+        @vocabulary.add(token)
       end
     end
 
-    @classifier_state.vocabulary_size = vocabulary.size
+    @classifier_state.vocabulary_size = @vocabulary.size
   end
 
   def train(trained_message)
@@ -108,41 +111,6 @@ class SpamClassifierService
     is_spam = p_spam >= confidence_threshold
     Rails.logger.info "classified_result: #{is_spam ? "maybe_spam": "maybe_ham"}, p_spam: #{p_spam}, message_text: #{message_text}"
     [ is_spam, spam_score, ham_score ]
-  end
-
-  class << self
-    def rebuild_for_group(group_id, group_name)
-      service = new(group_id, group_name)
-      service.rebuild_classifier
-    end
-  end
-
-  def rebuild_classifier
-    Rails.logger.info "Rebuild classifier for group_id: #{group_id}"
-    messages_to_train = if group_id == GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID
-                          TrainedMessage.trainable.for_user_name
-    else
-                          TrainedMessage.trainable.for_message_content
-    end
-
-    ActiveRecord::Base.transaction do
-      classifier_state.update!(
-        group_name: group_name,
-        spam_counts: {},
-        ham_counts: {},
-        total_spam_words: 0,
-        total_ham_words: 0,
-        total_spam_messages: 0,
-        total_ham_messages: 0,
-        vocabulary_size: 0
-      )
-
-      # Retrain from all trainable messages
-      messages_to_train.find_each do |message|
-        train_only(message)
-      end
-      classifier_state.save!
-    end
   end
 
   def tokenize(text)
@@ -218,5 +186,59 @@ class SpamClassifierService
   def pure_numbers?(token)
     # Check if token contains only numbers (Arabic or Chinese)
     token.match?(/^[0-9一二三四五六七八九十百千万亿零]+$/)
+  end
+
+  class << self
+    def rebuild_all_public
+      Rails.logger.info "Starting rebuild for all public classifiers..."
+
+      # 1. Load all classifier states from the DB
+      classifier_states = GroupClassifierState.for_public.index_by(&:group_id)
+
+      # Reset stats in memory before starting
+      classifier_states.each_value do |state|
+        state.spam_counts = {}
+        state.ham_counts = {}
+        state.total_spam_words = 0
+        state.total_ham_words = 0
+        state.total_spam_messages = 0
+        state.total_ham_messages = 0
+        state.vocabulary_size = 0
+      end
+
+      # 2. Create a service instance for each state, injecting the state object
+      # This avoids all redundant database lookups.
+      services = classifier_states.transform_values do |state|
+        new(state.group_id, state.group_name, classifier_state: state)
+      end
+
+      # 3. Process each category of messages ONCE
+      user_name_service = services[GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID]
+      group_services = services.values.reject { |s| s.group_id == GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID }
+
+      # Process user name messages
+      if user_name_service
+        TrainedMessage.trainable.for_user_name.find_each do |message|
+          user_name_service.train_only(message)
+        end
+      end
+
+      # Process group content messages
+      TrainedMessage.trainable.for_message_content.find_each do |message|
+        group_services.each do |service|
+          service.train_only(message)
+        end
+      end
+
+      # 4. Save everything in one transaction
+      ActiveRecord::Base.transaction do
+        services.each_value do |service|
+          Rails.logger.info "Saving classifier for group_id: #{service.group_id}"
+          service.classifier_state.save!
+        end
+      end
+
+      Rails.logger.info "Classifier rebuild completed!"
+    end
   end
 end
