@@ -52,7 +52,14 @@ class TrainedMessage < ApplicationRecord
       Rails.logger.info "user: #{self.sender_user_name} sent more than 3 spam messages in group: #{self.group_id}, ban this user from group"
       TelegramBackgroundWorkerJob.perform_later(
         action: PostAction::BAN_USER,
-        trained_message: self
+        trained_message_data: {
+          sender_user_name: self.sender_user_name,
+          sender_chat_id: self.sender_chat_id,
+          group_id: self.group_id,
+          group_name: self.group_name,
+          message: self.message,
+          message_id: self.message_id
+        }
       )
     end
   end

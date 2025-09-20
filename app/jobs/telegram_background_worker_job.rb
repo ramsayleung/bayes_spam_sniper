@@ -14,8 +14,8 @@ class TelegramBackgroundWorkerJob < ApplicationJob
 
     case action
     when PostAction::BAN_USER
-      trained_message = args.fetch(:trained_message)
-      ban_user_in_group(trained_message: trained_message)
+      trained_message_data = args.fetch(:trained_message_data)
+      ban_user_in_group(trained_message_data: trained_message_data)
     when PostAction::DELETE_ALERT_MESSAGE
       chat_id = args.fetch(:chat_id)
       message_id = args.fetch(:message_id)
@@ -45,10 +45,10 @@ class TelegramBackgroundWorkerJob < ApplicationJob
     end
   end
 
-  def ban_user_in_group(trained_message:)
-    user_name = trained_message.sender_user_name
-    user_id = trained_message.sender_chat_id
-    group_id = trained_message.group_id
+  def ban_user_in_group(trained_message_data:)
+    user_name = trained_message_data[:sender_user_name]
+    user_id = trained_message_data[:sender_chat_id]
+    group_id = trained_message_data[:group_id]
 
     chat_member = TelegramMemberFetcher.get_bot_chat_member(group_id)
     can_ban_user = [ "administrator", "creator" ].include?(chat_member&.status) && chat_member&.can_restrict_members
@@ -68,15 +68,15 @@ class TelegramBackgroundWorkerJob < ApplicationJob
 
     begin
       I18n.with_locale("en") do
-      bot.api.ban_chat_member(chat_id: trained_message.group_id, user_id: trained_message.sender_chat_id)
+      bot.api.ban_chat_member(chat_id: group_id, user_id: user_id)
       BannedUser.find_or_create_by!(
         group_id: group_id,
         sender_chat_id: user_id
       ) do |banned_user|
-        banned_user.group_name = trained_message.group_name
+        banned_user.group_name = trained_message_data[:group_name]
         banned_user.sender_user_name = user_name
-        banned_user.spam_message = trained_message.message
-        banned_user.message_id = trained_message.message_id
+        banned_user.spam_message = trained_message_data[:message]
+        banned_user.message_id = trained_message_data[:message_id]
       end
       bot.api.send_message(
         chat_id: group_id,
