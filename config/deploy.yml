@@ -93,6 +93,17 @@ builder:
 
 # Use accessory services (secrets come from .kamal/secrets).
 accessories:
+  db:
+    image: postgres:15
+    host: 192.168.1.188
+    port: "127.0.0.1:5432:5432"
+    env:
+      clear:
+        POSTGRES_DB: telegram_spam_sniper_bot_production
+      secret:
+        - POSTGRES_PASSWORD
+    volumes:
+      - "telegram_spam_sniper_bot_db:/var/lib/postgresql/data"
   migrator:
     host: 192.168.1.188
     image: samrayleung/telegram_spam_sniper_bot
@@ -119,6 +130,17 @@ accessories:
     host: 192.168.1.188
     image: samrayleung/telegram_spam_sniper_bot
     cmd: bin/rails export:trained_messages RAILS_ENV=production
+    env:
+      secret:
+        - RAILS_MASTER_KEY
+    volumes:
+      - "/tmp/migration_data:/rails/db/data"
+      # Mount the SAME storage volume as the main app to access the database
+      - "telegram_spam_sniper_bot_storage:/rails/storage"
+  json_exporter:
+    host: 192.168.1.188
+    image: samrayleung/telegram_spam_sniper_bot
+    cmd: bin/rails pg_migration:export_data RAILS_ENV=production
     env:
       secret:
         - RAILS_MASTER_KEY

@@ -4,7 +4,7 @@ namespace :pg_migration do
     data = {}
 
     # Export all models
-    [ TrainedMessage, BannedUser ].each do |model|
+    [ TrainedMessage, BannedUser, GroupClassifierState ].each do |model|
       puts "Exporting #{model.name}..."
       data[model.table_name] = model.all.as_json
     end
@@ -48,6 +48,16 @@ namespace :pg_migration do
           print "."
         end
         puts "\nImported #{data["banned_users"].length} BannedUser records"
+      end
+
+      if data["group_classifier_states"]
+        puts "Importing GroupClassifierStates records..."
+        data["group_classifier_states"].each do |record|
+          record.delete("id")
+          GroupClassifierState.create!(record)
+          print "."
+        end
+        puts "\nImported #{data["group_classifier_states"].length} GroupClassifierStates records"
       end
     end
     puts "Migration complete!"
