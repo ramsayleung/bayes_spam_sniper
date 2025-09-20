@@ -218,7 +218,7 @@ class TelegramBotter
   def is_admin?(bot, message)
     I18n.with_locale(@lang_code) do
       # Check if the user is admin of the target group
-      unless is_admin_of_group?(bot: bot, user: message.from, group_id: message.chat.id)
+      unless is_admin_of_group?(user: message.from, group_id: message.chat.id)
         bot.api.send_message(
           chat_id: message.chat.id,
           text: I18n.t("telegram_bot.is_admin.error_message"),
@@ -461,7 +461,7 @@ class TelegramBotter
     end
   end
 
-  def is_admin_of_group?(bot:, user:, group_id:)
+  def is_admin_of_group?(user:, group_id:)
     user_id = user.id
     chat_member = TelegramMemberFetcher.get_chat_member(group_id, user_id)
     [ "administrator", "creator" ].include?(chat_member&.status)
@@ -551,7 +551,7 @@ class TelegramBotter
 
   def handle_mark_as_ham_callback(bot, callback, chat_id, tg_message_id, trained_message_id)
     # Only admin has permission to perform actions
-    return unless is_admin_of_group?(bot: bot, user: callback.from, group_id: callback.message.chat.id)
+    return unless is_admin_of_group?(user: callback.from, group_id: callback.message.chat.id)
 
     I18n.with_locale(@lang_code) do
       trained_message = TrainedMessage.find_by(id: trained_message_id)
@@ -574,7 +574,7 @@ class TelegramBotter
 
   def handle_unban_callback(bot, callback, chat_id, message_id, banned_user_id)
     # Only admin has permission to perform actions
-    return unless is_admin_of_group?(bot: bot, user: callback.from, group_id: callback.message.chat.id)
+    return unless is_admin_of_group?(user: callback.from, group_id: callback.message.chat.id)
 
     I18n.with_locale(@lang_code) do
       banned_user = BannedUser.find_by(id: banned_user_id)
@@ -611,7 +611,7 @@ class TelegramBotter
 
   def handle_listspam_pagination_callback(bot, callback, page)
     # Only admin has permission to perform actions
-    is_admin = is_admin_of_group?(bot: bot, user: callback.from, group_id: callback.message.chat.id)
+    is_admin = is_admin_of_group?(user: callback.from, group_id: callback.message.chat.id)
     return unless is_admin
 
     # Simulate the listbanuser command with the new page
@@ -633,7 +633,7 @@ class TelegramBotter
 
   def handle_listbanuser_pagination_callback(bot, callback, page)
     # Only admin has permission to perform actions
-    is_admin = is_admin_of_group?(bot: bot, user: callback.from, group_id: callback.message.chat.id)
+    is_admin = is_admin_of_group?(user: callback.from, group_id: callback.message.chat.id)
     return unless is_admin
 
     # Simulate the listbanuser command with the new page
