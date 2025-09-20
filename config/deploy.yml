@@ -36,7 +36,12 @@ registry:
 env:
   secret:
     - RAILS_MASTER_KEY
-  # clear:
+    - POSTGRES_PASSWORD
+  clear:
+    # The hostname is constructed as [service_name]-[accessory_name].
+    DB_HOST: telegram_spam_sniper_bot-postgres
+    POSTGRES_USER: rails_user
+    POSTGRES_DB: telegram_spam_sniper_bot_production
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
     # SOLID_QUEUE_IN_PUMA: true
@@ -65,8 +70,8 @@ aliases:
 
 # Use a persistent storage volume for sqlite database files and local Active Storage files.
 # Recommended to change this to a mounted volume path that is backed up off server.
-volumes:
-  - "telegram_spam_sniper_bot_storage:/rails/storage"
+# volumes:
+#   - "telegram_spam_sniper_bot_storage:/rails/storage"
 
 # Bridge fingerprinted assets, like JS and CSS, between versions to avoid
 # hitting 404 on in-flight requests. Combines all files from new and old
@@ -93,17 +98,20 @@ builder:
 
 # Use accessory services (secrets come from .kamal/secrets).
 accessories:
-  db:
+  postgres:
     image: postgres:15
     host: 192.168.1.188
     port: "127.0.0.1:5432:5432"
     env:
       clear:
+        POSTGRES_USER: rails_user
         POSTGRES_DB: telegram_spam_sniper_bot_production
       secret:
         - POSTGRES_PASSWORD
-    volumes:
-      - "telegram_spam_sniper_bot_db:/var/lib/postgresql/data"
+    directories:
+      - data:/var/lib/postgresql/data
+    files:
+      - db/production_setup.sql:/docker-entrypoint-initdb.d/setup.sql
   migrator:
     host: 192.168.1.188
     image: samrayleung/telegram_spam_sniper_bot
@@ -137,6 +145,25 @@ accessories:
       - "/tmp/migration_data:/rails/db/data"
       # Mount the SAME storage volume as the main app to access the database
       - "telegram_spam_sniper_bot_storage:/rails/storage"
+  json_importer:
+    host: 192.168.1.188
+    image: samrayleung/telegram_spam_sniper_bot
+    cmd: bin/rails pg_migration:import_data RAILS_ENV=production
+    env:
+      clear:
+        DB_HOST: telegram_spam_sniper_bot-postgres
+        POSTGRES_USER: rails_user
+        POSTGRES_DB: telegram_spam_sniper_bot_production
+      secret:
+        - RAILS_MASTER_KEY
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
+    files:
+      - db/production_setup.sql:/docker-entrypoint-initdb.d/setup.sql
+    volumes:
+      - "/tmp/migration_data:/rails/db/data"
+
   json_exporter:
     host: 192.168.1.188
     image: samrayleung/telegram_spam_sniper_bot

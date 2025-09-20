@@ -1,0 +1,5 @@
+
+CREATE DATABASE telegram_spam_sniper_bot_production;
+CREATE DATABASE telegram_spam_sniper_bot_production_cache;
+CREATE DATABASE telegram_spam_sniper_bot_production_queue;
+CREATE DATABASE telegram_spam_sniper_bot_production_cable;
