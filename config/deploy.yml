@@ -40,6 +40,7 @@ env:
   clear:
     # The hostname is constructed as [service_name]-[accessory_name].
     DB_HOST: telegram_spam_sniper_bot-postgres
+    DB_PORT: 5432
     POSTGRES_USER: rails_user
     POSTGRES_DB: telegram_spam_sniper_bot_production
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
@@ -101,7 +102,7 @@ accessories:
   postgres:
     image: postgres:15
     host: 192.168.1.188
-    port: "127.0.0.1:5432:5432"
+    port: "5432:5432"
     env:
       clear:
         POSTGRES_USER: rails_user
@@ -145,6 +146,7 @@ accessories:
       - "/tmp/migration_data:/rails/db/data"
       # Mount the SAME storage volume as the main app to access the database
       - "telegram_spam_sniper_bot_storage:/rails/storage"
+
   json_importer:
     host: 192.168.1.188
     image: samrayleung/telegram_spam_sniper_bot
@@ -175,6 +177,7 @@ accessories:
       - "/tmp/migration_data:/rails/db/data"
       # Mount the SAME storage volume as the main app to access the database
       - "telegram_spam_sniper_bot_storage:/rails/storage"
+
   backfiller:
     host: 192.168.1.188
     image: samrayleung/telegram_spam_sniper_bot
