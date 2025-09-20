@@ -12,7 +12,7 @@ servers:
   job:
     hosts:
       - 192.168.1.188
-    cmd: bin/jobs
+    cmd: bin/bot
 
 # Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
 # Remove this section when using multiple web servers and ensure you terminate SSL at your load balancer.

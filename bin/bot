@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+
+require_relative "../config/environment"
+
+# Enqueue the bot job before starting the worker, ensuring the bot
+# starts immediately when the job worker container starts up.
+token = Rails.application.credentials.dig(:telegram_bot_token)
+if token
+  Rails.logger.info "Enqueuing TelegramBotWorkerJob..."
+  TelegramBotWorkerJob.perform_later(token)
+else
+  Rails.logger.info "No telegram bot token found"
+end
+
+# Start Solid queue
+require "solid_queue/cli"
+SolidQueue::Cli.start(ARGV)
