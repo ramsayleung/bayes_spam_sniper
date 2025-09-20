@@ -13,4 +13,6 @@ class GroupClassifierState < ApplicationRecord
   # find all classifiers for public, including group and username
   scope :for_public, -> { where(arel_table[:group_id].lteq(0)) }
   scope :for_group, -> { where("group_id < 0") }
+
+  validates :group_id, uniqueness: true
 end
