@@ -27,39 +27,49 @@ namespace :pg_migration do
     end
 
     data = JSON.parse(File.read(filepath))
+    now = Time.current # Use the same timestamp for all imported records
 
-    ActiveRecord::Base.transaction do
-      # Import in dependency order
-      if data["trained_messages"]
-        puts "Importinng TrainedMessage records.."
-        data["trained_messages"].each do |record|
-          record.delete("id")
-          TrainedMessage.create!(record)
-          print "."
-        end
-        puts "\nImported #{data["trained_messages"].length} TrainedMessage records"
+    # Import in dependency order
+    if data["trained_messages"]
+      puts "Importing #{data["trained_messages"].length} TrainedMessage records..."
+
+      # Prepare the data for bulk insert
+      attributes = data["trained_messages"].map do |record|
+        record.delete("id")
+        # Add timestamps if they don't exist in your JSON data
+        record["created_at"] ||= now
+        record["updated_at"] ||= now
+        record
       end
 
-      if data["banned_users"]
-        puts "Importing BannedUser records..."
-        data["banned_users"].each do |record|
-          record.delete("id")
-          BannedUser.create!(record)
-          print "."
-        end
-        puts "\nImported #{data["banned_users"].length} BannedUser records"
-      end
-
-      if data["group_classifier_states"]
-        puts "Importing GroupClassifierStates records..."
-        data["group_classifier_states"].each do |record|
-          record.delete("id")
-          GroupClassifierState.create!(record)
-          print "."
-        end
-        puts "\nImported #{data["group_classifier_states"].length} GroupClassifierStates records"
-      end
+      # Perform the bulk insert
+      TrainedMessage.insert_all!(attributes)
     end
+
+    # Repeat for BannedUser
+    if data["banned_users"]
+      puts "Importing #{data["banned_users"].length} BannedUser records..."
+      attributes = data["banned_users"].map do |record|
+        record.delete("id")
+        record["created_at"] ||= now
+        record["updated_at"] ||= now
+        record
+      end
+      BannedUser.insert_all!(attributes)
+    end
+
+    # Repeat for GroupClassifierState
+    if data["group_classifier_states"]
+      puts "Importing #{data["group_classifier_states"].length} GroupClassifierStates records..."
+      attributes = data["group_classifier_states"].map do |record|
+        record.delete("id")
+        record["created_at"] ||= now
+        record["updated_at"] ||= now
+        record
+      end
+      GroupClassifierState.insert_all!(attributes)
+    end
+
     puts "Migration complete!"
   end
 end

@@ -18,6 +18,7 @@ namespace :import do
     # A transaction ensures that if any row fails, the entire import is rolled back.
     # This prevents a partially-imported file from corrupting your data.
     ActiveRecord::Base.transaction do
+      TrainedMessage.skip_callback(:create, :after, :should_ban_user)
       CSV.foreach(csv_file_path, headers: true) do |row|
         message_content = row["message"]
 
@@ -75,6 +76,7 @@ namespace :import do
 
     # If any record fails to import, the whole process will be rolled back.
     ActiveRecord::Base.transaction do
+      TrainedMessage.skip_callback(:create, :after, :should_ban_user)
       CSV.foreach(filepath, headers: true, header_converters: :symbol) do |row|
         # 1. Calculate the message_hash from the message content in the row.
         message_text = row[:message].to_s
