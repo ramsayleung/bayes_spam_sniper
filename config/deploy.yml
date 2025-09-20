@@ -48,10 +48,10 @@ env:
     # SOLID_QUEUE_IN_PUMA: true
 
     # Set number of processes dedicated to Solid Queue (default: 1)
-    # JOB_CONCURRENCY: 3
+    JOB_CONCURRENCY: 3
 
     # Set number of cores available to the application on each server (default: 1).
-    # WEB_CONCURRENCY: 2
+    WEB_CONCURRENCY: 2
 
     # Match this to any external database server to configure Active Record correctly
     # Use telegram_spam_sniper_bot-db for a db accessory server on same machine via local kamal docker network.
@@ -108,49 +108,19 @@ accessories:
         POSTGRES_USER: rails_user
         POSTGRES_DB: telegram_spam_sniper_bot_production
       secret:
+        - RAILS_MASTER_KEY
         - POSTGRES_PASSWORD
     directories:
       - data:/var/lib/postgresql/data
     files:
       - db/production_setup.sql:/docker-entrypoint-initdb.d/setup.sql
-  migrator:
-    host: 192.168.1.188
-    image: samrayleung/telegram_spam_sniper_bot
-    cmd: bin/rails import:migrate_from_csv
-    env:
-      secret:
-        - RAILS_MASTER_KEY
-    volumes:
-      - "/tmp/migration_data/db_migration_data.csv:/rails/db/data/db_migration_data.csv:ro"
-      # Mount the SAME storage volume as the main app to access the database
-      - "telegram_spam_sniper_bot_storage:/rails/storage"
-  cleanup:
-    host: 192.168.1.188
-    image: samrayleung/telegram_spam_sniper_bot
-    cmd: bin/rails cleanup:delete_by_csv_hash RAILS_ENV=production
-    env:
-      secret:
-        - RAILS_MASTER_KEY
     volumes:
       - "/tmp/migration_data:/rails/db/data"
-      # Mount the SAME storage volume as the main app to access the database
-      - "telegram_spam_sniper_bot_storage:/rails/storage"
-  exporter:
-    host: 192.168.1.188
-    image: samrayleung/telegram_spam_sniper_bot
-    cmd: bin/rails export:trained_messages RAILS_ENV=production
-    env:
-      secret:
-        - RAILS_MASTER_KEY
-    volumes:
-      - "/tmp/migration_data:/rails/db/data"
-      # Mount the SAME storage volume as the main app to access the database
-      - "telegram_spam_sniper_bot_storage:/rails/storage"
 
-  json_importer:
+  runner:
     host: 192.168.1.188
     image: samrayleung/telegram_spam_sniper_bot
-    cmd: bin/rails pg_migration:import_data RAILS_ENV=production
+    cmd: sleep infinity  # Keeps the container running but idle
     env:
       clear:
         DB_HOST: telegram_spam_sniper_bot-postgres
@@ -161,33 +131,9 @@ accessories:
         - POSTGRES_PASSWORD
     directories:
       - data:/var/lib/postgresql/data
-    files:
-      - db/production_setup.sql:/docker-entrypoint-initdb.d/setup.sql
     volumes:
       - "/tmp/migration_data:/rails/db/data"
 
-  json_exporter:
-    host: 192.168.1.188
-    image: samrayleung/telegram_spam_sniper_bot
-    cmd: bin/rails pg_migration:export_data RAILS_ENV=production
-    env:
-      secret:
-        - RAILS_MASTER_KEY
-    volumes:
-      - "/tmp/migration_data:/rails/db/data"
-      # Mount the SAME storage volume as the main app to access the database
-      - "telegram_spam_sniper_bot_storage:/rails/storage"
-
-  backfiller:
-    host: 192.168.1.188
-    image: samrayleung/telegram_spam_sniper_bot
-    cmd: bin/rails data_migration:backfill_message_hashes
-    env:
-      secret:
-        - RAILS_MASTER_KEY
-    volumes:
-      # Mount the SAME storage volume as the main app to access the database
-      - "telegram_spam_sniper_bot_storage:/rails/storage"
 #   db:
 #     image: mysql:8.0
 #     host: 192.168.0.2
