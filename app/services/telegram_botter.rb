@@ -421,6 +421,10 @@ class TelegramBotter
 
   def handle_regular_message(bot, message)
     return if message.text.nil? || message.text.strip.empty?
+    if is_in_whitelist?(message)
+      Rails.logger.info "Skipping inspecting message #{message.text} as sender is in whitelist"
+      return
+    end
     Rails.logger.info "Handle regular message: #{message.text}"
     I18n.with_locale(@lang_code) do
       begin
@@ -679,6 +683,12 @@ class TelegramBotter
     Rails.logger.error "Error editing message: #{e.message}"
     # If editing fails, send a new message
     bot.api.send_message(chat_id: chat_id, text: new_text, parse_mode: "Markdown")
+  end
+
+  def is_in_whitelist?(message)
+    # don't inspect message from administrator
+    is_admin_of_group?(user: message.from, group_id: message.chat.id)
+    # add more rules
   end
 
   Signal.trap("TERM") do
