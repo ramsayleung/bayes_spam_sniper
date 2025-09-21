@@ -77,4 +77,7 @@ Rails.application.configure do
   # config.generators.apply_rubocop_autocorrect_after_generate!
 
   config.probability_threshold = 0.95
+
+  # Delete the warning message in x minutes to keep chat clean
+  config.delete_message_delay = 1
 end

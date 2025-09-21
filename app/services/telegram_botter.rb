@@ -160,7 +160,15 @@ class TelegramBotter
         else
           response_message = I18n.t("telegram_bot.markspam.success_message", banned_user_name: banned_user_name, user_id: replied.from.id)
         end
-        bot.api.send_message(chat_id: message.chat.id, text: response_message, parse_mode: "Markdown")
+
+        sent_message = bot.api.send_message(chat_id: message.chat.id, text: response_message, parse_mode: "Markdown")
+        # 5. Schedule a background job to delete the message
+        # to avoid polluting the group chat
+        delete_message_delay = Rails.application.config.delete_message_delay
+        TelegramBackgroundWorkerJob.set(wait: delete_message_delay.minutes).perform_later(
+          action: PostAction::DELETE_ALERT_MESSAGE,
+          chat_id: sent_message.chat.id,
+          message_id: sent_message.message_id)
       rescue => e
         Rails.logger.error "Error in markspam command: #{e.message}"
         bot.api.send_message(chat_id: message.chat.id, text: I18n.t("telegram_bot.markspam.failure_message"))
