@@ -30,9 +30,6 @@
               </th>
   
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Telegram Group Id
-              </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 <%= link_to banned_users_path(params.permit!.merge(sort: 'group_name', direction: params[:sort] == 'group_name' && params[:direction] == 'asc' ? 'desc' : 'asc')), class: "hover:text-gray-700 flex items-center space-x-1" do %>
                   <span>Group</span>
                   <% if params[:sort] == 'group_name' %>
@@ -72,9 +69,6 @@
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     <%= banned_user.id %>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    <%= banned_user.group_id %>
-                  </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <%= banned_user.group_name || 'Private' %>
                   </td>
@@ -85,7 +79,7 @@
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     <%= banned_user.sender_user_name %>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" title="<%= banned_user.spam_message %>">
                     <%= truncate(banned_user.spam_message, length: 50) %>
                   </td>
   

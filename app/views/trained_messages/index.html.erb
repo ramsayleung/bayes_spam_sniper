@@ -180,8 +180,8 @@
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 <%= message_type_classes(trained_message.message_type) %>">
                     <%= trained_message.message_type&.humanize || 'Unknown' %>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <%= trained_message.sender_user_name || 'Admin Imported' %>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" title="<%= trained_message.sender_user_name %>">
+                    <%= truncate(trained_message.sender_user_name, length: 20) || 'Admin Imported' %>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <%= trained_message.group_name || 'Imported' %>
