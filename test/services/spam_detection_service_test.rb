@@ -57,7 +57,10 @@ class SpamDetectionServiceIntegrationTest < ActiveSupport::TestCase
     tg_message = OpenStruct.new(chat: @chat, from: @from, text: pre_existing_message.message, message_id: 123)
     service = SpamDetectionService.new(tg_message)
 
-    result = service.process
+    result = nil
+    TelegramMemberFetcher.stub(:get_bot_chat_member, OpenStruct.new(status: "administrator", can_restrict_members: true)) do
+      result = service.process
+    end
 
     assert result.is_spam
     assert_equal TrainedMessage::TrainingTarget::MESSAGE_CONTENT, result.target

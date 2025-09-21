@@ -1,4 +1,6 @@
 require "application_system_test_case"
+require "ostruct"
+require "minitest/mock"
 
 class TrainedMessagesTest < ApplicationSystemTestCase
   setup do
@@ -11,18 +13,20 @@ class TrainedMessagesTest < ApplicationSystemTestCase
   end
 
   test "should create trained message" do
-    visit trained_messages_url
-    click_on "New trained message"
+    TelegramMemberFetcher.stub(:get_bot_chat_member, OpenStruct.new(status: "administrator", can_restrict_members: true)) do
+      visit trained_messages_url
+      click_on "New trained message"
 
-    fill_in "Group", with: @trained_message.group_id
-    fill_in "Message", with: @trained_message.message
-    select "Spam", from: "Message type"
-    select "Message Content", from: "Training target"
-    fill_in "Sender chat", with: @trained_message.sender_chat_id
-    click_on "Create Trained message"
+      fill_in "Group", with: @trained_message.group_id
+      fill_in "Message", with: @trained_message.message
+      select "Spam", from: "Message type"
+      select "Message Content", from: "Training target"
+      fill_in "Sender chat", with: @trained_message.sender_chat_id
+      click_on "Create Trained message"
 
-    assert_text "Trained message was successfully created"
-    click_on "Back"
+      assert_text "Trained message was successfully created"
+      click_on "Back"
+    end
   end
 
   test "should update Trained message" do

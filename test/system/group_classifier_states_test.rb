@@ -14,7 +14,7 @@ class GroupClassifierStatesTest < ApplicationSystemTestCase
     visit group_classifier_states_url
     click_on "New Group Classifier"
 
-    fill_in "Group", with: @group_classifier_state.group_id
+    fill_in "Group", with: 99
     fill_in "Ham counts", with: @group_classifier_state.ham_counts
     fill_in "Spam counts", with: @group_classifier_state.spam_counts
     fill_in "Total ham messages", with: @group_classifier_state.total_ham_messages

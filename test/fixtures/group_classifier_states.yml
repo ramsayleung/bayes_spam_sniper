@@ -11,7 +11,7 @@ one:
   vocabulary_size: 1
 
 two:
-  group_id: 1
+  group_id: 2
   spam_counts: '{"word5": 2, "word6": 8}'
   ham_counts: '{"word7": 4, "word8": 6}'
   total_spam_words: 1

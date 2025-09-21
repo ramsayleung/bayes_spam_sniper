@@ -1,3 +1,5 @@
+require "telegram/bot"
+
 class TelegramMemberFetcher
   def self.get_bot_chat_member(group_id)
     bot_id = Rails.cache.fetch("bot_id", expires_in: 24.hours) do

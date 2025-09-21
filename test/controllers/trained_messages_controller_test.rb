@@ -17,7 +17,13 @@ class TrainedMessagesControllerTest < ActionDispatch::IntegrationTest
 
   test "should create trained_message" do
     assert_difference("TrainedMessage.count") do
-      post trained_messages_url, params: { trained_message: { group_id: @trained_message.group_id, message: @trained_message.message, message_type: @trained_message.message_type, sender_chat_id: @trained_message.sender_chat_id } }
+      TelegramMemberFetcher.stub(:get_bot_chat_member, OpenStruct.new(status: "administrator", can_restrict_members: true)) do
+        post trained_messages_url, params: { trained_message: {
+                                               group_id: @trained_message.group_id,
+                                               message: @trained_message.message,
+                                               message_type: @trained_message.message_type,
+                                               sender_chat_id: @trained_message.sender_chat_id } }
+      end
     end
 
     assert_redirected_to trained_message_url(TrainedMessage.last)

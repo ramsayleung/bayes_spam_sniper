@@ -17,7 +17,15 @@ class GroupClassifierStatesControllerTest < ActionDispatch::IntegrationTest
 
   test "should create group_classifier_state" do
     assert_difference("GroupClassifierState.count") do
-      post group_classifier_states_url, params: { group_classifier_state: { group_id: @group_classifier_state.group_id, ham_counts: @group_classifier_state.ham_counts, spam_counts: @group_classifier_state.spam_counts, total_ham_messages: @group_classifier_state.total_ham_messages, total_ham_words: @group_classifier_state.total_ham_words, total_spam_messages: @group_classifier_state.total_spam_messages, total_spam_words: @group_classifier_state.total_spam_words, vocabulary_size: @group_classifier_state.vocabulary_size } }
+      post group_classifier_states_url, params: { group_classifier_state:
+                                                  { group_id: 99,
+                                                    ham_counts: @group_classifier_state.ham_counts,
+                                                    spam_counts: @group_classifier_state.spam_counts,
+                                                    total_ham_messages: @group_classifier_state.total_ham_messages,
+                                                    total_ham_words: @group_classifier_state.total_ham_words,
+                                                    total_spam_messages: @group_classifier_state.total_spam_messages,
+                                                    total_spam_words: @group_classifier_state.total_spam_words,
+                                                    vocabulary_size: @group_classifier_state.vocabulary_size } }
     end
 
     assert_redirected_to group_classifier_state_url(GroupClassifierState.last)
