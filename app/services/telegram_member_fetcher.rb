@@ -10,7 +10,7 @@ class TelegramMemberFetcher
 
   def self.get_chat_member(group_id, user_id)
     cache_key = "#{group_id}_#{user_id}_group_chat_member"
-    chat_member = Rails.cache.fetch(cache_key, expires_in: 1.hours) do
+    chat_member = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
       begin
         bot.api.get_chat_member(chat_id: group_id, user_id: user_id)
       rescue => e
