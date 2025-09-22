@@ -1,0 +1,41 @@
+<div class="container mx-auto px-4">
+  <h1 class="text-2xl font-bold mb-4">Tokenization Samples</h1>
+
+  <%= link_to "Get Another Random Samples",
+              new_tokenization_sample_path,
+              data: { turbo_frame: "sample" },
+              class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+
+  <turbo-frame id="sample">
+    <% if @samples.any? %>
+      <% @samples.each_with_index do |sample, index| %>
+        <div class="mt-6 p-4 border rounded shadow bg-white">
+          <h2 class="text-xl font-semibold">Sample <%= index + 1 %></h2>
+
+          <div class="mt-2">
+            <h3 class="text-lg font-medium">Original Message</h3>
+            <p class="bg-gray-100 p-2 rounded"><%= sample[:original] %></p>
+          </div>
+
+          <div class="mt-2">
+            <h3 class="text-lg font-medium">Cleaned Message</h3>
+            <p class="bg-gray-100 p-2 rounded"><%= sample[:cleaned] %></p>
+          </div>
+
+          <div class="mt-2">
+            <h3 class="text-lg font-medium">Tokens</h3>
+            <div class="bg-gray-100 p-2 rounded flex flex-wrap">
+              <% sample[:tokens].each do |token| %>
+                <span class="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">
+                  <%= token %>
+                </span>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="mt-4">No trained messages found in the database.</p>
+    <% end %>
+  </turbo-frame>
+</div>
