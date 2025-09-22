@@ -474,6 +474,9 @@ class TelegramBotter
   end
 
   def is_admin_of_group?(user:, group_id:)
+    # Special case: Channel admins posting via "GroupAnonymousBot"
+    return true if user.is_bot && user.username == "GroupAnonymousBot"
+
     user_id = user.id
     chat_member = TelegramMemberFetcher.get_chat_member(group_id, user_id)
     [ "administrator", "creator" ].include?(chat_member&.status)
