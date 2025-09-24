@@ -1,5 +1,6 @@
 require "test_helper"
 require "ostruct"
+require "minitest/mock"
 
 class SpamDetectionServiceIntegrationTest < ActiveSupport::TestCase
   fixtures :group_classifier_states, :trained_messages

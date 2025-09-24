@@ -1,6 +1,4 @@
 class SpamDetectionService
-  ClassificationResult = Data.define(:is_spam, :target)
-
   def initialize(tg_message_struct)
     @tg_message_struct = tg_message_struct
     @group_id = tg_message_struct.chat.id
@@ -13,6 +11,12 @@ class SpamDetectionService
 
   def process
     return non_spam_result unless valid_message?
+
+    rule_result = RuleBasedClassifier.new(@message_text).classify
+    if rule_result.is_spam
+      create_trained_message(@message_text, rule_result.target)
+      return rule_result
+    end
 
     targets_to_check = [
       { name: "message_content", value: @message_text },
@@ -56,7 +60,7 @@ class SpamDetectionService
     when "spam"
       @is_confident = true
       Rails.logger.info "Same message exists and already marked as spam: #{existing_message.message}, training target: #{existing_message.training_target}"
-      ClassificationResult.new(is_spam: true, target: existing_message.training_target)
+      Shared::ClassificationResult.new(is_spam: true, target: existing_message.training_target)
     when "ham"
       Rails.logger.info "Same message exists and already marked as ham: #{existing_message.message}, training target: #{existing_message.training_target}"
       non_spam_result
@@ -66,12 +70,13 @@ class SpamDetectionService
     end
   end
 
+
   def classify_with_bayesian(target_name, target_value)
     classifier = build_classifier(target_name)
     is_spam, spam_score, ham_score = classifier.classify(target_value)
 
     Rails.logger.info "Classified '#{target_value}' against '#{target_name}': is_spam=#{is_spam}, spam_score=#{spam_score}, ham_score=#{ham_score}"
-    ClassificationResult.new(is_spam: is_spam, target: target_name)
+    Shared::ClassificationResult.new(is_spam: is_spam, target: target_name)
   end
 
   def build_classifier(target_name)
@@ -105,6 +110,6 @@ class SpamDetectionService
   end
 
   def non_spam_result
-    ClassificationResult.new(is_spam: false, target: nil)
+    Shared::ClassificationResult.new(is_spam: false, target: nil)
   end
 end

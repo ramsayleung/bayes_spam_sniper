@@ -32,5 +32,6 @@ module TelegramSpamSniperBot
     config.delete_message_delay = 5
     # Spam blocked probability threshold
     config.probability_threshold = 0.95
+    config.chinese_space_spam_threshold = 0.8
   end
 end

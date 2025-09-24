@@ -163,6 +163,14 @@ namespace :telegram do
     classifier = SpamClassifierService.new(group_id, group_name)
     is_spam, _, _ = classifier.classify(text_to_classify)
 
+    if training_target == :message_content && !is_spam
+      rule_based_classifier = RuleBasedClassifier.new(text_to_classify)
+      is_spam = rule_based_classifier.classify().is_spam
+      if is_spam
+        puts "maybe_spam detected by rule_based classifier: #{text_to_classify}"
+      end
+    end
+
     puts "#{training_target} classified result: #{is_spam ? 'maybe_spam' : 'maybe_ham'}"
 
     spam_count = TrainedMessage.where(message_type: [ :spam, :maybe_spam ], training_target: training_target).count
