@@ -17,6 +17,7 @@ class RuleBasedClassifier
   private
 
   def check_chinese_spacing_spam
+    min_chinese_chars = 5
     # This pattern specifically looks for a Chinese character, followed by a space,
     # and then another Chinese character like this
     # 跟 单 像 捡 钱 ！ 再 不 进 群 是 傻 狗 ！
@@ -31,7 +32,7 @@ class RuleBasedClassifier
       threshold = Rails.application.config.chinese_space_spam_threshold
       ratio = chinese_chars > 0 ? spaced_chinese_words_count.to_f / chinese_chars : 0.0
 
-      if ratio > threshold
+      if ratio > threshold && chinese_chars >= min_chinese_chars
         Rails.logger.info "Classified as spam due to high Chinese character spacing ratio: #{ratio}"
         return Shared::ClassificationResult.new(is_spam: true, target: "message_content")
       end
