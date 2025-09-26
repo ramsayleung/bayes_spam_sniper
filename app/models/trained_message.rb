@@ -2,6 +2,7 @@ class TrainedMessage < ApplicationRecord
   enum :message_type, { spam: 0, ham: 1, untrained: 2, maybe_spam: 3, maybe_ham: 4 }
   # New enum for what is being trained
   enum :training_target, { message_content: 0, user_name: 1 }
+  enum :source, { chat: 0, feedspam_command: 1, import: 2 }
   module MessageType
     SPAM = "spam"
     HAM = "ham"
@@ -13,6 +14,11 @@ class TrainedMessage < ApplicationRecord
   module TrainingTarget
     MESSAGE_CONTENT = "message_content"
     USER_NAME = "user_name"
+  end
+  module Source
+    CHAT = "chat"
+    FEEDSPAM_COMMAND = "feedspam_command"
+    IMPORT = "import"
   end
   GLOBAL_SHARED_MESSAGE = 0
 
@@ -45,7 +51,7 @@ class TrainedMessage < ApplicationRecord
     end
 
     spam_ban_threshold = Rails.application.config.spam_ban_threshold
-    spam_count = TrainedMessage.where(group_id: self.group_id, sender_chat_id: self.sender_chat_id, message_type: :spam).count
+    spam_count = TrainedMessage.where(group_id: self.group_id, sender_chat_id: self.sender_chat_id, message_type: :spam, source: :chat).count
     chat_member = TelegramMemberFetcher.get_bot_chat_member(self.group_id)
     can_ban_user = [ "administrator", "creator" ].include?(chat_member&.status) && chat_member&.can_restrict_members
     if spam_count >= spam_ban_threshold && can_ban_user

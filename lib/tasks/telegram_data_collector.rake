@@ -188,7 +188,8 @@ namespace :telegram do
         message_type: is_spam ? :maybe_spam : :maybe_ham,
         sender_user_name: user_name || "Telegram collector",
         training_target: training_target,
-        sender_chat_id: user_id
+        sender_chat_id: user_id,
+        source: :import
       )
     end
   end

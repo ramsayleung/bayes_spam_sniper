@@ -17,6 +17,10 @@ class TrainedMessagesController < ApplicationController
       @trained_messages = @trained_messages.where(group_name: params[:group_name])
     end
 
+    if params[:source].present? && params[:source] != "all"
+      @trained_messages = @trained_messages.where(source: params[:source])
+    end
+
     if params[:search].present?
       @trained_messages = @trained_messages.where("message LIKE ?", "%#{params[:search]}%")
     end
@@ -41,12 +45,13 @@ class TrainedMessagesController < ApplicationController
     @total_pages = (@total_count.to_f / @per_page).ceil
 
     # Using unscoped ensures we get all possible options, not just the filtered ones.
-    filter_data = TrainedMessage.unscoped.distinct.pluck(:message_type, :training_target, :group_name)
+    filter_data = TrainedMessage.unscoped.distinct.pluck(:message_type, :training_target, :group_name, :source)
 
     # Get filter options
     @message_types = filter_data.map(&:first).uniq.compact.sort
     @training_targets = filter_data.map(&:second).uniq.compact.sort
     @group_names = filter_data.map(&:third).uniq.compact.sort
+    @sources = filter_data.map(&:fourth).uniq.compact.sort
   end
 
   # GET /trained_messages/1 or /trained_messages/1.json

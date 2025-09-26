@@ -38,6 +38,7 @@ namespace :import do
           record.sender_chat_id = 0
           record.sender_user_name = "CSV Import"
           record.training_target = row["target"] || "message_content"
+          record.source = :import
 
           record.save!
 
