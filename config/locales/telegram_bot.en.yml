@@ -38,6 +38,8 @@ en:
       help_message: "Please provide the spam message text after the command. Examples: `/feedspam FREE IPHONE`"
       success_message: "✅ Got it. I've learned from that spam message:\n\n`%{preview}`"
       failure_message: "❌ Failed to process the spam training request."
+      reply_prompt: "/feedspam: Please reply to the this message with the spam you want to feed"
+      input_field_placeholder: "Please type the spam message you want to feed"
     unban:
       already_unbanned_message: "✅User already has been unbanned"
       success_message: "✅ User @[%{user_name}](tg://user?id=%{user_id}) has been unbanned and their messages marked as ham."

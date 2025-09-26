@@ -59,6 +59,13 @@ class TelegramBotter
     @lang_code = (message.from&.language_code || "en").split("-").first
     # Remove @botname from the beginning if present
     message_text = message_text.gsub(/^@#{@bot_username}\s+/, "") if @bot_username
+    if @bot_username
+      bot_mention_regex = /@#{@bot_username}/i
+
+      # Command with bot name appended (e.g., /feedspam@BotName)
+      # This strips the @BotName from the end of the command.
+      message_text = message_text.gsub(bot_mention_regex, "")
+    end
 
     # Route to appropriate command handler
     case message_text
@@ -73,6 +80,11 @@ class TelegramBotter
     when %r{^/listspam}
       handle_listspam_command(bot, message)
     else
+      if message.reply_to_message
+        # If it's a reply, check if it's meant for the bot's training prompt
+        handle_forced_reply(bot, message)
+        return
+      end
       handle_regular_message(bot, message)
     end
   rescue => e
@@ -176,32 +188,94 @@ class TelegramBotter
     end
   end
 
-  def handle_feedspam_command(bot, message, message_text)
-    # Extract everything after /feedspam command, preserving multiline content
-    spam_text = message_text.sub(%r{^/feedspam\s*}, "").strip
+  def handle_forced_reply(bot, message)
+    replied_to = message.reply_to_message
 
-    I18n.with_locale(@lang_code) do
-      if spam_text.empty?
-        help_message = <<~TEXT
-      #{I18n.t('telegram_bot.feedspam.help_message')}
-    TEXT
-        bot.api.send_message(chat_id: message.chat.id, text: help_message, parse_mode: "Markdown")
-        return
+    # 1. Ensure it's a reply to a message sent by the bot
+    return unless replied_to && replied_to.from&.id == @bot_id
+
+    # 2. Check if the bot's message was the /feedspam prompt.
+    # defined in I18n.t('telegram_bot.feedspam.reply_prompt', locale: @lang_code)
+    feedspam_expected_prefix = "/feedspam:"
+
+    Rails.logger.info "handle_forced_reply: #{replied_to.text}"
+    if replied_to.text&.start_with?(feedspam_expected_prefix)
+      spam_text = message.text&.strip
+      if spam_text.nil? || spam_text.empty?
+        # User replied with an empty message
+        bot.api.send_message(
+          chat_id: message.chat.id,
+          text: I18n.t("telegram_bot.feedspam.empty_reply_error", locale: @lang_code),
+          reply_to_message_id: message.message_id # Reply to the empty reply to show who made the mistake
+        )
+      else
+        # Reroute to the actual training logic
+        execute_spam_training(bot, message, spam_text)
       end
+    end
+  end
 
-      Rails.logger.info "spam message: #{message_text}"
+  def handle_feedspam_command(bot, message, message_text)
+    I18n.with_locale(@lang_code) do
+      # 1. Check if the command was used as a reply to another message
+      replied_message = message.reply_to_message
+
+      if replied_message && !replied_message.text.to_s.strip.empty?
+        Rails.logger.info "It's replied_message in feedspam"
+        # Use the text of the replied-to message for training
+        spam_text = replied_message.text
+
+        # Execute training logic
+        execute_spam_training(bot, message, spam_text)
+
+      else
+        Rails.logger.info "It's not replied_message in feedspam"
+        # 2. Check for text arguments directly after the command
+        # Extract everything after /feedspam command, preserving multiline content
+        spam_text_argument = message_text.sub(%r{^/feedspam\s*}, "").strip
+
+        Rails.logger.info "feedspam #{spam_text_argument}"
+        if spam_text_argument.empty?
+          # 3. No text and no reply found: Send a user-friendly prompt with force_reply
+          help_message = I18n.t("telegram_bot.feedspam.reply_prompt")
+
+          force_reply_markup = {
+            force_reply: true,
+            input_field_placeholder: I18n.t("telegram_bot.feedspam.input_field_placeholder"),
+            selective: true
+          }.to_json # Manual JSON conversion
+          bot.api.send_message(
+            chat_id: message.chat.id,
+            text: help_message,
+            parse_mode: "Markdown",
+            reply_to_message_id: message.message_id, # Reply to the user's /feedspam command
+            reply_markup: force_reply_markup
+          )
+          return
+        else
+          # Use the text provided as argument
+          execute_spam_training(bot, message, spam_text_argument)
+        end
+      end
+    end
+  end
+
+
+  def execute_spam_training(bot, message, spam_text)
+    I18n.with_locale(@lang_code) do
+      Rails.logger.info "Spam message to train: #{spam_text}"
 
       begin
         user_name = [ message.from.first_name, message.from.last_name ].compact.join(" ")
         chat_type = message.chat.type
-        group_name = ""
+
         if chat_type == "private"
           group_name = "Private: " + user_name
         else
           group_name = message.chat.title
         end
 
-        # Save the traineded message, which will invoke ActiveModel
+        # Save the trained message, which will invoke ActiveModel
         # hook to train the model in the background job
         trained_message = TrainedMessage.create!(
           group_id: message.chat.id,
@@ -215,9 +289,10 @@ class TelegramBotter
         # Show a preview of what was learned (truncated if too long)
         preview = spam_text.length > 100 ? "#{spam_text[0..100]}..." : spam_text
         response_message = I18n.t("telegram_bot.feedspam.success_message", preview: preview)
+        # Send a final confirmation message
         bot.api.send_message(chat_id: message.chat.id, text: response_message, parse_mode: "Markdown")
       rescue => e
-        Rails.logger.error "Error in feedspam command: #{e.message}"
+        Rails.logger.error "Error in feedspam training: #{e.message}"
         bot.api.send_message(chat_id: message.chat.id, text: "#{I18n.t('telegram_bot.feedspam.failure_message')}")
       end
     end
@@ -429,6 +504,7 @@ class TelegramBotter
 
   def handle_regular_message(bot, message)
     return if message.text.nil? || message.text.strip.empty?
+
     if is_in_whitelist?(message)
       Rails.logger.info "Skipping inspecting message #{message.text} as sender is in whitelist"
       return
@@ -474,6 +550,8 @@ class TelegramBotter
   end
 
   def is_admin_of_group?(user:, group_id:)
+    return false if user.nil?
+
     # Special case: Channel admins posting via "GroupAnonymousBot"
     return true if user.is_bot && user.username == "GroupAnonymousBot"
 
@@ -697,9 +775,25 @@ class TelegramBotter
   end
 
   def is_in_whitelist?(message)
-    # don't inspect message from administrator
-    is_admin_of_group?(user: message.from, group_id: message.chat.id)
+    # 1. don't inspect message from administrator
+    return true if is_admin_of_group?(user: message.from, group_id: message.chat.id)
     # add more rules
+
+    # 2. Whitelist replies to the bot's own messages
+    # This specifically handles the user replying to the /feedspam prompt.
+    replied_to_message = message.reply_to_message
+    if replied_to_message && replied_to_message.from&.id == @bot_id
+      Rails.logger.info "Skipping inspection for user reply to bot message."
+      return true
+    end
+
+    # 3. This prevents the bot's instructional and alert messages from being deleted.
+    if message.from&.id == @bot_id
+      Rails.logger.info "Skipping spam inspection for a message sent by the bot (ID: #{@bot_id})"
+      return true
+    end
+
+    false
   end
 
   Signal.trap("TERM") do

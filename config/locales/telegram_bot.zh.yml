@@ -38,6 +38,8 @@ zh:
       help_message: "请在此命令后提供垃圾信息文本。示例：`/feedspam 看我简介，免费送U`"
       success_message: "✅ 收到，已把这条信息加入到训练数据:\n\n`%{preview}`"
       failure_message: "❌ 处理投喂数据异常."
+      reply_prompt: "/feedspam: 请在此消息下回复你想要投喂的广告信息"
+      input_field_placeholder: "请输入你想要投喂的广告信息"
     unban:
       already_unbanned_message: "✅ 用户已被解禁"
       success_message: "✅ 用户 @[%{user_name}](tg://user?id=%{user_id}) 已被解禁."
