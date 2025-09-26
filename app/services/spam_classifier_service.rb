@@ -47,11 +47,13 @@ class SpamClassifierService
         @classifier_state.spam_counts[token] = @classifier_state.spam_counts.fetch(token, 0) + 1
         @vocabulary.add(token)
       end
-    else # :ham
+    else # :ham - FALSE POSITIVE BIAS: count ham tokens double
+      # https://www.paulgraham.com/better.html
       @classifier_state.total_ham_messages += 1
-      @classifier_state.total_ham_words += tokens.size
+      @classifier_state.total_ham_words += tokens.size * 2 # Double
+      # count for bias
       tokens.each do |token|
-        @classifier_state.ham_counts[token] = @classifier_state.ham_counts.fetch(token, 0) + 1
+        @classifier_state.ham_counts[token] = @classifier_state.ham_counts.fetch(token, 0) + 2 # Double weight
         @vocabulary.add(token)
       end
     end
@@ -70,48 +72,43 @@ class SpamClassifierService
     end
     @classifier_state.save!
   end
-
   def classify(message_text)
-    # P(Spam|Words) = P(Words|Spam) * P(Spam) / P(Words)
-    # Return false if the model isn't trained enough
     @classifier_state.reload
-    return [ false, 0.0, 0.0 ] if @classifier_state.total_ham_messages == 0 || @classifier_state.total_spam_messages == 0
+    return [ false, 0.0 ] if @classifier_state.total_ham_messages.zero? || @classifier_state.total_spam_messages.zero?
 
-    tokens = tokenize(message_text)
     total_messages = @classifier_state.total_spam_messages + @classifier_state.total_ham_messages
 
-    # Calculate prior probabilities in log space
-    # Use Math.log to resolve numerical underflow problem
-    prob_spam_prior = Math.log(@classifier_state.total_spam_messages.to_f / total_messages)
-    prob_ham_prior = Math.log(@classifier_state.total_ham_messages.to_f / total_messages)
+    # These are the actual priors
+    prob_spam_prior = @classifier_state.total_spam_messages.to_f / total_messages
+    prob_ham_prior = @classifier_state.total_ham_messages.to_f / total_messages
 
-    spam_score = prob_spam_prior
-    ham_score = prob_ham_prior
+    tokens = tokenize(message_text)
 
-    vocab_size = @classifier_state.vocabulary_size
+    # Pass the priors to the selection method for consistent logic
+    significant_tokens = get_significant_tokens(tokens, prob_spam_prior, prob_ham_prior)
 
-    tokens.each do |token|
-      # Add 1 for Laplace smoothing, Laplace smoothing is tailored to solve zero probability problem
-      spam_count = @classifier_state.spam_counts.fetch(token, 0) + 1
-      spam_score += Math.log(spam_count.to_f / (@classifier_state.total_spam_words + vocab_size))
+    # Start scores with the log of the priors
+    spam_score = Math.log(prob_spam_prior)
+    ham_score = Math.log(prob_ham_prior)
 
-      ham_count = @classifier_state.ham_counts.fetch(token, 0) + 1
-      ham_score += Math.log(ham_count.to_f / (@classifier_state.total_ham_words + vocab_size))
+    significant_tokens.each do |token|
+      spam_likelihood, ham_likelihood = get_likelihoods(token)
+
+      spam_score += Math.log(spam_likelihood)
+      ham_score += Math.log(ham_likelihood)
     end
 
     diff = spam_score - ham_score
-    # stable logistic conversion
-    p_spam = if diff.abs > 700
-               diff > 0 ? 1.0 : 0.0
-    else
-               1.0 / (1.0 + Math.exp(-diff))
-    end
+    p_spam = 1.0 / (1.0 + Math.exp(-diff))
 
     confidence_threshold = Rails.application.config.probability_threshold
     is_spam = p_spam >= confidence_threshold
-    Rails.logger.info "classified_result: #{is_spam ? "maybe_spam": "maybe_ham"}, p_spam: #{p_spam}, message_text: #{message_text}"
+
+    Rails.logger.info "classified_result: #{is_spam ? "maybe_spam": "maybe_ham"}, p_spam: #{p_spam.round(4)}, tokens: #{significant_tokens.join(', ')}"
+
     [ is_spam, spam_score, ham_score ]
   end
+
 
   def tokenize(text)
     cleaned_text = clean_text(text)
@@ -186,6 +183,50 @@ class SpamClassifierService
   def pure_numbers?(token)
     # Check if token contains only numbers (Arabic or Chinese)
     token.match?(/^[0-9一二三四五六七八九十百千万亿零]+$/)
+  end
+
+  # It correctly calculates P(token|class) for all cases using Laplace smoothing.
+  def get_likelihoods(token)
+    vocab_size = @classifier_state.vocabulary_size
+
+    # For a spam-only word, ham_count is 0, so ham_likelihood will be very small.
+    # This is the correct, mathematically consistent way to handle it.
+    spam_count = @classifier_state.spam_counts.fetch(token, 0)
+    spam_likelihood = (spam_count + 1.0) / (@classifier_state.total_spam_words + vocab_size)
+
+    ham_count = @classifier_state.ham_counts.fetch(token, 0)
+    ham_likelihood = (ham_count + 1.0) / (@classifier_state.total_ham_words + vocab_size)
+
+    [ spam_likelihood, ham_likelihood ]
+  end
+
+  # Corrected to use the actual priors when determining "interestingness"
+  def get_significant_tokens(tokens, prob_spam_prior, prob_ham_prior)
+    # Use a Set to consider each unique token only once
+    unique_tokens = tokens.to_set
+
+    token_scores = unique_tokens.map do |token|
+      spam_likelihood, ham_likelihood = get_likelihoods(token)
+
+      # Calculate the actual P(Spam|token) using the real priors
+      # P(S|W) = P(W|S)P(S) / (P(W|S)P(S) + P(W|H)P(H))
+      prob_word_given_spam = spam_likelihood * prob_spam_prior
+      prob_word_given_ham = ham_likelihood * prob_ham_prior
+
+      # Avoid division by zero if both are 0
+      denominator = prob_word_given_spam + prob_word_given_ham
+      next [ token, 0.5 ] if denominator == 0
+
+      prob = prob_word_given_spam / denominator
+      interestingness = (prob - 0.5).abs
+
+      [ token, interestingness ]
+    end
+
+    # Select the top 15 most interesting tokens
+    token_scores.sort_by { |_, interest| -interest }
+      .first(15)
+      .map { |token, _| token }
   end
 
   class << self
