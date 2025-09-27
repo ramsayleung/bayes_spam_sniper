@@ -58,13 +58,10 @@
 *** =/feedspam=
     投喂垃圾信息来训练，无任何权限要求，可私聊投喂或在群组内投喂.
 
-    私聊投喂:
+    [[./doc/img/feedspam2.jpg]]
 
     [[./doc/img/feedspam.jpg]]
 
-    群组内投喂:
-
-    [[./doc/img/feedspam2.jpg]]
 ** 架构设计
    Telegram Bot 支持两种与 Telegram 服务器交互的模式，分别是：
    1. Webhook: Telegram 服务器会在 Bot 收到新消息时主动回调此前 Bot 注册的地址，Bot Server 只需要处理回调的消息
