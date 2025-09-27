@@ -40,7 +40,7 @@
   <div class="my-5">
     <%= form.label :source %>
     <%= form.select :source, 
-          options_for_select([['Chat', 'chat'], ['Feedspam Command', 'feedspam_command']], @trained_message.feedspam_command), 
+          options_for_select([['Chat', 'chat'], ['Feedspam Command', 'feedspam_command']], @trained_message.source), 
           { prompt: 'Select training target' },
        { class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": trained_message.errors[:source].none?, "border-red-400 focus:outline-red-600": trained_message.errors[:source].any?}] } %>
   </div>
