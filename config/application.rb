@@ -31,7 +31,7 @@ module TelegramSpamSniperBot
     # Delete the warning message in x minutes to keep chat clean
     config.delete_message_delay = 5
     # Spam blocked probability threshold
-    config.probability_threshold = 0.95
+    config.probability_threshold = 0.94
     config.chinese_space_spam_threshold = 0.8
   end
 end

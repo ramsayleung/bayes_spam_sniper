@@ -25,7 +25,8 @@ en:
         start: "/start - Start using the bot"
         markspam: "/markspam - Delete spam messages and restrict users"
         feedspam: "/feedspam - Submit spam samples for training" 
-        listspam: "/listspam - View list of banned accounts"
+        listspam: "/listspam - View list of spam messages"
+        listbanuser: "/listbanuser - List all banned users"
       support: "For assistance, join our support group: @[BSS support group](https://t.me/+i8fy3qOtiNAyODZl)"
     errors:
       processing: "An error occurred while processing your request."

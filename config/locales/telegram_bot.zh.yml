@@ -25,7 +25,8 @@ zh:
         start: "/start - 开始使用机器人"
         markspam: "/markspam - 删除垃圾消息并封禁用户"
         feedspam: "/feedspam - 投喂垃圾信息来训练"
-        listspam: "/listspam - 查看封禁账户列表"
+        listspam: "/listspam - 查看拦截广告消息列表"
+        listbanuser: "/listbanuser - 查看封禁账户列表"
       support: "如有问题，请加群 @[BSS 支持群](https://t.me/+i8fy3qOtiNAyODZl)。"
     errors:
       processing: "处理请求时出错。"
