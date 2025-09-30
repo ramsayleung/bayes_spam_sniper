@@ -86,7 +86,7 @@ class TrainedMessagesController < ApplicationController
                                 return
     end
 
-    messages.update_all(message_type: new_message_type_symbol)
+    messages.update_all(message_type: new_message_type_symbol, updated_at: Time.current)
 
     messages.each do |message|
       if message.spam? || message.ham?
