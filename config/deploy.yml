@@ -39,7 +39,7 @@ env:
     - POSTGRES_PASSWORD
   clear:
     DB_HOST: 172.17.0.1  # Docker's default bridge network gateway (host machine)
-    DB_PORT: 5433
+    DB_PORT: 5432
     POSTGRES_USER: rails_user
     POSTGRES_DB: telegram_spam_sniper_bot_production
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
@@ -105,7 +105,7 @@ accessories:
     env:
       clear:
         DB_HOST: 172.17.0.1
-        DB_PORT: 5433
+        DB_PORT: 5432
         POSTGRES_USER: rails_user
         POSTGRES_DB: telegram_spam_sniper_bot_production
       secret:
