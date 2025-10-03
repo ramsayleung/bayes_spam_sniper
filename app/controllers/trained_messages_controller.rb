@@ -88,6 +88,13 @@ class TrainedMessagesController < ApplicationController
 
     messages.update_all(message_type: new_message_type_symbol, updated_at: Time.current)
 
+    # Update all messages to the same message type if they have same
+    # message hash
+    message_hashes_to_sync = messages.pluck(:message_hash).uniq
+    message_hashes_to_sync.each do |hash|
+      MessageTypeSyncJob.perform_later(hash, new_message_type_symbol)
+    end
+
     messages.each do |message|
       if message.spam? || message.ham?
         BatchProcessor.add_to_batch(

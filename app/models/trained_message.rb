@@ -37,7 +37,7 @@ class TrainedMessage < ApplicationRecord
   after_update :retrain_classifier, if: :trainable_type_changed?
   after_create :should_ban_user, if: :trainable?
   after_update :should_ban_user, if: :trainable_type_changed?
-
+  after_update :sync_message_type_by_hash, if: :saved_change_to_message_type?
 
   def should_ban_user
     if [ GroupClassifierState::TELEGRAM_DATA_COLLECTOR_GROUP_ID, GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID ].include? self.group_id
@@ -98,5 +98,11 @@ class TrainedMessage < ApplicationRecord
 
   def set_message_hash
     self.message_hash = Digest::SHA256.hexdigest(message.to_s)
+  end
+
+  def sync_message_type_by_hash
+    if spam? || ham?
+      MessageTypeSyncJob.perform_later(self.message_hash, self.message_type.to_sym)
+    end
   end
 end
