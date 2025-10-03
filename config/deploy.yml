@@ -38,9 +38,8 @@ env:
     - RAILS_MASTER_KEY
     - POSTGRES_PASSWORD
   clear:
-    # The hostname is constructed as [service_name]-[accessory_name].
-    DB_HOST: telegram_spam_sniper_bot-postgres
-    DB_PORT: 5432
+    DB_HOST: 172.17.0.1  # Docker's default bridge network gateway (host machine)
+    DB_PORT: 5433
     POSTGRES_USER: rails_user
     POSTGRES_DB: telegram_spam_sniper_bot_production
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
@@ -99,38 +98,19 @@ builder:
 
 # Use accessory services (secrets come from .kamal/secrets).
 accessories:
-  postgres:
-    image: postgres:15
-    host: 192.168.1.188
-    port: "5432:5432"
-    env:
-      clear:
-        POSTGRES_USER: rails_user
-        POSTGRES_DB: telegram_spam_sniper_bot_production
-      secret:
-        - RAILS_MASTER_KEY
-        - POSTGRES_PASSWORD
-    directories:
-      - data:/var/lib/postgresql/data
-    files:
-      - db/production_setup.sql:/docker-entrypoint-initdb.d/setup.sql
-    volumes:
-      - "/tmp/migration_data:/rails/db/data"
-
   runner:
     host: 192.168.1.188
     image: samrayleung/telegram_spam_sniper_bot
     cmd: sleep infinity  # Keeps the container running but idle
     env:
       clear:
-        DB_HOST: telegram_spam_sniper_bot-postgres
+        DB_HOST: 172.17.0.1
+        DB_PORT: 5433
         POSTGRES_USER: rails_user
         POSTGRES_DB: telegram_spam_sniper_bot_production
       secret:
         - RAILS_MASTER_KEY
         - POSTGRES_PASSWORD
-    directories:
-      - data:/var/lib/postgresql/data
     volumes:
       - "/tmp/migration_data:/rails/db/data"
 
