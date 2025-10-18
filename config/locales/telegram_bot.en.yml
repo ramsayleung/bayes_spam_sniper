@@ -58,7 +58,7 @@ en:
       previous_page: "⬅️ Previous"
       next_page: "Next ➡️"
     listspam:
-      no_spam_user_message: "There is no spam message in this group"
+      no_spam_message: "There is no spam message in this group"
       no_spam_on_page_x_message: "No spam found on page %{page} for group `%{group_title}`. Try `/listspam %{target_group_id} 1` to see the first page."
       mark_as_ham_message: "Not Spam"
       failure_message: "❌ Failed to retrieve spam list."

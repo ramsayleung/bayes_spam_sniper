@@ -327,6 +327,7 @@ class TelegramBotter
 
     items_per_page = Rails.application.config.items_per_page
     offset = (page - 1) * items_per_page
+    buttons = []
 
     I18n.with_locale(@lang_code) do
       begin
@@ -355,7 +356,6 @@ class TelegramBotter
         else
           text = "🚫 **Spam Messages** (Page #{page}/#{total_pages})\n"
           text += "Total spam messages: #{total_count}\n\n"
-          buttons = []
 
           max_spam_preview_length = Rails.application.config.max_spam_preview_length
           max_spam_preview_button_length = Rails.application.config.max_spam_preview_button_length
@@ -404,8 +404,8 @@ class TelegramBotter
           )
         end
       rescue => e
-        Rails.logger.error "Error in listspam command: #{e.message}"
-        bot.api.send_message(chat_id: message.chat.id, text: "#{I18n.t('telegram_bot.listspam.unban_message')}")
+        Rails.logger.error "Error in listspam command: #{e.message} #{buttons}"
+        bot.api.send_message(chat_id: message.chat.id, text: "#{I18n.t('telegram_bot.listspam.failure_message')}")
       end
     end
   end
