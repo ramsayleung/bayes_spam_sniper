@@ -176,7 +176,7 @@ GEM
       activesupport (>= 7.0.0)
     jieba_rb (0.0.5)
     json (2.15.1)
-    kamal (2.8.0)
+    kamal (2.8.1)
       activesupport (>= 7.0)
       base64 (~> 0.2)
       bcrypt_pbkdf (~> 1.0)
