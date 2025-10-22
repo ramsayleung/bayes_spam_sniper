@@ -70,5 +70,7 @@ en:
       error_message: "❌ Current chat is not a group chat" 
     handle_regular_message:
       alert_message: "⚠️ Potential spam from @[%{user_name}](tg://user?id=%{user_id}) was automatically removed. (This message will be deleted in %{delete_message_delay} mins.)" 
-      ban_user_message: "✅ User @[%{user_name}](tg://user?id=%{user_id}) send spam more than 3 times, has been banned."
+      ban_user_message: "✅ User @[%{user_name}](tg://user?id=%{user_id}) has been banned from this group for repeated spam."
+      global_ban_user_message: "✅ User @[%{user_name}](tg://user?id=%{user_id}) has been banned from all groups using this bot for repeated spam."
+      
       
