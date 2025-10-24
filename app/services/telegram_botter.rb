@@ -302,12 +302,15 @@ class TelegramBotter
   end
 
   def is_admin?(bot, user:, group_id:)
+    username = [ user.first_name, user.last_name ].compact.join(" ")
+    user_id = user.id
     I18n.with_locale(@lang_code) do
       # Check if the user is admin of the target group
       unless is_admin_of_group?(user: user, group_id: group_id)
         bot.api.send_message(
           chat_id: group_id,
-          text: I18n.t("telegram_bot.is_admin.error_message"),
+          text: I18n.t("telegram_bot.is_admin.error_message", user_name: username, user_id: user_id),
+          parse_mode: "Markdown"
         )
         return false
       end
@@ -647,7 +650,16 @@ class TelegramBotter
 
   def handle_mark_as_ham_callback(bot, callback, chat_id, tg_message_id, trained_message_id)
     # Only admin has permission to perform actions
-    return unless is_admin_of_group?(user: callback.from, group_id: callback.message.chat.id)
+    is_admin = is_admin_of_group?(user: callback.from, group_id: callback.message.chat.id)
+    unless is_admin
+      # The text is displayed as a small notification pop-up.
+      bot.api.answer_callback_query(
+        callback_query_id: callback.id,
+        text: I18n.t("telegram_bot.is_admin.general_error_message"),
+        show_alert: true # Use show_alert: true for a larger, persistent alert box
+      )
+      return
+    end
 
     I18n.with_locale(@lang_code) do
       trained_message = TrainedMessage.find_by(id: trained_message_id)
@@ -670,7 +682,16 @@ class TelegramBotter
 
   def handle_unban_callback(bot, callback, chat_id, message_id, banned_user_id)
     # Only admin has permission to perform actions
-    return unless is_admin_of_group?(user: callback.from, group_id: callback.message.chat.id)
+    is_admin = is_admin_of_group?(user: callback.from, group_id: callback.message.chat.id)
+    unless is_admin
+      # The text is displayed as a small notification pop-up.
+      bot.api.answer_callback_query(
+        callback_query_id: callback.id,
+        text: I18n.t("telegram_bot.is_admin.general_error_message"),
+        show_alert: true # Use show_alert: true for a larger, persistent alert box
+      )
+      return
+    end
 
     I18n.with_locale(@lang_code) do
       banned_user = BannedUser.find_by(id: banned_user_id)
@@ -708,7 +729,15 @@ class TelegramBotter
   def handle_listspam_pagination_callback(bot, callback, page)
     # Only admin has permission to perform actions
     is_admin = is_admin_of_group?(user: callback.from, group_id: callback.message.chat.id)
-    return unless is_admin
+    unless is_admin
+      # The text is displayed as a small notification pop-up.
+      bot.api.answer_callback_query(
+        callback_query_id: callback.id,
+        text: I18n.t("telegram_bot.is_admin.general_error_message"),
+        show_alert: true # Use show_alert: true for a larger, persistent alert box
+      )
+      return
+    end
 
     # Simulate the listbanuser command with the new page
     callback_data = parse_callback_data(callback.data)
@@ -730,7 +759,15 @@ class TelegramBotter
   def handle_listbanuser_pagination_callback(bot, callback, page)
     # Only admin has permission to perform actions
     is_admin = is_admin_of_group?(user: callback.from, group_id: callback.message.chat.id)
-    return unless is_admin
+    unless is_admin
+      # The text is displayed as a small notification pop-up.
+      bot.api.answer_callback_query(
+        callback_query_id: callback.id,
+        text: I18n.t("telegram_bot.is_admin.general_error_message"),
+        show_alert: true # Use show_alert: true for a larger, persistent alert box
+      )
+      return
+    end
 
     # Simulate the listbanuser command with the new page
     callback_data = parse_callback_data(callback.data)

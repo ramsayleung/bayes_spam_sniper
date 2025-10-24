@@ -49,7 +49,8 @@ en:
       success_message: "✅ Message from user @[%{user_name}](tg://user?id=%{user_id}) has been marked as ham."
       failure_message: "❌ Failed to mark message as ham."
     is_admin:
-      error_message: "❌ You are not an administrator of this group"
+      error_message: "❌ You(@[%{user_name}](tg://user?id=%{user_id})) are not an administrator of this group"
+      general_error_message: "❌ You are not an administrator of this group"
     listbanuser:
       no_banned_user_message: "There is no banned users in this group"
       no_banned_on_page_x_message: "No banned users found on page %{page} for group `%{group_title}`. Try `/listbanuser %{target_group_id} 1` to see the first page."
