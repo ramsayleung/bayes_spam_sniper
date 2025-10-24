@@ -59,6 +59,7 @@ class TelegramBackgroundWorkerJob < ApplicationJob
   def ban_user_in_groups(trained_message_data:, groups:)
     user_id = trained_message_data[:sender_chat_id]
     user_name = trained_message_data[:sender_user_name]
+    Rails.logger.info "Banning user #{user_id} #{user_name} in groups: #{groups}"
     groups.each do |group|
       group_id = group[:id]
       group_name = group[:name]

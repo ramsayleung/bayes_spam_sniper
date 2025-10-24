@@ -24,7 +24,7 @@ module TelegramSpamSniperBot
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
     config.items_per_page =  5
-    config.max_spam_preview_length =  60
+    config.max_spam_preview_length =  500
     config.max_spam_preview_button_length =  10
     # a user will be banned if send spam message >= 3 times
     config.spam_ban_threshold =  3

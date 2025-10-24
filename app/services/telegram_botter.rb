@@ -119,9 +119,11 @@ class TelegramBotter
 
   def handle_markspam_command(bot, message)
     return unless is_group_chat?(bot, message)
+    return unless is_admin?(bot, user: message.from, group_id: message.chat.id)
+
     group_id = message.chat.id
     chat_member = TelegramMemberFetcher.get_bot_chat_member(group_id)
-    # return if it's not admin
+    # return if bot is not admin
     return unless [ "administrator", "creator" ].include?(chat_member.status) && message.reply_to_message
 
     replied = message.reply_to_message
@@ -299,12 +301,12 @@ class TelegramBotter
     end
   end
 
-  def is_admin?(bot, message)
+  def is_admin?(bot, user:, group_id:)
     I18n.with_locale(@lang_code) do
       # Check if the user is admin of the target group
-      unless is_admin_of_group?(user: message.from, group_id: message.chat.id)
+      unless is_admin_of_group?(user: user, group_id: group_id)
         bot.api.send_message(
-          chat_id: message.chat.id,
+          chat_id: group_id,
           text: I18n.t("telegram_bot.is_admin.error_message"),
         )
         return false
@@ -315,7 +317,7 @@ class TelegramBotter
 
   def handle_listspam_command(bot, message)
     return unless is_group_chat?(bot, message)
-    return unless is_admin?(bot, message)
+    return unless is_admin?(bot, user: message.from, group_id: message.chat.id)
 
     # Parse the command: /listspam pageId
     command_parts = message.text.strip.split(/\s+/)
@@ -412,7 +414,7 @@ class TelegramBotter
 
   def handle_listbanuser_command(bot, message)
     return unless is_group_chat?(bot, message)
-    return unless is_admin?(bot, message)
+    return unless is_admin?(bot, user: message.from, group_id: message.chat.id)
 
     # Parse the command: /listbanuser pageId
     command_parts = message.text.strip.split(/\s+/)
@@ -562,7 +564,7 @@ class TelegramBotter
   end
 
   def handle_callback(bot, callback)
-    Rails.logger.info "Handling callback"
+    Rails.logger.info "Handling callback #{callback.data}"
 
     callback_data = parse_callback_data(callback.data)
     action = callback_data[CallbackConstants::ACTION]
