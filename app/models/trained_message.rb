@@ -55,23 +55,21 @@ class TrainedMessage < ApplicationRecord
     global_spam_count = TrainedMessage.where(sender_chat_id: self.sender_chat_id, message_type: :spam, source: :chat).count
     chat_member = TelegramMemberFetcher.get_bot_chat_member(self.group_id)
     can_ban_user = [ "administrator", "creator" ].include?(chat_member&.status) && chat_member&.can_restrict_members
-    # TODO: enable this feature at 2025-10-27
-    # if global_spam_count >= spam_ban_threshold * 2 && can_ban_user
-    #   Rails.logger.info "user: #{self.sender_user_name} has sent #{global_spam_count} spam messages, ban this user globally"
-    #   TelegramBackgroundWorkerJob.perform_later(
-    #     action: PostAction::GLOBAL_BAN_USER,
-    #     trained_message_data: {
-    #       sender_user_name: self.sender_user_name,
-    #       sender_chat_id: self.sender_chat_id,
-    #       group_id: self.group_id,
-    #       group_name: self.group_name,
-    #       message: self.message,
-    #       message_id: self.message_id
-    #     }
-    #   )
+    if global_spam_count >= spam_ban_threshold * 2 && can_ban_user
+      Rails.logger.info "user: #{self.sender_user_name} has sent #{global_spam_count} spam messages, ban this user globally"
+      TelegramBackgroundWorkerJob.perform_later(
+        action: PostAction::GLOBAL_BAN_USER,
+        trained_message_data: {
+          sender_user_name: self.sender_user_name,
+          sender_chat_id: self.sender_chat_id,
+          group_id: self.group_id,
+          group_name: self.group_name,
+          message: self.message,
+          message_id: self.message_id
+        }
+      )
 
-    # elsif spam_count >= spam_ban_threshold && can_ban_user
-    if spam_count >= spam_ban_threshold && can_ban_user
+    elsif spam_count >= spam_ban_threshold && can_ban_user
       Rails.logger.info "user: #{self.sender_user_name} sent more than #{spam_ban_threshold} spam messages in group: #{self.group_id}, ban this user from group"
       TelegramBackgroundWorkerJob.perform_later(
         action: PostAction::BAN_USER,
