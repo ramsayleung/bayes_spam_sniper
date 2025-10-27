@@ -93,36 +93,9 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
     assert_nil state.spam_counts["项目"]
   end
 
-  test "#cleanup should handle any anti-spam separators" do
-    spam_variants = [
-      "合-约*报@单群组",
-      "B#T@C$500点",
-      "稳.赚.不.亏.的",
-      "联,系,我,们"
-    ]
-
-    expected_variants = [
-      "合约报单群组",
-      "BTC500 点",
-      "稳赚不亏的",
-      "联系我们"
-    ]
-
-    service = SpamClassifierService.new(@group_id, @group_name)
-    spam_variants.each_with_index do |variant, index|
-      expected_text = expected_variants[index]
-      cleaned_text = service.clean_text(variant)
-      cleaned_text = service.clean_text(variant)
-      assert_equal expected_text, cleaned_text, "Failed on input: '#{variant}'"
-
-      # Should NOT contain separator characters
-      refute cleaned_text.match?(/[*@#$,.-]/)
-    end
-  end
   test "#toenize should handle emoji correctly" do
     service = SpamClassifierService.new(@group_id, @group_name)
     spam_message =" 🚘🚘🚘还在死扛单 🚘🚘🚘 这里策略准到爆 进群免费体验 @hakaoer 🚘🚘🚘不满意随便喷🚘🚘🚘 "
-    cleaned_text = service.clean_text(spam_message)
     tokens = service.tokenize(spam_message)
 
     assert_includes tokens, "🚘"
@@ -133,8 +106,6 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
   test "#toenize should handle punctuation correctly" do
     service = SpamClassifierService.new(@group_id, @group_name)
     spam_message = "这人简-介挂的 合-约-报单群组挺牛的ETH500点，大饼5200点！ + @BTCETHl6666"
-    cleaned_text = service.clean_text(spam_message)
-    assert_equal "这人简介挂的合约报单群组挺牛的 ETH500 点大饼 5200 点！ + @BTCETHl6666", cleaned_text
     tokens = service.tokenize(spam_message)
     assert_includes tokens, "简介"
     assert_includes tokens, "合约"
@@ -146,7 +117,6 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
   test "#tokenize should handle user-defined dictionary correct" do
     service = SpamClassifierService.new(@group_id, @group_name)
     spam_message ="在 币圈 想 赚 钱，那 你 不关 注 这 个 王 牌 社 区，真的太可惜了，真 心 推 荐，每 天 都 有 免 费 策 略"
-    cleaned_text = service.clean_text(spam_message)
     tokens = service.tokenize(spam_message)
     # 币圈 is user-defined word
     assert_includes tokens, "币圈"

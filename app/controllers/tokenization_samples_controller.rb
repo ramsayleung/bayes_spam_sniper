@@ -6,7 +6,7 @@ class TokenizationSamplesController < ApplicationController
       @samples = @trained_messages.map do |msg|
         {
           original: msg.message,
-          cleaned: service.clean_text(msg.message),
+          cleaned: TextCleaner.call(msg.message),
           tokens: service.tokenize(msg.message)
         }
       end
