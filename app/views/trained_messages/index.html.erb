@@ -172,8 +172,8 @@
                     <%= trained_message.id %>
                   </td>
                   <td class="px-6 py-4 text-sm text-gray-900">
-                    <div class="max-w-xs truncate" title="<%= trained_message.message %>">
-                      <%= truncate(trained_message.message, length: 50) %>
+                      <div class="max-w-xs truncate" title="<%= extract_message_content(trained_message.message) %>">
+                      <%= truncate(extract_message_content(trained_message.message), length: 50) %>
                     </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
