@@ -74,3 +74,5 @@ gem "jieba_rb", "~> 0.0.5"
 gem "ffi"
 
 gem "solid_queue_dashboard", "~> 0.2.0"
+
+gem "prometheus-client"

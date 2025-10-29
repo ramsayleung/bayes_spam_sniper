@@ -260,6 +260,8 @@ GEM
       prettyprint
     prettyprint (0.2.0)
     prism (1.6.0)
+    prometheus-client (4.2.5)
+      base64
     propshaft (1.3.1)
       actionpack (>= 7.0.0)
       activesupport (>= 7.0.0)
@@ -466,6 +468,7 @@ DEPENDENCIES
   kamal
   overcommit
   pg (~> 1.1)
+  prometheus-client
   propshaft
   puma (>= 5.0)
   rails (~> 8.1.1)

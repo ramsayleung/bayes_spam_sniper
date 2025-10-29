@@ -19,5 +19,8 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "trained_messages#index"
 
+  # Metrics endpoint for Prometheus
+  get "/metrics", to: "metrics#show"
+
   mount SolidQueueDashboard::Engine, at: "/solid-queue"
 end

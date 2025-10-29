@@ -1,0 +1,273 @@
+{
+  "id": null,
+  "title": "Telegram Spam Sniper Bot Dashboard",
+  "tags": ["telegram", "bot", "spam", "monitoring"],
+  "style": "dark",
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Feedspam Command Usage",
+      "type": "stat",
+      "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "telegram_bot_command_count{command=\"feedspam\"}",
+          "legendFormat": "Feedspam Commands"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Listspam Command Usage",
+      "type": "stat",
+      "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0},
+      "targets": [
+        {
+          "expr": "telegram_bot_command_count{command=\"listspam\"}",
+          "legendFormat": "Listspam Commands"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Listbanuser Command Usage",
+      "type": "stat",
+      "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "telegram_bot_command_count{command=\"listbanuser\"}",
+          "legendFormat": "Listbanuser Commands"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Markspam Command Usage",
+      "type": "stat",
+      "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0},
+      "targets": [
+        {
+          "expr": "telegram_bot_command_count{command=\"markspam\"}",
+          "legendFormat": "Markspam Commands"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Messages Processed Over Time",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [
+        {
+          "expr": "rate(telegram_bot_messages_processed[5m])",
+          "legendFormat": "Messages Processed Rate (5m avg)"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Messages/Second",
+          "show": true
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Spam Messages Detected Over Time",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [
+        {
+          "expr": "rate(telegram_bot_spam_messages_detected[5m])",
+          "legendFormat": "Spam Detected Rate (5m avg)"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Spam Messages/Second",
+          "show": true
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Spam Detection Rate",
+      "type": "stat",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 16},
+      "targets": [
+        {
+          "expr": "telegram_bot_spam_messages_detected / telegram_bot_messages_processed * 100",
+          "legendFormat": "Spam Detection Rate %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 20
+              }
+            ]
+          },
+          "unit": "percent"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "All Command Usage - Time Series",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 16, "x": 8, "y": 16},
+      "targets": [
+        {
+          "expr": "rate(telegram_bot_command_count[5m])",
+          "legendFormat": "{{command}}"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Commands/Second",
+          "show": true
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Message Processing Time",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(telegram_bot_message_processing_time_bucket[5m]))",
+          "legendFormat": "95th Percentile Processing Time"
+        },
+        {
+          "expr": "histogram_quantile(0.50, rate(telegram_bot_message_processing_time_bucket[5m]))",
+          "legendFormat": "50th Percentile Processing Time"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Processing Time (seconds)",
+          "show": true
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Total Messages Processed vs Spam Detected",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+      "targets": [
+        {
+          "expr": "telegram_bot_messages_processed",
+          "legendFormat": "Total Messages Processed"
+        },
+        {
+          "expr": "telegram_bot_spam_messages_detected",
+          "legendFormat": "Spam Messages Detected"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Count",
+          "show": true
+        }
+      ]
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "refresh": "5s",
+  "schemaVersion": 17,
+  "version": 0,
+  "links": [],
+  "gnetId": null
+}

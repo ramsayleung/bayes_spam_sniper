@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 15s  # By default, scrape targets every 15 seconds.
+
+# A scrape configuration containing exactly one endpoint to scrape:
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'telegram_bot'
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 5s
+    static_configs:
+      # For development with Rails server running on all interfaces (0.0.0.0:3000)
+      - targets: ['host.docker.internal:3000']
+        labels:
+          app: 'telegram_spam_sniper_bot'
+          component: 'web'
+    # Use relabeling to add more labels to the metrics
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'telegram_bot_.*'
+        target_label: service
+        replacement: 'telegram_bot'

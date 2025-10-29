@@ -1,4 +1,5 @@
 require "telegram/bot"
+require "prometheus/client"
 
 class TelegramBotter
   module CallbackConstants
@@ -67,17 +68,21 @@ class TelegramBotter
       message_text = message_text.gsub(bot_mention_regex, "")
     end
 
-    # Route to appropriate command handler
+    # Route to appropriate command handler and track command usage
     case message_text
     when %r{^/start}
       handle_start_command(bot, message)
     when %r{^/markspam}
+      increment_command_counter("markspam")
       handle_markspam_command(bot, message)
     when %r{^/feedspam}
+      increment_command_counter("feedspam")
       handle_feedspam_command(bot, message, message_text)
     when %r{^/listbanuser}
+      increment_command_counter("listbanuser")
       handle_listbanuser_command(bot, message)
     when %r{^/listspam}
+      increment_command_counter("listspam")
       handle_listspam_command(bot, message)
     else
       if message.reply_to_message
@@ -128,6 +133,9 @@ class TelegramBotter
 
     replied = message.reply_to_message
     return if replied.text.nil? || replied.text.empty?
+
+    # Increment the messages processed counter
+    increment_messages_processed
 
     I18n.with_locale(@lang_code) do
       begin
@@ -215,6 +223,9 @@ class TelegramBotter
         execute_spam_training(bot, message, spam_text)
       end
     end
+
+    # Increment the messages processed counter for forced replies
+    increment_messages_processed
   end
 
   def handle_feedspam_command(bot, message, message_text)
@@ -268,6 +279,9 @@ class TelegramBotter
       Rails.logger.info "Spam message to train: #{spam_text}"
 
       begin
+        # Increment the messages processed counter
+        increment_messages_processed
+
         user_name = [ message.from.first_name, message.from.last_name ].compact.join(" ")
         chat_type = message.chat.type
 
@@ -511,6 +525,9 @@ class TelegramBotter
   def handle_regular_message(bot, message)
     return if message.text.nil? || message.text.strip.empty?
 
+    # Increment the messages processed counter
+    increment_messages_processed
+
     if is_in_whitelist?(message)
       Rails.logger.info "Skipping inspecting message #{message.text} as sender is in whitelist"
       return
@@ -518,9 +535,13 @@ class TelegramBotter
     Rails.logger.info "Handle regular message: #{message.text}"
     I18n.with_locale(@lang_code) do
       begin
+        start_time = Time.current
         spam_detection_service = SpamDetectionService.new(message)
         result = spam_detection_service.process
         if result.is_spam
+          # Increment the spam detected counter
+          increment_spam_detected
+
           # 1. Delete the original spam message
           bot.api.delete_message(chat_id: message.chat.id, message_id: message.message_id)
 
@@ -538,9 +559,12 @@ class TelegramBotter
             message_id: sent_warning_message.message_id)
         end
 
-      end
+        # Calculate and record processing time
+        processing_time = Time.current - start_time
+        increment_message_processing_time(processing_time)
       rescue => e
-        Rails.logger.error "Error processing regular message: #{e.message}"
+        Rails.logger.error "Error processing regular message: #{e.message}\n#{e.backtrace.join("\n")}"
+      end
     end
   end
 
@@ -834,6 +858,50 @@ class TelegramBotter
     end
 
     false
+  end
+
+  def increment_command_counter(command)
+    require "prometheus/client"
+    registry = Prometheus::Client.registry
+    begin
+      counter = registry.get(:telegram_bot_command_count)
+      counter&.increment(labels: { command: command })
+    rescue => e
+      Rails.logger.error "Error incrementing command counter: #{e.message}"
+    end
+  end
+
+  def increment_messages_processed
+    require "prometheus/client"
+    registry = Prometheus::Client.registry
+    begin
+      counter = registry.get(:telegram_bot_messages_processed)
+      counter&.increment
+    rescue => e
+      Rails.logger.error "Error incrementing messages processed counter: #{e.message}"
+    end
+  end
+
+  def increment_spam_detected
+    require "prometheus/client"
+    registry = Prometheus::Client.registry
+    begin
+      counter = registry.get(:telegram_bot_spam_messages_detected)
+      counter&.increment
+    rescue => e
+      Rails.logger.error "Error incrementing spam detected counter: #{e.message}"
+    end
+  end
+
+  def increment_message_processing_time(duration)
+    require "prometheus/client"
+    registry = Prometheus::Client.registry
+    begin
+      histogram = registry.get(:telegram_bot_message_processing_time)
+      histogram&.observe(duration)
+    rescue => e
+      Rails.logger.error "Error recording message processing time: #{e.message}"
+    end
   end
 
   Signal.trap("TERM") do

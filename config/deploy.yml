@@ -9,10 +9,15 @@ servers:
   web:
     hosts:
       - 192.168.1.188
+    options:
+      publish:
+        - "3002:3000"
   job:
     hosts:
       - 192.168.1.188
     cmd: bin/bot
+volumes:
+    - "telegram_spam_sniper_bot_metrics:/rails/tmp/prometheus"
 
 # Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
 # Remove this section when using multiple web servers and ensure you terminate SSL at your load balancer.
@@ -60,12 +65,13 @@ env:
     # RAILS_LOG_LEVEL: debug
 
 # Aliases are triggered with "bin/kamal <alias>". You can overwrite arguments on invocation:
-# "bin/kamal logs -r job" will tail logs from the first server in the job section.
+# "bin/kamal logs -r job" will tail logs from first server in the job section.
 aliases:
   console: app exec --interactive --reuse "bin/rails console"
   shell: app exec --interactive --reuse "bash"
   logs: app logs -f
   dbc: app exec --interactive --reuse "bin/rails dbconsole"
+  metrics: app exec --interactive --reuse "curl http://localhost:3000/metrics"
 
 
 # Use a persistent storage volume for sqlite database files and local Active Storage files.
@@ -97,7 +103,65 @@ builder:
 #   user: app
 
 # Use accessory services (secrets come from .kamal/secrets).
+# For production monitoring, you would typically set up a separate Prometheus instance
+# that scrapes metrics from your application. This volume ensures metrics persist 
+# across deployments for the DirectFileStore.
 accessories:
+  # Metrics storage volume for the DirectFileStore persistence
+  metrics:
+    host: 192.168.1.188
+    image: samrayleung/telegram_spam_sniper_bot
+    cmd: sleep infinity  # Keeps the container running but idle
+    env:
+      clear:
+        DB_HOST: 172.17.0.1
+        DB_PORT: 5432
+        POSTGRES_USER: rails_user
+        POSTGRES_DB: telegram_spam_sniper_bot_production
+      secret:
+        - RAILS_MASTER_KEY
+        - POSTGRES_PASSWORD
+    volumes:
+      - "telegram_spam_sniper_bot_metrics:/rails/tmp/prometheus"
+
+  # Prometheus server for collecting metrics
+  prometheus:
+    host: 192.168.1.188
+    image: prom/prometheus:latest
+    port: "9090:9090"
+    files:
+      - config/production/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    volumes:
+      - "telegram_spam_sniper_bot_prometheus:/prometheus"
+      - "telegram_spam_sniper_bot_metrics:/rails/tmp/prometheus"
+    cmd: >-
+      --config.file=/etc/prometheus/prometheus.yml
+      --storage.tsdb.path=/prometheus
+      --web.console.libraries=/etc/prometheus/console_libraries
+      --web.console.templates=/etc/prometheus/consoles
+      --storage.tsdb.retention.time=200h
+      --web.enable-lifecycle
+    options:
+      add-host: "host.docker.internal:host-gateway"
+
+  # Grafana for visualization
+  grafana:
+    host: 192.168.1.188
+    image: grafana/grafana:latest
+    port: "3001:3000"
+    files:
+      - config/production/grafana/provisioning/datasources/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - config/production/grafana/provisioning/dashboards/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml
+      - config/production/grafana/dashboards/telegram_bot_dashboard.json:/etc/grafana/dashboards/telegram_bot_dashboard.json
+    volumes:
+      - "telegram_spam_sniper_bot_grafana:/var/lib/grafana"
+    env:
+      clear:
+        GF_SECURITY_ADMIN_PASSWORD: admin
+        GF_SECURITY_ADMIN_USER: admin
+    options:
+      add-host: "host.docker.internal:host-gateway"
+
   runner:
     host: 192.168.1.188
     image: samrayleung/telegram_spam_sniper_bot
