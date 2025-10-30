@@ -76,3 +76,5 @@ gem "ffi"
 gem "solid_queue_dashboard", "~> 0.2.0"
 
 gem "prometheus-client"
+
+gem "silencer"
