@@ -10,7 +10,7 @@ scrape_configs:
     static_configs:
       # In Kamal's internal network, the web service would be accessible as 'telegram_spam_sniper_bot-web-1' or similar
       # For the actual IP address approach:
-      - targets: ['host.docker.internal:3002']
+      - targets: ['telegram-web:3000']
     scrape_interval: 5s
     # Add authentication headers if needed
     # headers:

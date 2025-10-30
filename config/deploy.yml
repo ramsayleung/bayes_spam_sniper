@@ -10,12 +10,12 @@ servers:
     hosts:
       - 192.168.1.188
     options:
-      publish:
-        - "3002:3000"
+      network-alias: "telegram-web" 
   job:
     hosts:
       - 192.168.1.188
     cmd: bin/bot
+
 volumes:
     - "telegram_spam_sniper_bot_metrics:/rails/tmp/prometheus"
 
