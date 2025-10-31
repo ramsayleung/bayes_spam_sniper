@@ -44,7 +44,7 @@
       "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
       "targets": [
         {
-          "expr": "increase(telegram_bot_spam_messages_detected[5m])",
+          "expr": "sum(increase(telegram_bot_spam_messages_detected[5m]))",
           "legendFormat": "Spam Messages",
           "refId": "A"
         }

@@ -26,8 +26,13 @@ module PrometheusMetrics
 
   # Sanitize labels to avoid Prometheus label issues
   def sanitize_label(label)
-    return "unknown" if label.nil? || label.empty?
-    label.to_s.gsub(/[^a-zA-Z0-9_\-]/, "_")[0..63]
+    return "unknown" if label.nil? || label.to_s.strip.empty?
+
+    label.to_s
+      .gsub(/[\r\n\t]/, " ")        # Replace line breaks with space
+      .gsub(/[[:cntrl:]]/, "")      # Remove control characters
+      .strip
+      .slice(0, 128)
   end
 
   def increment_messages_processed(group_id, group_name)
