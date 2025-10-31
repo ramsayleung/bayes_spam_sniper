@@ -1,255 +1,486 @@
 {
   "id": null,
-  "title": "Telegram Spam Sniper Bot Dashboard",
+  "title": "Telegram Spam Sniper Bot Dashboard - Complete",
   "tags": ["telegram", "bot", "spam", "monitoring"],
   "style": "dark",
   "timezone": "browser",
+  "editable": true,
   "panels": [
     {
       "id": 1,
-      "title": "Feedspam Command Usage",
+      "title": "Total Messages (Last 5 Minutes)",
       "type": "stat",
-      "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0},
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
       "targets": [
         {
-          "expr": "telegram_bot_command_count{command=\"feedspam\"}",
-          "legendFormat": "Feedspam Commands"
+          "expr": "sum(increase(telegram_bot_messages_processed[5m]))",
+          "legendFormat": "Total Messages",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
+          "color": {"mode": "thresholds"},
           "thresholds": {
             "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 50},
+              {"color": "red", "value": 100}
             ]
           },
-          "unit": "short"
+          "unit": "short",
+          "decimals": 0
         }
+      },
+      "options": {
+        "textMode": "value_and_name",
+        "colorMode": "background"
       }
     },
     {
       "id": 2,
-      "title": "Listspam Command Usage",
+      "title": "Total Spam Detected (Last 5 Minutes)",
       "type": "stat",
-      "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0},
+      "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
       "targets": [
         {
-          "expr": "telegram_bot_command_count{command=\"listspam\"}",
-          "legendFormat": "Listspam Commands"
+          "expr": "increase(telegram_bot_spam_messages_detected[5m])",
+          "legendFormat": "Spam Messages",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
+          "color": {"mode": "thresholds"},
           "thresholds": {
             "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 5},
+              {"color": "red", "value": 15}
             ]
           },
-          "unit": "short"
+          "unit": "short",
+          "decimals": 0
         }
+      },
+      "options": {
+        "textMode": "value_and_name",
+        "colorMode": "background"
       }
     },
     {
       "id": 3,
-      "title": "Listbanuser Command Usage",
+      "title": "Spam Detection Rate % (Last 5 Minutes)",
       "type": "stat",
-      "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0},
+      "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
       "targets": [
         {
-          "expr": "telegram_bot_command_count{command=\"listbanuser\"}",
-          "legendFormat": "Listbanuser Commands"
+          "expr": "(sum(increase(telegram_bot_spam_messages_detected[5m])) / sum(increase(telegram_bot_messages_processed[5m]))) * 100",
+          "legendFormat": "Spam Rate",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
+          "color": {"mode": "thresholds"},
           "thresholds": {
             "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 15},
+              {"color": "orange", "value": 25},
+              {"color": "red", "value": 35}
             ]
           },
-          "unit": "short"
+          "unit": "percent",
+          "decimals": 1
         }
+      },
+      "options": {
+        "textMode": "value_and_name",
+        "colorMode": "background"
       }
     },
     {
       "id": 4,
-      "title": "Markspam Command Usage",
+      "title": "Avg Processing Time (Last 5 Minutes)",
       "type": "stat",
-      "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0},
+      "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0},
       "targets": [
         {
-          "expr": "telegram_bot_command_count{command=\"markspam\"}",
-          "legendFormat": "Markspam Commands"
+          "expr": "sum(rate(telegram_bot_message_processing_time_sum[5m])) / sum(rate(telegram_bot_message_processing_time_count[5m]))",
+          "legendFormat": "Avg Time",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
+          "color": {"mode": "thresholds"},
           "thresholds": {
             "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 0.5},
+              {"color": "red", "value": 2.0}
             ]
           },
-          "unit": "short"
+          "unit": "s",
+          "decimals": 3
         }
+      },
+      "options": {
+        "textMode": "value_and_name",
+        "colorMode": "background"
       }
     },
     {
       "id": 5,
-      "title": "Messages Processed Over Time",
-      "type": "graph",
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
-      "targets": [
-        {
-          "expr": "rate(telegram_bot_messages_processed[5m])",
-          "legendFormat": "Messages Processed Rate (5m avg)"
-        }
-      ],
-      "yAxes": [
-        {
-          "label": "Messages/Second",
-          "show": true
-        }
-      ]
-    },
-    {
-      "id": 6,
-      "title": "Spam Messages Detected Over Time",
-      "type": "graph",
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
-      "targets": [
-        {
-          "expr": "rate(telegram_bot_spam_messages_detected[5m])",
-          "legendFormat": "Spam Detected Rate (5m avg)"
-        }
-      ],
-      "yAxes": [
-        {
-          "label": "Spam Messages/Second",
-          "show": true
-        }
-      ]
-    },
-    {
-      "id": 7,
-      "title": "Spam Detection Rate",
+      "title": "Command Usage (Last Hour)",
       "type": "stat",
-      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 16},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 6},
       "targets": [
         {
-          "expr": "telegram_bot_spam_messages_detected / telegram_bot_messages_processed * 100",
-          "legendFormat": "Spam Detection Rate %"
+          "expr": "increase(telegram_bot_command_count[1h])",
+          "legendFormat": "{{command}}",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 10
-              },
-              {
-                "color": "red",
-                "value": 20
-              }
-            ]
-          },
-          "unit": "percent"
+          "color": {"mode": "palette-classic"},
+          "unit": "short",
+          "decimals": 0
         }
+      },
+      "options": {
+        "orientation": "horizontal",
+        "textMode": "value_and_name",
+        "displayMode": "gradient"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Messages Per Minute by Group",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+      "targets": [
+        {
+          "expr": "rate(telegram_bot_messages_processed{group_id!=\"\"}[1m]) * 60",
+          "legendFormat": "{{group_name}} ({{group_id}})",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          },
+          "unit": "short",
+          "min": 0
+        }
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom"},
+        "tooltip": {"mode": "multi"}
+      }
+    },
+    {
+      "id": 7,
+      "title": "Total Messages Per Minute (All Groups)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+      "targets": [
+        {
+          "expr": "sum(rate(telegram_bot_messages_processed[1m])) * 60",
+          "legendFormat": "Total Messages/min",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          },
+          "unit": "short",
+          "min": 0
+        }
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom"},
+        "tooltip": {"mode": "multi"}
       }
     },
     {
       "id": 8,
-      "title": "All Command Usage - Time Series",
-      "type": "graph",
-      "gridPos": {"h": 8, "w": 16, "x": 8, "y": 16},
+      "title": "Spam Per Minute by Group",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 22},
       "targets": [
         {
-          "expr": "rate(telegram_bot_command_count[5m])",
-          "legendFormat": "{{command}}"
+          "expr": "rate(telegram_bot_spam_messages_detected{group_id!=\"\"}[1m]) * 60",
+          "legendFormat": "{{group_name}} spam/min",
+          "refId": "A"
         }
       ],
-      "yAxes": [
-        {
-          "label": "Commands/Second",
-          "show": true
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          },
+          "unit": "short",
+          "min": 0
         }
-      ]
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom"},
+        "tooltip": {"mode": "multi"}
+      }
     },
     {
       "id": 9,
-      "title": "Message Processing Time",
-      "type": "graph",
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+      "title": "Total Spam Per Minute (All Groups)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 22},
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(telegram_bot_message_processing_time_bucket[5m]))",
-          "legendFormat": "95th Percentile Processing Time"
-        },
-        {
-          "expr": "histogram_quantile(0.50, rate(telegram_bot_message_processing_time_bucket[5m]))",
-          "legendFormat": "50th Percentile Processing Time"
+          "expr": "sum(rate(telegram_bot_spam_messages_detected[1m])) * 60",
+          "legendFormat": "Total Spam/min",
+          "refId": "A"
         }
       ],
-      "yAxes": [
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          },
+          "unit": "short",
+          "min": 0
+        }
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom"},
+        "tooltip": {"mode": "multi"}
+      }
+    },
+    {
+      "id": 10,
+      "title": "Messages by Group (Last Hour) - Table",
+      "type": "table",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 30},
+      "targets": [
         {
-          "label": "Processing Time (seconds)",
-          "show": true
+          "expr": "increase(telegram_bot_messages_processed{group_id!=\"\"}[1h])",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true
+            },
+            "renameByName": {
+              "group_id": "Group ID",
+              "group_name": "Group Name",
+              "Value": "Messages (Last Hour)"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [{"field": "Messages (Last Hour)", "desc": true}]
+          }
         }
       ]
     },
     {
-      "id": 10,
-      "title": "Total Messages Processed vs Spam Detected",
-      "type": "graph",
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+      "id": 11,
+      "title": "Spam by Group (Last Hour) - Table",
+      "type": "table",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 30},
       "targets": [
         {
-          "expr": "telegram_bot_messages_processed",
-          "legendFormat": "Total Messages Processed"
-        },
-        {
-          "expr": "telegram_bot_spam_messages_detected",
-          "legendFormat": "Spam Messages Detected"
+          "expr": "increase(telegram_bot_spam_messages_detected{group_id!=\"\"}[1h])",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
         }
       ],
-      "yAxes": [
+      "transformations": [
         {
-          "label": "Count",
-          "show": true
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true
+            },
+            "renameByName": {
+              "group_id": "Group ID",
+              "group_name": "Group Name",
+              "Value": "Spam Detected (Last Hour)"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [{"field": "Spam Detected (Last Hour)", "desc": true}]
+          }
         }
       ]
+    },
+    {
+      "id": 12,
+      "title": "Spam Detection Rate % by Group",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 38},
+      "targets": [
+        {
+          "expr": "(rate(telegram_bot_spam_messages_detected{group_id!=\"\"}[5m]) / rate(telegram_bot_messages_processed{group_id!=\"\"}[5m])) * 100",
+          "legendFormat": "{{group_name}} spam rate %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        }
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom"},
+        "tooltip": {"mode": "multi"}
+      }
+    },
+    {
+      "id": 13,
+      "title": "Processing Time Percentiles (All Groups)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 46},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(telegram_bot_message_processing_time_bucket[5m])) by (le))",
+          "legendFormat": "P99 (99th percentile)",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(telegram_bot_message_processing_time_bucket[5m])) by (le))",
+          "legendFormat": "P95 (95th percentile)",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(telegram_bot_message_processing_time_bucket[5m])) by (le))",
+          "legendFormat": "P50 (Median)",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never"
+          },
+          "unit": "s",
+          "min": 0
+        }
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom"},
+        "tooltip": {"mode": "multi"}
+      }
+    },
+    {
+      "id": 14,
+      "title": "Processing Time P95 by Group",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 46},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(telegram_bot_message_processing_time_bucket{group_id!=\"\"}[5m])) by (le, group_id, group_name))",
+          "legendFormat": "{{group_name}} P95",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never"
+          },
+          "unit": "s",
+          "min": 0
+        }
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom"},
+        "tooltip": {"mode": "multi"}
+      }
+    },
+    {
+      "id": 15,
+      "title": "Cumulative Totals (All Time)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 54},
+      "targets": [
+        {
+          "expr": "sum(telegram_bot_messages_processed)",
+          "legendFormat": "Total Messages (all time)",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(telegram_bot_spam_messages_detected)",
+          "legendFormat": "Total Spam (all time)",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never"
+          },
+          "unit": "short",
+          "min": 0
+        }
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom"},
+        "tooltip": {"mode": "multi"}
+      }
     }
   ],
   "time": {
@@ -259,15 +490,10 @@
   "timepicker": {
     "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
   },
-  "templating": {
-    "list": []
-  },
-  "annotations": {
-    "list": []
-  },
-  "refresh": "5s",
-  "schemaVersion": 17,
+  "templating": {"list": []},
+  "annotations": {"list": []},
+  "refresh": "10s",
+  "schemaVersion": 36,
   "version": 0,
-  "links": [],
-  "gnetId": null
+  "links": []
 }
