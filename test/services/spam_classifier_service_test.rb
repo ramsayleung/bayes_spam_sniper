@@ -124,7 +124,7 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
 
   test "#classify should return false if the model is not trained" do
     service = SpamClassifierService.new(@group_id, @group_name)
-    is_spam, _, _ = service.classify("some random message")
+    is_spam, _ = service.classify("some random message")
     assert_not is_spam
   end
 
@@ -152,10 +152,10 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
                     sender_user_name: "s"
                   ))
 
-    is_spam, spam_score, ham_score = service.classify("点击这里买伟哥")
+    is_spam, p_spam = service.classify("点击这里买伟哥")
 
     assert is_spam, "Message should be classified as spam"
-    assert spam_score > ham_score, "Spam score should be higher than ham score"
+    assert p_spam > 0.5, "Spam score should be higher than ham score"
   end
 
   test "#train_batch train a list of messages and identify spam message correctly" do
@@ -183,10 +183,10 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
                             sender_user_name: "s"
                           )
                         ])
-    is_spam, spam_score, ham_score = service.classify("点击这里买伟哥")
+    is_spam, p_spam = service.classify("点击这里买伟哥")
 
     assert is_spam, "Message should be classified as spam"
-    assert spam_score > ham_score, "Spam score should be higher than ham score"
+    assert p_spam > 0.5, "Spam score should be higher than ham score"
   end
 
   test "#classify should correctly identify a message as ham" do
@@ -213,11 +213,11 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
                     sender_user_name: "s"
                   ))
 
-    is_spam, spam_score, ham_score = service.classify("我们明天见")
+    is_spam, p_spam = service.classify("我们明天见")
 
     state = service.classifier_state
 
     assert_not is_spam, "Message should be classified as ham"
-    assert ham_score > spam_score, "Ham score should be higher than spam score"
+    assert p_spam < 0.5, "Ham score should be higher than spam score"
   end
 end

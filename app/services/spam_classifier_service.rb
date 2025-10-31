@@ -106,7 +106,7 @@ class SpamClassifierService
 
     Rails.logger.info "classified_result: #{is_spam ? "maybe_spam": "maybe_ham"}, p_spam: #{p_spam.round(4)}, tokens: #{significant_tokens.join(', ')}"
 
-    [ is_spam, spam_score, ham_score ]
+    [ is_spam, p_spam ]
   end
 
 

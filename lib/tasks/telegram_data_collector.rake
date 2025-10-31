@@ -161,7 +161,7 @@ namespace :telegram do
 
     # Memoize the classifier to avoid creating it twice
     classifier = SpamClassifierService.new(group_id, group_name)
-    is_spam, _, _ = classifier.classify(text_to_classify)
+    is_spam, _ = classifier.classify(text_to_classify)
 
     if training_target == :message_content && !is_spam
       rule_based_classifier = RuleBasedClassifier.new(text_to_classify)

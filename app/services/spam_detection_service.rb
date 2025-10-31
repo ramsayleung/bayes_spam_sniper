@@ -60,7 +60,7 @@ class SpamDetectionService
     when "spam"
       @is_confident = true
       Rails.logger.info "Same message exists and already marked as spam: #{existing_message.message}, training target: #{existing_message.training_target}"
-      Shared::ClassificationResult.new(is_spam: true, target: existing_message.training_target)
+      Shared::ClassificationResult.new(is_spam: true, target: existing_message.training_target, p_spam: 1)
     when "ham"
       Rails.logger.info "Same message exists and already marked as ham: #{existing_message.message}, training target: #{existing_message.training_target}"
       non_spam_result
@@ -73,10 +73,10 @@ class SpamDetectionService
 
   def classify_with_bayesian(target_name, target_value)
     classifier = build_classifier(target_name)
-    is_spam, spam_score, ham_score = classifier.classify(target_value)
+    is_spam, p_spam = classifier.classify(target_value)
 
-    Rails.logger.info "Classified '#{target_value}' against '#{target_name}': is_spam=#{is_spam}, spam_score=#{spam_score}, ham_score=#{ham_score}"
-    Shared::ClassificationResult.new(is_spam: is_spam, target: target_name)
+    Rails.logger.info "Classified '#{target_value}' against '#{target_name}': is_spam=#{is_spam}, p_spam=#{p_spam}"
+    Shared::ClassificationResult.new(is_spam: is_spam, target: target_name, p_spam: p_spam)
   end
 
   def build_classifier(target_name)
@@ -110,6 +110,6 @@ class SpamDetectionService
   end
 
   def non_spam_result
-    Shared::ClassificationResult.new(is_spam: false, target: nil)
+    Shared::ClassificationResult.new(is_spam: false, target: nil, p_spam: 0)
   end
 end

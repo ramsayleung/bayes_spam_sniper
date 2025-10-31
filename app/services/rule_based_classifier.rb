@@ -34,9 +34,9 @@ class RuleBasedClassifier
 
       if ratio > threshold && chinese_chars >= min_chinese_chars
         Rails.logger.info "Classified as spam due to high Chinese character spacing ratio: #{ratio}"
-        return Shared::ClassificationResult.new(is_spam: true, target: "message_content")
+        return Shared::ClassificationResult.new(is_spam: true, target: "message_content", p_spam: 1)
       end
     end
-    Shared::ClassificationResult.new(is_spam: false, target: nil)
+    Shared::ClassificationResult.new(is_spam: false, target: nil, p_spam: 0)
   end
 end
