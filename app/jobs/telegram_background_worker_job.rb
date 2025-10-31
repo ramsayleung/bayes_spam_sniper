@@ -95,23 +95,17 @@ class TelegramBackgroundWorkerJob < ApplicationJob
         banned_user.message_id = trained_message_data[:message_id]
       end
 
+        I18n.with_locale("en") do
+        i18ntext = groups.length <= 1 ? "telegram_bot.handle_regular_message.ban_user_message" : "telegram_bot.handle_regular_message.global_ban_user_message"
+        bot.api.send_message(
+          chat_id: group_id,
+          text: I18n.t(i18ntext, user_name: user_name, user_id: user_id),
+          parse_mode: "Markdown"
+        )
+      end
       rescue Telegram::Bot::Exceptions::ResponseError => e
         Rails.logger.error "Faile to ban user #{user_id}:#{user_name} in Telegram group #{group_id} #{group_name} #{e}"
       end
-    end
-
-    spam_message_src_group_id = trained_message_data[:group_id]
-    begin
-      I18n.with_locale("en") do
-      i18ntext = groups.length <= 1 ? "telegram_bot.handle_regular_message.ban_user_message" : "telegram_bot.handle_regular_message.global_ban_user_message"
-      bot.api.send_message(
-        chat_id: spam_message_src_group_id,
-        text: I18n.t(i18ntext, user_name: user_name, user_id: user_id),
-        parse_mode: "Markdown"
-      )
-    end
-    rescue Telegram::Bot::Exceptions::ResponseError => e
-      Rails.logger.error "Faile to ban user in a group #{e} #{user_id}:#{user_name} in chat #{spam_message_src_group_id}"
     end
   end
 end
