@@ -14,7 +14,8 @@ class SpamDetectionService
 
     rule_result = RuleBasedClassifier.new(@message_text).classify
     if rule_result.is_spam
-      create_trained_message(@message_text, rule_result.target)
+      message_type = @is_confident ? :spam : :maybe_spam
+      create_trained_message(@message_text, rule_result.target, message_type)
       return rule_result
     end
 
@@ -28,8 +29,16 @@ class SpamDetectionService
 
       if result.is_spam
         # If any target is found to be spam, we create the record and stop immediately.
-        create_trained_message(target_info[:value], result.target)
+        message_type = @is_confident ? :spam : :maybe_spam
+        create_trained_message(target_info[:value], result.target, message_type)
         return result
+      else
+        # collect ham data if spam message is more than ham message to balance the dataset
+        spam_count, ham_count = SpamDetectionService.get_message_count_by_target(target_info[:name])
+        # highly confident it's a ham
+        if spam_count > ham_count && result.p_spam < 0.1
+          create_trained_message(target_info[:value], result.target, :maybe_ham)
+        end
       end
     end
 
@@ -38,6 +47,12 @@ class SpamDetectionService
   end
 
   private
+
+  def self.get_message_count_by_target(target)
+    spam_count = TrainedMessage.where(message_type: [ :spam, :maybe_spam ], training_target: target).count
+    ham_count  = TrainedMessage.where(message_type: [ :ham, :maybe_ham ], training_target: target).count
+    [ spam_count, ham_count ]
+  end
 
   def check_target(target_name, target_value)
     content_hash = Digest::SHA256.hexdigest(target_value.to_s)
@@ -91,7 +106,7 @@ class SpamDetectionService
     end
   end
 
-  def create_trained_message(content, target)
+  def create_trained_message(content, target, message_type)
     TrainedMessage.create!(
       group_id: @group_id,
       group_name: @group_name,
@@ -100,7 +115,7 @@ class SpamDetectionService
       training_target: target,
       sender_chat_id: @user_id,
       sender_user_name: @username,
-      message_type: @is_confident ? :spam : :maybe_spam,
+      message_type: message_type,
       message_id: @tg_message_struct.message_id
     )
   end
