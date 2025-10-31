@@ -30,14 +30,14 @@ class SpamDetectionService
       if result.is_spam
         # If any target is found to be spam, we create the record and stop immediately.
         message_type = @is_confident ? :spam : :maybe_spam
-        create_trained_message(target_info[:value], result.target, message_type)
+        create_trained_message(target_info[:value], target_info[:name], message_type)
         return result
       else
         # collect ham data if spam message is more than ham message to balance the dataset
         spam_count, ham_count = SpamDetectionService.get_message_count_by_target(target_info[:name])
         # highly confident it's a ham
         if spam_count > ham_count && result.p_spam < 0.1
-          create_trained_message(target_info[:value], result.target, :maybe_ham)
+          create_trained_message(target_info[:value], target_info[:name], :maybe_ham)
         end
       end
     end

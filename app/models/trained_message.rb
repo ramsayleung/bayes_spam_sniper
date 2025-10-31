@@ -56,7 +56,7 @@ class TrainedMessage < ApplicationRecord
     chat_member = TelegramMemberFetcher.get_bot_chat_member(self.group_id)
     can_ban_user = [ "administrator", "creator" ].include?(chat_member&.status) && chat_member&.can_restrict_members
     if global_spam_count >= spam_ban_threshold * 2 && can_ban_user
-      Rails.logger.info "user: #{self.sender_user_name} has sent #{global_spam_count} spam messages, ban this user globally"
+      Rails.logger.info "user: #{self.sender_user_name}:#{self.sender_chat_id} has sent #{global_spam_count} spam messages, ban this user globally"
       TelegramBackgroundWorkerJob.perform_later(
         action: PostAction::GLOBAL_BAN_USER,
         trained_message_data: {
@@ -70,7 +70,7 @@ class TrainedMessage < ApplicationRecord
       )
 
     elsif spam_count >= spam_ban_threshold && can_ban_user
-      Rails.logger.info "user: #{self.sender_user_name} sent more than #{spam_ban_threshold} spam messages in group: #{self.group_id}, ban this user from group"
+      Rails.logger.info "user: #{self.sender_user_name}:#{self.sender_chat_id} sent more than #{spam_ban_threshold} spam messages in group: #{self.group_id}, ban this user from group"
       TelegramBackgroundWorkerJob.perform_later(
         action: PostAction::BAN_USER,
         trained_message_data: {
