@@ -97,11 +97,17 @@ class TelegramBackgroundWorkerJob < ApplicationJob
 
         I18n.with_locale("en") do
         i18ntext = groups.length <= 1 ? "telegram_bot.handle_regular_message.ban_user_message" : "telegram_bot.handle_regular_message.global_ban_user_message"
-        bot.api.send_message(
+        delete_message_delay = Rails.application.config.delete_message_delay
+        sent_message = bot.api.send_message(
           chat_id: group_id,
-          text: I18n.t(i18ntext, user_name: user_name, user_id: user_id),
+          text: I18n.t(i18ntext, user_name: user_name, user_id: user_id, delete_message_delay: delete_message_delay),
           parse_mode: "Markdown"
         )
+
+        TelegramBackgroundWorkerJob.set(wait: delete_message_delay.minutes).perform_later(
+          action: PostAction::DELETE_ALERT_MESSAGE,
+          chat_id: sent_message.chat.id,
+          message_id: sent_message.message_id)
       end
       rescue Telegram::Bot::Exceptions::ResponseError => e
         Rails.logger.error "Faile to ban user #{user_id}:#{user_name} in Telegram group #{group_id} #{group_name} #{e}"
