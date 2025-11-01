@@ -32,18 +32,13 @@ class TelegramBackgroundWorkerJobTest < ActiveJob::TestCase
     TelegramMemberFetcher.stub(:get_bot_chat_member, @chat_member) do
       api_mock = Minitest::Mock.new
 
-      mock_sent_message = OpenStruct.new(
-        chat: OpenStruct.new(id: @group_id),
-        message_id: 999999999
-      )
-
       # For keyword arguments, pass as a single hash
       # The mock will receive: ban_chat_member(chat_id: @group_id, user_id: @user_id)
       api_mock.expect(:ban_chat_member, nil) do |**kwargs|
         kwargs[:chat_id] == @group_id && kwargs[:user_id] == @user_id
       end
 
-      api_mock.expect(:send_message, mock_sent_message) do |**kwargs|
+      api_mock.expect(:send_message, nil) do |**kwargs|
         kwargs[:chat_id] == @group_id &&
         kwargs[:text].is_a?(String) &&
           kwargs[:parse_mode] == "Markdown"
@@ -103,16 +98,11 @@ class TelegramBackgroundWorkerJobTest < ActiveJob::TestCase
         end
       end
 
-      mock_sent_message = OpenStruct.new(
-        chat: OpenStruct.new(id: @group_id),
-        message_id: 999999999
-      )
-      # Expect notification to each group for global ban (4 total groups)
-      4.times do
-        api_mock.expect(:send_message, mock_sent_message) do |**kwargs|
-          [ group1_id, group2_id, group3_id, @group_id ].include?(kwargs[:chat_id]) &&
-            kwargs[:parse_mode] == "Markdown"
-        end
+      # Expect only ONE notification to source group
+      api_mock.expect(:send_message, nil) do |**kwargs|
+        kwargs[:chat_id] == @group_id &&
+        kwargs[:text].is_a?(String) &&
+          kwargs[:parse_mode] == "Markdown"
       end
 
       bot_client_stub = ->(_token) {
@@ -150,6 +140,13 @@ class TelegramBackgroundWorkerJobTest < ActiveJob::TestCase
       api_mock = Minitest::Mock.new
 
       # Should NOT call ban_chat_member
+      # Should only call send_message once
+      api_mock.expect(:send_message, nil) do |**kwargs|
+        kwargs[:chat_id] == @group_id &&
+        kwargs[:text].is_a?(String) &&
+          kwargs[:parse_mode] == "Markdown"
+      end
+
       bot_client_stub = ->(_token) {
         OpenStruct.new(api: api_mock)
       }
@@ -173,6 +170,13 @@ class TelegramBackgroundWorkerJobTest < ActiveJob::TestCase
 
     TelegramMemberFetcher.stub(:get_bot_chat_member, @chat_member) do
       api_mock = Minitest::Mock.new
+
+      # Should only call send_message, not ban_chat_member
+      api_mock.expect(:send_message, nil) do |**kwargs|
+        kwargs[:chat_id] == GroupClassifierState::TELEGRAM_DATA_COLLECTOR_GROUP_ID &&
+        kwargs[:text].is_a?(String) &&
+          kwargs[:parse_mode] == "Markdown"
+      end
 
       bot_client_stub = ->(_token) {
         OpenStruct.new(api: api_mock)
@@ -200,6 +204,13 @@ class TelegramBackgroundWorkerJobTest < ActiveJob::TestCase
 
     TelegramMemberFetcher.stub(:get_bot_chat_member, @chat_member) do
       api_mock = Minitest::Mock.new
+
+      # Should only call send_message
+      api_mock.expect(:send_message, nil) do |**kwargs|
+        kwargs[:chat_id] == @group_id &&
+        kwargs[:text].is_a?(String) &&
+          kwargs[:parse_mode] == "Markdown"
+      end
 
       bot_client_stub = ->(_token) {
         OpenStruct.new(api: api_mock)
@@ -236,6 +247,13 @@ class TelegramBackgroundWorkerJobTest < ActiveJob::TestCase
       bot_client_stub = ->(_token) {
         OpenStruct.new(api: api_mock)
       }
+
+      # Should still send notification
+      api_mock.expect(:send_message, nil) do |**kwargs|
+        kwargs[:chat_id] == @group_id &&
+        kwargs[:text].is_a?(String) &&
+          kwargs[:parse_mode] == "Markdown"
+      end
 
       Telegram::Bot::Client.stub(:new, bot_client_stub) do
         assert_nothing_raised do
