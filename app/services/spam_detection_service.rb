@@ -107,17 +107,18 @@ class SpamDetectionService
   end
 
   def create_trained_message(content, target, message_type)
-    TrainedMessage.create!(
-      group_id: @group_id,
-      group_name: @group_name,
-      message: content,
-      message_hash: Digest::SHA256.hexdigest(content.to_s),
-      training_target: target,
-      sender_chat_id: @user_id,
-      sender_user_name: @username,
-      message_type: message_type,
-      message_id: @tg_message_struct.message_id
-    )
+    message_hash = Digest::SHA256.hexdigest(content.to_s)
+
+    TrainedMessage.find_or_create_by(message_hash: message_hash) do |message|
+      message.group_id = @group_id
+      message.group_name = @group_name
+      message.message = content
+      message.training_target = target
+      message.sender_chat_id = @user_id
+      message.sender_user_name = @username
+      message.message_type = message_type
+      message.message_id = @tg_message_struct.message_id
+    end
   end
 
   def valid_message?
