@@ -1,5 +1,6 @@
 require "telegram/bot"
 require "prometheus/client"
+require "ostruct"
 
 class TelegramBotter
   include PrometheusMetrics
@@ -530,7 +531,40 @@ class TelegramBotter
         start_time = Time.current
         spam_detection_service = SpamDetectionService.new(message)
         result = spam_detection_service.process
+        is_spam = false
+
+        # First check the message itself
+        spam_detection_service = SpamDetectionService.new(message)
+        result = spam_detection_service.process
+
         if result.is_spam
+          is_spam = true
+          Rails.logger.info "Message flagged as spam due to message itself is spam"
+        elsif message.quote
+          # Check if quoting a spam message (especially from channels)
+          replied_message = message.reply_to_message
+          quoted_text = message.quote&.text
+
+          if quoted_text
+            original_message = message
+            quoted_message = OpenStruct.new(
+              message_id: original_message.message_id,
+              from: original_message.from,
+              date: original_message.date,
+              chat: original_message.chat,
+              text: quoted_text
+            )
+            replied_spam_service = SpamDetectionService.new(quoted_message)
+            replied_result = replied_spam_service.process
+
+            if replied_result.is_spam
+              is_spam = true
+              Rails.logger.info "Message flagged as spam due to quoting spam content"
+            end
+          end
+        end
+
+        if is_spam
           # Increment the spam detected counter
           increment_spam_detected(group_id, group_name)
 
