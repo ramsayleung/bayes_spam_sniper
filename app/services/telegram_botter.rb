@@ -58,8 +58,22 @@ class TelegramBotter
     message_text = message.text&.strip || ""
     Rails.logger.info "Handling message #{message_text}"
 
+    # In group chats, ignore commands for other bots
+    if is_group_message?(message)
+      command_match = message_text.match(%r{^/([a-zA-Z0-9_]+)(?:@([a-zA-Z0-9_]+))?})
+      if command_match
+        target_bot = command_match[2]
+        # If the command is targeted at a specific bot, and it's not this one, ignore it
+        if target_bot && target_bot.casecmp(@bot_username) != 0
+          Rails.logger.info "Ignoring command for another bot: #{message_text}"
+          return
+        end
+      end
+    end
+
     # Clean the message text and handle @botname mentions
     @lang_code = (message.from&.language_code || "en").split("-").first
+
     # Remove @botname from the beginning if present
     message_text = message_text.gsub(/^@#{@bot_username}\s+/, "") if @bot_username
     if @bot_username
@@ -598,12 +612,16 @@ class TelegramBotter
   def is_group_chat?(bot, message)
     I18n.with_locale(@lang_code) do
       # Returns true if the chat type is 'group' or 'supergroup'
-      unless [ "group", "supergroup" ].include?(message.chat.type)
+      unless is_group_message?(message)
         bot.api.send_message(chat_id: message.chat.id, text: "#{I18n.t('telegram_bot.is_group_chat.error_message')}", parse_mode: "Markdown")
         return false
       end
       return true
     end
+  end
+
+  def is_group_message?(message)
+    [ "group", "supergroup" ].include?(message.chat.type)
   end
 
   def is_admin_of_group?(user:, group_id:)
