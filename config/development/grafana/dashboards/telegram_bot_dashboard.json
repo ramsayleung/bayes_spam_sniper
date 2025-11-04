@@ -1,6 +1,6 @@
 {
   "id": null,
-  "title": "Telegram Spam Sniper Bot Dashboard - Complete",
+  "title": "Telegram Spam Sniper Bot Dashboard",
   "tags": ["telegram", "bot", "spam", "monitoring"],
   "style": "dark",
   "timezone": "browser",
@@ -8,12 +8,12 @@
   "panels": [
     {
       "id": 1,
-      "title": "Total Messages (Last 5 Minutes)",
+      "title": "Total Messages",
       "type": "stat",
       "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
       "targets": [
         {
-          "expr": "sum(increase(telegram_bot_messages_processed[5m]))",
+          "expr": "sum(increase(telegram_bot_messages_processed[$__range]))",
           "legendFormat": "Total Messages",
           "refId": "A"
         }
@@ -24,8 +24,8 @@
           "thresholds": {
             "steps": [
               {"color": "green", "value": null},
-              {"color": "yellow", "value": 50},
-              {"color": "red", "value": 100}
+              {"color": "yellow", "value": 100},
+              {"color": "red", "value": 500}
             ]
           },
           "unit": "short",
@@ -39,12 +39,12 @@
     },
     {
       "id": 2,
-      "title": "Total Spam Detected (Last 5 Minutes)",
+      "title": "Total Spam Detected",
       "type": "stat",
       "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
       "targets": [
         {
-          "expr": "sum(increase(telegram_bot_spam_messages_detected[5m]))",
+          "expr": "sum(increase(telegram_bot_spam_messages_detected[$__range]))",
           "legendFormat": "Spam Messages",
           "refId": "A"
         }
@@ -55,8 +55,8 @@
           "thresholds": {
             "steps": [
               {"color": "green", "value": null},
-              {"color": "yellow", "value": 5},
-              {"color": "red", "value": 15}
+              {"color": "yellow", "value": 10},
+              {"color": "red", "value": 50}
             ]
           },
           "unit": "short",
@@ -70,12 +70,12 @@
     },
     {
       "id": 3,
-      "title": "Spam Detection Rate % (Last 5 Minutes)",
+      "title": "Spam Detection Rate %",
       "type": "stat",
       "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
       "targets": [
         {
-          "expr": "(sum(increase(telegram_bot_spam_messages_detected[5m])) / sum(increase(telegram_bot_messages_processed[5m]))) * 100",
+          "expr": "(sum(increase(telegram_bot_spam_messages_detected[$__range])) / sum(increase(telegram_bot_messages_processed[$__range]))) * 100",
           "legendFormat": "Spam Rate",
           "refId": "A"
         }
@@ -102,12 +102,12 @@
     },
     {
       "id": 4,
-      "title": "Avg Processing Time (Last 5 Minutes)",
+      "title": "Avg Processing Time",
       "type": "stat",
       "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0},
       "targets": [
         {
-          "expr": "sum(rate(telegram_bot_message_processing_time_sum[5m])) / sum(rate(telegram_bot_message_processing_time_count[5m]))",
+          "expr": "sum(rate(telegram_bot_message_processing_time_sum[$__rate_interval])) / sum(rate(telegram_bot_message_processing_time_count[$__rate_interval]))",
           "legendFormat": "Avg Time",
           "refId": "A"
         }
@@ -133,12 +133,12 @@
     },
     {
       "id": 5,
-      "title": "Command Usage (Last Hour)",
+      "title": "Command Usage",
       "type": "stat",
       "gridPos": {"h": 8, "w": 24, "x": 0, "y": 6},
       "targets": [
         {
-          "expr": "increase(telegram_bot_command_count[1h])",
+          "expr": "increase(telegram_bot_command_count[$__range])",
           "legendFormat": "{{command}}",
           "refId": "A"
         }
@@ -163,7 +163,7 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
       "targets": [
         {
-          "expr": "rate(telegram_bot_messages_processed{group_id!=\"\"}[1m]) * 60",
+          "expr": "rate(telegram_bot_messages_processed{group_id!=\"\"}[$__rate_interval]) * 60",
           "legendFormat": "{{group_name}} ({{group_id}})",
           "refId": "A"
         }
@@ -192,7 +192,7 @@
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
       "targets": [
         {
-          "expr": "sum(rate(telegram_bot_messages_processed[1m])) * 60",
+          "expr": "sum(rate(telegram_bot_messages_processed[$__rate_interval])) * 60",
           "legendFormat": "Total Messages/min",
           "refId": "A"
         }
@@ -221,7 +221,7 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 22},
       "targets": [
         {
-          "expr": "rate(telegram_bot_spam_messages_detected{group_id!=\"\"}[1m]) * 60",
+          "expr": "rate(telegram_bot_spam_messages_detected{group_id!=\"\"}[$__rate_interval]) * 60",
           "legendFormat": "{{group_name}} spam/min",
           "refId": "A"
         }
@@ -250,7 +250,7 @@
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 22},
       "targets": [
         {
-          "expr": "sum(rate(telegram_bot_spam_messages_detected[1m])) * 60",
+          "expr": "sum(rate(telegram_bot_spam_messages_detected[$__rate_interval])) * 60",
           "legendFormat": "Total Spam/min",
           "refId": "A"
         }
@@ -274,12 +274,12 @@
     },
     {
       "id": 10,
-      "title": "Messages by Group (Last Hour) - Table",
+      "title": "Messages by Group - Table",
       "type": "table",
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 30},
       "targets": [
         {
-          "expr": "increase(telegram_bot_messages_processed{group_id!=\"\"}[1h])",
+          "expr": "increase(telegram_bot_messages_processed{group_id!=\"\"}[$__range])",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -298,7 +298,7 @@
             "renameByName": {
               "group_id": "Group ID",
               "group_name": "Group Name",
-              "Value": "Messages (Last Hour)"
+              "Value": "Messages"
             }
           }
         },
@@ -306,19 +306,19 @@
           "id": "sortBy",
           "options": {
             "fields": {},
-            "sort": [{"field": "Messages (Last Hour)", "desc": true}]
+            "sort": [{"field": "Messages", "desc": true}]
           }
         }
       ]
     },
     {
       "id": 11,
-      "title": "Spam by Group (Last Hour) - Table",
+      "title": "Spam by Group - Table",
       "type": "table",
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 30},
       "targets": [
         {
-          "expr": "increase(telegram_bot_spam_messages_detected{group_id!=\"\"}[1h])",
+          "expr": "increase(telegram_bot_spam_messages_detected{group_id!=\"\"}[$__range])",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -337,7 +337,7 @@
             "renameByName": {
               "group_id": "Group ID",
               "group_name": "Group Name",
-              "Value": "Spam Detected (Last Hour)"
+              "Value": "Spam Detected"
             }
           }
         },
@@ -345,7 +345,7 @@
           "id": "sortBy",
           "options": {
             "fields": {},
-            "sort": [{"field": "Spam Detected (Last Hour)", "desc": true}]
+            "sort": [{"field": "Spam Detected", "desc": true}]
           }
         }
       ]
@@ -357,7 +357,7 @@
       "gridPos": {"h": 8, "w": 24, "x": 0, "y": 38},
       "targets": [
         {
-          "expr": "(rate(telegram_bot_spam_messages_detected{group_id!=\"\"}[5m]) / rate(telegram_bot_messages_processed{group_id!=\"\"}[5m])) * 100",
+          "expr": "(rate(telegram_bot_spam_messages_detected{group_id!=\"\"}[$__rate_interval]) / rate(telegram_bot_messages_processed{group_id!=\"\"}[$__rate_interval])) * 100",
           "legendFormat": "{{group_name}} spam rate %",
           "refId": "A"
         }
@@ -387,17 +387,17 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 46},
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(telegram_bot_message_processing_time_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(telegram_bot_message_processing_time_bucket[$__rate_interval])) by (le))",
           "legendFormat": "P99 (99th percentile)",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(telegram_bot_message_processing_time_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(telegram_bot_message_processing_time_bucket[$__rate_interval])) by (le))",
           "legendFormat": "P95 (95th percentile)",
           "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.50, sum(rate(telegram_bot_message_processing_time_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(telegram_bot_message_processing_time_bucket[$__rate_interval])) by (le))",
           "legendFormat": "P50 (Median)",
           "refId": "C"
         }
@@ -426,7 +426,7 @@
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 46},
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(telegram_bot_message_processing_time_bucket{group_id!=\"\"}[5m])) by (le, group_id, group_name))",
+          "expr": "histogram_quantile(0.95, sum(rate(telegram_bot_message_processing_time_bucket{group_id!=\"\"}[$__rate_interval])) by (le, group_id, group_name))",
           "legendFormat": "{{group_name}} P95",
           "refId": "A"
         }
