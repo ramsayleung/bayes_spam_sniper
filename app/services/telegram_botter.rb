@@ -543,8 +543,6 @@ class TelegramBotter
     I18n.with_locale(@lang_code) do
       begin
         start_time = Time.current
-        spam_detection_service = SpamDetectionService.new(message)
-        result = spam_detection_service.process
         is_spam = false
 
         # First check the message itself
