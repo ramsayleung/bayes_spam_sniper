@@ -15,16 +15,19 @@ development:
   workers:
     - queues: "bot"
       processes: 1
-      threads: 5
+      threads: 3
     - queues: "training"
       processes: 1
-      threads: 5
+      threads: 3
     - queues: "batching"
       processes: 1
-      threads: 4
+      threads: 3
     - queues: "low_priority"
       processes: 1
       threads: 5
+    - queues: "*"
+      processes: <%= [ENV.fetch("JOB_CONCURRENCY", "1").to_i - 5, 1].max %>
+      threads: 3
 
 test:
   <<: *default
@@ -35,14 +38,17 @@ production:
       batch_size: 500
   workers:
     - queues: "bot"
-      processes: 2
-      threads: 5
+      processes: 1
+      threads: 3
     - queues: "training"
-      processes: 3
-      threads: 5
+      processes: 1
+      threads: 3
     - queues: "batching"
-      processes: 2
-      threads: 4
+      processes: 1
+      threads: 3
     - queues: "low_priority"
-      processes: 2
+      processes: 1
       threads: 5
+    - queues: "*"
+      processes: <%= [ENV.fetch("JOB_CONCURRENCY", "1").to_i - 5, 1].max %>
+      threads: 3
