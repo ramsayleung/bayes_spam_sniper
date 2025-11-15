@@ -214,30 +214,54 @@ class SpamClassifierService
       end
 
       # 2. Create a service instance for each state, injecting the state object
-      # This avoids all redundant database lookups.
       services = classifier_states.transform_values do |state|
         new(state.group_id, state.group_name, classifier_state: state)
       end
 
-      # 3. Process each category of messages ONCE
+      # 3. Process user name messages separately
       user_name_service = services[GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID]
-      group_services = services.values.reject { |s| s.group_id == GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID }
-
-      # Process user name messages
       if user_name_service
         TrainedMessage.trainable.for_user_name.find_each do |message|
           user_name_service.train_only(message)
         end
       end
 
-      # Process group content messages
+      # 4. Process group content messages
+      group_services = services.values.reject { |s| s.group_id == GroupClassifierState::USER_NAME_CLASSIFIER_GROUP_ID }
+
+      # Create a single, temporary classifier state to aggregate results
+      # This avoids training each group on the same data set individually.
+      temp_state = GroupClassifierState.new(
+        group_id: "temp",
+        group_name: "temp",
+        spam_counts: {},
+        ham_counts: {},
+        total_spam_words: 0,
+        total_ham_words: 0,
+        total_spam_messages: 0,
+        total_ham_messages: 0,
+        vocabulary_size: 0
+      )
+      temp_service = new(temp_state.group_id, temp_state.group_name, classifier_state: temp_state)
+
+      # Train the temporary service once on all content messages
       TrainedMessage.trainable.for_message_content.find_each do |message|
-        group_services.each do |service|
-          service.train_only(message)
-        end
+        temp_service.train_only(message)
       end
 
-      # 4. Save everything in one transaction
+      # Now, apply the aggregated state to all actual group services
+      group_services.each do |service|
+        state = service.classifier_state
+        state.spam_counts         = temp_state.spam_counts.dup
+        state.ham_counts          = temp_state.ham_counts.dup
+        state.total_spam_words    = temp_state.total_spam_words
+        state.total_ham_words     = temp_state.total_ham_words
+        state.total_spam_messages = temp_state.total_spam_messages
+        state.total_ham_messages  = temp_state.total_ham_messages
+        state.vocabulary_size     = temp_state.vocabulary_size
+      end
+
+      # 5. Save everything in one transaction
       ActiveRecord::Base.transaction do
         services.each_value do |service|
           Rails.logger.info "Saving classifier for group_id: #{service.group_id}"
