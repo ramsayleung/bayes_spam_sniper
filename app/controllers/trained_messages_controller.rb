@@ -102,8 +102,8 @@ class TrainedMessagesController < ApplicationController
           "ClassifierTrainerJob",
           message,
           {},
-          batch_size: 100,
-          batch_window: 5.minutes
+          batch_size: 500,
+          batch_window: 10.minutes
         )
       end
     end

@@ -9,10 +9,40 @@ default: &default
       polling_interval: 0.1
 
 development:
-  <<: *default
+  dispatchers:
+    - polling_interval: 1
+      batch_size: 500
+  workers:
+    - queues: "bot"
+      processes: 1
+      threads: 5
+    - queues: "training"
+      processes: 1
+      threads: 5
+    - queues: "batching"
+      processes: 1
+      threads: 4
+    - queues: "low_priority"
+      processes: 1
+      threads: 5
 
 test:
   <<: *default
 
 production:
-  <<: *default
+  dispatchers:
+    - polling_interval: 1
+      batch_size: 500
+  workers:
+    - queues: "bot"
+      processes: 2
+      threads: 5
+    - queues: "training"
+      processes: 3
+      threads: 5
+    - queues: "batching"
+      processes: 2
+      threads: 4
+    - queues: "low_priority"
+      processes: 2
+      threads: 5

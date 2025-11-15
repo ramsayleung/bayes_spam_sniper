@@ -93,8 +93,8 @@ class TrainedMessage < ApplicationRecord
       "ClassifierTrainerJob",
       self,                     # pass trainedMessage as item_data
       {},                        # no shared_args needed
-      batch_size: 100,
-      batch_window: 5.minutes
+      batch_size: 500,
+      batch_window: 10.minutes
     )
   end
 
