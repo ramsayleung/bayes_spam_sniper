@@ -27,7 +27,14 @@ zh:
         feedspam: "/feedspam - 投喂垃圾信息来训练"
         listspam: "/listspam - 查看拦截广告消息列表"
         listbanuser: "/listbanuser - 查看封禁账户列表"
-      support: "如有问题，请加群 @[BSS 支持群](https://t.me/+i8fy3qOtiNAyODZl)。"
+        setlang: "/setlang `<language_code>` - 设置机器人的语言"
+      support: "如有问题，请加群 [@BSS 支持群](https://t.me/+i8fy3qOtiNAyODZl)。"
+    setlang:
+      usage: "用法: /setlang <语言代码>. 可选: %{available_locales}"
+      success: "✅ 此群组的语言已设置为: %{language}"
+      failure: "❌ 未能设置此群组的语言。"
+      unsupported_language: "❌ 不支持的语言: %{language}. 可选: %{available_locales}"
+      general_error: "❌ 设置语言时发生意外错误。"
     errors:
       processing: "处理请求时出错。"
     markspam:
@@ -52,6 +59,12 @@ zh:
       error_message: "❌ 你(@[%{user_name}](tg://user?id=%{user_id}))不是当前群组的管理员"
       general_error_message: "❌ 你不是当前群组的管理员"
     listbanuser:
+      banned_user_text: "封禁用户"
+      page_text: "页"
+      total_banned_user: "封禁总用户数"
+      user_text: "用户"
+      message_text: "消息"
+      banned_text: "封禁日期"
       no_banned_user_message: "当前群组无被禁言用户"
       no_banned_on_page_x_message: "在群组 %{group_title} 的第 %{page} 页未找到被封禁用户。请尝试 /listbanuser %{target_group_id} 1 查看第一页内容"
       unban_message: "解禁"
@@ -59,6 +72,13 @@ zh:
       previous_page: "⬅️ 上一页"
       next_page: "下一页 ➡️"
     listspam:
+      spam_message_text: "广告消息"
+      page_text: "页"
+      total_spam_message_text: "消息总条数"
+      user_text: "用户"
+      message_text: "消息"
+      spamtype_text: "广告类型"
+      banned_text: "封禁"
       no_spam_message: "当前群组无被禁言用户"
       no_spam_on_page_x_message: "在群组 %{group_title} 的第 %{page} 页未找到被封禁消息。请尝试 /listspam %{target_group_id} 1 查看第一页内容"
       mark_as_ham_message: "标记为正常"

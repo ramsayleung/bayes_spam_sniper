@@ -27,7 +27,14 @@ en:
         feedspam: "/feedspam - Submit spam samples for training" 
         listspam: "/listspam - View list of spam messages"
         listbanuser: "/listbanuser - List all banned users"
+        setlang: "/setlang `<language_code>` - Set language for the bot"
       support: "For assistance, join our support group: @[BSS support group](https://t.me/+i8fy3qOtiNAyODZl)"
+    setlang:
+      usage: "Usage: /setlang <language_code>. Available: %{available_locales}"
+      success: "✅ Language for this group set to: %{language}"
+      failure: "❌ Failed to set language for this group."
+      unsupported_language: "❌ Unsupported language: %{language}. Available: %{available_locales}"
+      general_error: "❌ An unexpected error occurred while setting the language."
     errors:
       processing: "An error occurred while processing your request."
     markspam:
@@ -52,6 +59,12 @@ en:
       error_message: "❌ You(@[%{user_name}](tg://user?id=%{user_id})) are not an administrator of this group"
       general_error_message: "❌ You are not an administrator of this group"
     listbanuser:
+      banned_user_text: "Banned Users"
+      page_text: "Page"
+      total_banned_user: "Total banned users"
+      user_text: "User"
+      message_text: "Message"
+      banned_text: "Banned at"
       no_banned_user_message: "There is no banned users in this group"
       no_banned_on_page_x_message: "No banned users found on page %{page} for group `%{group_title}`. Try `/listbanuser %{target_group_id} 1` to see the first page."
       unban_message: "Unban"
@@ -59,6 +72,13 @@ en:
       previous_page: "⬅️ Previous"
       next_page: "Next ➡️"
     listspam:
+      spam_message_text: "Spam Messages"
+      page_text: "Page"
+      total_spam_message_text: "Total spam messages"
+      user_text: "User"
+      message_text: "Message"
+      spamtype_text: "SpamType"
+      banned_text: "Banned"
       no_spam_message: "There is no spam message in this group"
       no_spam_on_page_x_message: "No spam found on page %{page} for group `%{group_title}`. Try `/listspam %{target_group_id} 1` to see the first page."
       mark_as_ham_message: "Not Spam"

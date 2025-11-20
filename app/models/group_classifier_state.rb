@@ -15,4 +15,5 @@ class GroupClassifierState < ApplicationRecord
   scope :for_group, -> { where("group_id < 0") }
 
   validates :group_id, uniqueness: true
+  validates :language, inclusion: { in: I18n.available_locales.map(&:to_s) }, allow_nil: true
 end

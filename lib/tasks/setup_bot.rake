@@ -12,7 +12,8 @@ namespace :bot do
       { command: "markspam", description: "删除垃圾消息并禁言(Delete the spam message and ban the sender)" },
       { command: "feedspam", description: "投喂垃圾信息来训练(Feed spam message to train the bot)" },
       { command: "listspam", description: "查看广告列表(List all spams)" },
-      { command: "listbanuser", description: "查看封禁账户列表(List all banned users)" }
+      { command: "listbanuser", description: "查看封禁账户列表(List all banned users)" },
+      { command: "setlang", description: "设置机器人语言(Set language for bot)" }
     ]
     begin
       require "telegram/bot"

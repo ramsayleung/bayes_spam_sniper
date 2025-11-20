@@ -54,6 +54,26 @@ class TelegramBotter
 
   private
 
+  # Determines the appropriate language code for a given message based on a layered approach.
+  # 1. Checks for a group-specific language setting if it's a group message.
+  # 2. Falls back to the sender's language code from their Telegram profile.
+  # 3. Defaults to 'en' if no language is determined.
+  def determine_language(message)
+    # 1. Check for group-specific language setting
+    if is_group_message?(message)
+      group_state = GroupClassifierState.find_by(group_id: message.chat.id)
+      return group_state.language if group_state&.language.present?
+    end
+
+    # 2. Fallback to user's language_code from Telegram
+    if message.from&.language_code.present?
+      return message.from.language_code.split("-").first
+    end
+
+    # 3. Default to 'en'
+    "en"
+  end
+
   def handle_message(bot, message)
     message_text = message.text&.strip || ""
     Rails.logger.info "Handling message #{message_text}"
@@ -71,8 +91,8 @@ class TelegramBotter
       end
     end
 
-    # Clean the message text and handle @botname mentions
-    @lang_code = (message.from&.language_code || "en").split("-").first
+    username = [ message.from&.first_name, message.from&.last_name ].compact.join(" ")
+    @lang_code = determine_language(message)
 
     # Remove @botname from the beginning if present
     message_text = message_text.gsub(/^@#{@bot_username}\s+/, "") if @bot_username
@@ -88,6 +108,9 @@ class TelegramBotter
     case message_text
     when %r{^/start}
       handle_start_command(bot, message)
+    when %r{^/setlang}
+      increment_command_counter("setlang")
+      handle_set_language_command(bot, message)
     when %r{^/markspam}
       increment_command_counter("markspam")
       handle_markspam_command(bot, message)
@@ -116,7 +139,7 @@ class TelegramBotter
     keyboard = [
       [
         { text: I18n.t("telegram_bot.buttons.user_guide", locale: @lang_code),
-          callback_data: build_callback_data(CallbackAction::USER_GUIDE, lang: @lang_code) },
+          callback_data: build_callback_data(CallbackAction::USER_GUIDE, CallbackConstants::LANGUAGE => @lang_code) },
         { text: I18n.t("telegram_bot.buttons.add_to_group", locale: @lang_code),
           url: "https://t.me/#{@bot_username}?startgroup=true" }
       ]
@@ -136,6 +159,54 @@ class TelegramBotter
       reply_markup: { inline_keyboard: keyboard }.to_json(),
       parse_mode: "Markdown"
     )
+  end
+
+  def handle_set_language_command(bot, message)
+    return unless is_group_chat?(bot, message)
+    return unless is_admin?(bot, user: message.from, group_id: message.chat.id)
+
+    I18n.with_locale(@lang_code) do
+      command_parts = message.text.strip.split(/\s+/)
+      target_language = command_parts[1]&.downcase
+
+      if target_language.nil?
+        bot.api.send_message(
+          chat_id: message.chat.id,
+          text: I18n.t("telegram_bot.setlang.usage", available_locales: I18n.available_locales.map(&:to_s).join(", ")),
+        )
+        return
+      end
+
+      if I18n.available_locales.map(&:to_s).include?(target_language)
+        group_id = message.chat.id
+        group_name = message.chat.title || "Unknown Group"
+
+        group_state = GroupClassifierState.find_or_initialize_by(group_id: group_id)
+        group_state.group_name = group_name
+        group_state.language = target_language
+
+        if group_state.save
+          bot.api.send_message(
+            chat_id: message.chat.id,
+            text: I18n.t("telegram_bot.setlang.success", language: target_language),
+          )
+        else
+          Rails.logger.error "Error saving group language: #{group_state.errors.full_messages.join(', ')}"
+          bot.api.send_message(
+            chat_id: message.chat.id,
+            text: I18n.t("telegram_bot.setlang.failure"),
+          )
+        end
+      else
+        bot.api.send_message(
+          chat_id: message.chat.id,
+          text: I18n.t("telegram_bot.setlang.unsupported_language", language: target_language, available_locales: I18n.available_locales.map(&:to_s).join(", ")),
+        )
+      end
+    end
+  rescue => e
+    Rails.logger.error "Error in setlang command: #{e.message}\n#{e.backtrace.join("\n")}"
+    bot.api.send_message(chat_id: message.chat.id, text: I18n.t("telegram_bot.setlang.general_error"))
   end
 
   def handle_markspam_command(bot, message)
@@ -380,8 +451,8 @@ class TelegramBotter
             )
           end
         else
-          text = "🚫 **Spam Messages** (Page #{page}/#{total_pages})\n"
-          text += "Total spam messages: #{total_count}\n\n"
+          text = "🚫 **#{I18n.t('telegram_bot.listspam.spam_message_text')}** (#{I18n.t('telegram_bot.listspam.page_text')} #{page}/#{total_pages})\n"
+          text += "#{I18n.t('telegram_bot.listspam.total_spam_message_text')}: #{total_count}\n\n"
 
           max_spam_preview_length = Rails.application.config.max_spam_preview_length
           max_spam_preview_button_length = Rails.application.config.max_spam_preview_button_length
@@ -389,10 +460,10 @@ class TelegramBotter
             # Truncate long spam messages for display
             spam_preview = message.message.length > max_spam_preview_length ? "#{message.message[0..max_spam_preview_length]}..." : message.message
             spam_button_preview = message.message.length > max_spam_preview_button_length ? "#{message.message[0..max_spam_preview_button_length]}..." : message.message
-            text += "**#{index + 1}. User:** *#{message.sender_user_name}*\n"
-            text += "**Message:** `#{spam_preview}`\n"
-            text += "**SpamType:** *#{message.training_target}*\n"
-            text += "**Banned:** #{message.created_at.strftime("%Y-%m-%d %H:%M")}\n\n"
+            text += "**#{index + 1}. #{I18n.t('telegram_bot.listspam.user_text')}:** *#{message.sender_user_name}*\n"
+            text += "**#{I18n.t('telegram_bot.listspam.message_text')}:** `#{spam_preview}`\n"
+            text += "**#{I18n.t('telegram_bot.listspam.spamtype_text')}:** *#{message.training_target}*\n"
+            text += "**#{I18n.t('telegram_bot.listspam.banned_text')}:** #{message.created_at.strftime("%Y-%m-%d %H:%M")}\n\n"
 
             # Create an "mark as ham" button for each user
             callback_data = build_callback_data(CallbackAction::MARK_AS_HAM,
@@ -476,7 +547,7 @@ class TelegramBotter
             )
           end
         else
-          text = "🚫 **Banned Users** (Page #{page}/#{total_pages})\n"
+          text = "🚫 **#{I18n.t("telegram_bot.listbanuser.banned_user_text")}** (#{I18n.t("telegram_bot.listbanuser.page_text")} #{page}/#{total_pages})\n"
           text += "Total banned users: #{total_count}\n\n"
           buttons = []
 
@@ -485,9 +556,9 @@ class TelegramBotter
             # Truncate long spam messages for display
             spam_preview = user.spam_message.length > max_spam_preview_length ? "#{user.spam_message[0..max_spam_preview_length]}..." : user.spam_message
 
-            text += "**User:** *#{user.sender_user_name}*\n"
-            text += "**Message:** `#{spam_preview}`\n"
-            text += "**Banned:** #{user.created_at.strftime("%Y-%m-%d %H:%M")}\n\n"
+            text += "**#{I18n.t("telegram_bot.listbanuser.user_text")}:** *#{user.sender_user_name}*\n"
+            text += "**#{I18n.t("telegram_bot.listbanuser.message_text")}:** `#{spam_preview}`\n"
+            text += "**#{I18n.t("telegram_bot.listbanuser.banned_text")}:** #{user.created_at.strftime("%Y-%m-%d %H:%M")}\n\n"
 
             # Create an "unban" button for each user
             callback_data = build_callback_data(CallbackAction::UNBAN, CallbackConstants::USER_ID => user.id, CallbackConstants::GROUP_ID=> target_group_id)
