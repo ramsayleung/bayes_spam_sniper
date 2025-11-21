@@ -9,78 +9,81 @@
   <% end %>
 
   <!-- Header -->
-  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-    <div>
-      <h1 class="font-bold text-4xl mb-2">Trained Messages</h1>
-      <p class="text-gray-600">Showing <%= @trained_messages.length %> of <%= @total_count %> messages</p>
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+    <div class="flex-1">
+      <h1 class="font-bold text-2xl sm:text-3xl md:text-4xl mb-1">Trained Messages</h1>
+      <p class="text-gray-600 text-sm sm:text-base">Showing <%= @trained_messages.length %> of <%= @total_count %> messages</p>
     </div>
-    <%= link_to "New trained message", new_trained_message_path, class: "mt-4 sm:mt-0 rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white block font-medium" %>
+    <div class="w-full sm:w-auto">
+      <%= link_to "New trained message", new_trained_message_path, class: "w-full sm:w-auto text-center rounded-lg px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white block font-medium transition-colors duration-150" %>
+    </div>
   </div>
 
   <!-- Filters -->
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-    <%= form_with url: trained_messages_path, method: :get, local: true, class: "space-y-4" do |form| %>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <%= form_with url: trained_messages_path, method: :get, local: true, class: "space-y-6" do |form| %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-5">
         <!-- Search -->
-        <div>
+        <div class="lg:col-span-2">
           <%= form.label :search, "Search Message", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= form.text_field :search, value: params[:search], placeholder: "Search in messages...", class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          <%= form.text_field :search, value: params[:search], placeholder: "Search in messages...", class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3" %>
         </div>
 
         <!-- Message Type Filter -->
         <div>
           <%= form.label :message_type, "Message Type", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= form.select :message_type, 
-              options_for_select([['All Types', 'all']] + @message_types.map { |type| [type&.humanize || 'Unknown', type] }, params[:message_type]), 
-              {}, 
-              { class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" } %>
+          <%= form.select :message_type,
+              options_for_select([['All Types', 'all']] + @message_types.map { |type| [type&.humanize || 'Unknown', type] }, params[:message_type]),
+              {},
+              { class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3" } %>
         </div>
 
         <!-- Training Target Filter -->
         <div>
           <%= form.label :training_target, "Training Target", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= form.select :training_target, 
-              options_for_select([['All Targets', 'all']] + @training_targets.map { |target| [target&.humanize || 'Unknown', target] }, params[:training_target]), 
-              {}, 
-              { class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" } %>
+          <%= form.select :training_target,
+              options_for_select([['All Targets', 'all']] + @training_targets.map { |target| [target&.humanize || 'Unknown', target] }, params[:training_target]),
+              {},
+              { class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3" } %>
         </div>
 
         <!-- Source Filter -->
         <div>
           <%= form.label :source, "Source", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= form.select :source, 
-              options_for_select([['All Sources', 'all']] + @sources.map { |source| [source&.humanize || 'Unknown', source] }, params[:source]), 
-              {}, 
-              { class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" } %>
+          <%= form.select :source,
+              options_for_select([['All Sources', 'all']] + @sources.map { |source| [source&.humanize || 'Unknown', source] }, params[:source]),
+              {},
+              { class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3" } %>
         </div>
 
         <!-- Group Filter -->
         <div>
           <%= form.label :group_name, "Group", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= form.select :group_name, 
-              options_for_select([['All Groups', 'all']] + @group_names.map { |name| [name, name] }, params[:group_name]), 
-              {}, 
-              { class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" } %>
+          <%= form.select :group_name,
+              options_for_select([['All Groups', 'all']] + @group_names.map { |name| [name, name] }, params[:group_name]),
+              {},
+              { class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3" } %>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-3 space-y-3 sm:space-y-0">
+        <div class="flex-1">
+          <%= form.label :per_page, "Per Page", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= form.select :per_page,
+              options_for_select([[10, 10], [25, 25], [50, 50], [100, 100]], @per_page),
+              {},
+              { class: "rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3", onchange: "this.form.submit();" } %>
         </div>
 
-        <!-- Per Page -->
-        <div>
-          <%= form.label :per_page, "Per Page", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= form.select :per_page, 
-              options_for_select([[10, 10], [25, 25], [50, 50], [100, 100]], @per_page), 
-              {}, 
-              { class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", onchange: "this.form.submit();" } %>
+        <div class="flex items-center space-x-3 pt-4 sm:pt-0">
+          <%= form.submit "Apply Filters", class: "rounded-lg px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium cursor-pointer transition-colors duration-150" %>
+          <%= link_to "Clear Filters", trained_messages_path, class: "rounded-lg px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition-colors duration-150" %>
         </div>
       </div>
 
       <!-- Hidden fields to preserve sorting -->
       <%= form.hidden_field :sort, value: params[:sort] %>
       <%= form.hidden_field :direction, value: params[:direction] %>
-
-      <div class="flex space-x-2">
-        <%= form.submit "Apply Filters", class: "rounded-md px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium cursor-pointer" %>
-        <%= link_to "Clear Filters", trained_messages_path, class: "rounded-md px-4 py-2 bg-gray-100 hover:bg-gray-50 text-gray-700 font-medium" %>
-      </div>
     <% end %>
   </div>
 
@@ -90,10 +93,17 @@
       <%= hidden_field_tag key, value %>
     <% end %>
 
-    <div class="flex items-center space-x-4 mb-4">
-      <span class="text-sm font-medium text-gray-700">With selected:</span>
-      <%= form.submit "Mark as Spam", class: "rounded-md px-4 py-2 bg-red-100 text-red-700 hover:bg-red-200 font-medium cursor-pointer" %>
-      <%= form.submit "Mark as Ham", class: "rounded-md px-4 py-2 bg-green-100 text-green-700 hover:bg-green-200 font-medium cursor-pointer" %>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+      <div class="flex items-center space-x-3">
+        <span class="text-sm font-medium text-gray-700">With selected:</span>
+        <div class="flex space-x-2">
+          <%= form.submit "Mark as Spam", class: "rounded-lg px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 font-medium cursor-pointer transition-colors duration-150" %>
+          <%= form.submit "Mark as Ham", class: "rounded-lg px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 font-medium cursor-pointer transition-colors duration-150" %>
+        </div>
+      </div>
+      <div class="text-sm text-gray-500">
+        <span id="selected-count">0</span> selected
+      </div>
     </div>
 
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -101,21 +111,21 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th scope="col" class="p-4">
+              <th scope="col" class="p-4 w-12">
                 <input type="checkbox" data-checkbox-select-all-target="parent" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
               </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <%= link_to trained_messages_path(params.permit!.merge(sort: 'id', direction: params[:sort] == 'id' && params[:direction] == 'asc' ? 'desc' : 'asc')), class: "hover:text-gray-700 flex items-center space-x-1" do %>
-                <span>ID</span>
-                <% if params[:sort] == 'id' %>
-                  <span><%= params[:direction] == 'asc' ? '↑' : '↓' %></span>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px]">
+                <%= link_to trained_messages_path(params.permit!.merge(sort: 'id', direction: params[:sort] == 'id' && params[:direction] == 'asc' ? 'desc' : 'asc')), class: "hover:text-gray-700 flex items-center space-x-1" do %>
+                  <span>ID</span>
+                  <% if params[:sort] == 'id' %>
+                    <span><%= params[:direction] == 'asc' ? '↑' : '↓' %></span>
+                  <% end %>
                 <% end %>
-              <% end %>
               </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
                 Message
               </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
                 <%= link_to trained_messages_path(params.permit!.merge(sort: 'training_target', direction: params[:sort] == 'training_target' && params[:direction] == 'asc' ? 'desc' : 'asc')), class: "hover:text-gray-700 flex items-center space-x-1" do %>
                   <span>Target</span>
                   <% if params[:sort] == 'training_target' %>
@@ -123,7 +133,7 @@
                   <% end %>
                 <% end %>
               </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
                 <%= link_to trained_messages_path(params.permit!.merge(sort: 'message_type', direction: params[:sort] == 'message_type' && params[:direction] == 'asc' ? 'desc' : 'asc')), class: "hover:text-gray-700 flex items-center space-x-1" do %>
                   <span>Type</span>
                   <% if params[:sort] == 'message_type' %>
@@ -131,7 +141,7 @@
                   <% end %>
                 <% end %>
               </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
                 <%= link_to trained_messages_path(params.permit!.merge(sort: 'sender_user_name', direction: params[:sort] == 'sender_user_name' && params[:direction] == 'asc' ? 'desc' : 'asc')), class: "hover:text-gray-700 flex items-center space-x-1" do %>
                   <span>Sender</span>
                   <% if params[:sort] == 'sender_user_name' %>
@@ -139,8 +149,7 @@
                   <% end %>
                 <% end %>
               </th>
-
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
                 <%= link_to trained_messages_path(params.permit!.merge(sort: 'group_name', direction: params[:sort] == 'group_name' && params[:direction] == 'asc' ? 'desc' : 'asc')), class: "hover:text-gray-700 flex items-center space-x-1" do %>
                   <span>Group</span>
                   <% if params[:sort] == 'group_name' %>
@@ -148,7 +157,7 @@
                   <% end %>
                 <% end %>
               </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
                 <%= link_to trained_messages_path(params.permit!.merge(sort: 'updated_at', direction: params[:sort] == 'updated_at' && params[:direction] == 'asc' ? 'desc' : 'asc')), class: "hover:text-gray-700 flex items-center space-x-1" do %>
                   <span>Updated</span>
                   <% if params[:sort] == 'updated_at' %>
@@ -156,29 +165,29 @@
                   <% end %>
                 <% end %>
               </th>
-              <th scope="col" class="relative px-6 py-3">
-                <span class="sr-only">Actions</span>
+              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
+                Actions
               </th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <% if !@trained_messages.empty? %>
               <% @trained_messages.each do |trained_message| %>
-                <tr class="hover:bg-gray-50">
-                  <td class="p-4">
+                <tr class="hover:bg-gray-50 transition-colors duration-150">
+                  <td class="p-4 w-12">
                     <input type="checkbox" name="trained_message_ids[]" value="<%= trained_message.id %>" data-checkbox-select-all-target="child" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     <%= trained_message.id %>
                   </td>
-                  <td class="px-6 py-4 text-sm text-gray-900">
-                      <div class="max-w-xs truncate" title="<%= extract_message_content(trained_message.message) %>">
+                  <td class="px-6 py-4 text-sm text-gray-900 max-w-xs">
+                    <div class="truncate" title="<%= extract_message_content(trained_message.message) %>">
                       <%= truncate(extract_message_content(trained_message.message), length: 50) %>
                     </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <% if trained_message.training_target %>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= training_target_classes(trained_message.training_target) %>">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= training_target_classes(trained_message.training_target) %>">
                         <%= trained_message.training_target.humanize %>
                       </span>
                     <% else %>
@@ -187,7 +196,7 @@
                       </span>
                     <% end %>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 <%= message_type_classes(trained_message.message_type) %>">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm <%= message_type_classes(trained_message.message_type) %>">
                     <%= trained_message.message_type&.humanize || 'Unknown' %>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" title="<%= trained_message.sender_user_name %>">
@@ -200,11 +209,11 @@
                     <%= time_ago_in_words(trained_message.updated_at) %> ago
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div class="flex space-x-2">
-                      <%= link_to "View", trained_message_path(trained_message, request.query_parameters), class: "text-indigo-600 hover:text-indigo-900" %>
-                      <%= link_to "Edit", edit_trained_message_path(trained_message), class: "text-indigo-600 hover:text-indigo-900" %>
-                      <%= link_to "Delete", trained_message_path(trained_message, return_url: request.original_url), method: :delete, 
-                          class: "text-red-600 hover:text-red-900", 
+                    <div class="flex items-center justify-end space-x-2">
+                      <%= link_to "View", trained_message_path(trained_message, request.query_parameters), class: "text-indigo-600 hover:text-indigo-900 transition-colors duration-150" %>
+                      <%= link_to "Edit", edit_trained_message_path(trained_message), class: "text-indigo-600 hover:text-indigo-900 transition-colors duration-150" %>
+                      <%= link_to "Delete", trained_message_path(trained_message, return_url: request.original_url), method: :delete,
+                          class: "text-red-600 hover:text-red-900 transition-colors duration-150",
                           data: { turbo_confirm: "Are you sure?" } %>
                     </div>
                   </td>
@@ -212,8 +221,13 @@
               <% end %>
             <% else %>
             <tr>
-              <td colspan="8" class="px-6 py-4 text-center text-gray-500">
-                No trained messages found matching your criteria.
+              <td colspan="9" class="px-6 py-12 text-center text-gray-500">
+                <div class="flex flex-col items-center">
+                  <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  <p>No trained messages found matching your criteria.</p>
+                </div>
               </td>
             </tr>
             <% end %>
@@ -225,41 +239,40 @@
 
   <!-- Pagination -->
   <% if @total_pages > 1 %>
-    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-4 rounded-lg shadow-sm">
+    <div class="bg-white px-4 py-4 flex flex-col sm:flex-row items-center justify-between border-t border-gray-200 sm:px-6 mt-4 rounded-lg shadow-sm">
       <div class="flex-1 flex justify-between sm:hidden">
         <% if @page > 1 %>
-          <%= link_to "Previous", trained_messages_path(params.permit!.merge(page: @page - 1)), 
-              class: "relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50" %>
+          <%= link_to "Previous", trained_messages_path(params.permit!.merge(page: @page - 1)),
+              class: "relative inline-flex items-center px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-150" %>
         <% end %>
         <% if @page < @total_pages %>
-          <%= link_to "Next", trained_messages_path(params.permit!.merge(page: @page + 1)), 
-              class: "ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50" %>
+          <%= link_to "Next", trained_messages_path(params.permit!.merge(page: @page + 1)),
+              class: "ml-3 relative inline-flex items-center px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-150" %>
         <% end %>
       </div>
-      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-        <div>
-          <p class="text-sm text-gray-700">
-            Showing page <span class="font-medium"><%= @page %></span> of 
-            <span class="font-medium"><%= @total_pages %></span>
-            (<span class="font-medium"><%= @total_count %></span> total results)
-          </p>
+      <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+        <div class="text-sm text-gray-700 mb-3 sm:mb-0">
+          Showing <span class="font-medium"><%= (@page - 1) * @per_page + 1 %></span> to
+          <span class="font-medium"><%= [@page * @per_page, @total_count].min %></span> of
+          <span class="font-medium"><%= @total_count %></span> results
         </div>
         <div>
-          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+          <nav class="relative z-0 inline-flex rounded-lg shadow-sm -space-x-px" aria-label="Pagination">
             <!-- Previous Button -->
             <% if @page > 1 %>
-              <%= link_to trained_messages_path(params.permit!.merge(page: @page - 1)), 
-                  class: "relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50" do %>
-                <span class="sr-only">Previous</span>
+              <%= link_to trained_messages_path(params.permit!.merge(page: @page - 1)),
+                  class: "relative inline-flex items-center px-3 py-2 rounded-l-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors duration-150" do %>
                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
+                <span class="sr-only">Previous</span>
               <% end %>
             <% else %>
-              <span class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-gray-50 text-sm font-medium text-gray-300 cursor-not-allowed">
+              <span class="relative inline-flex items-center px-3 py-2 rounded-l-lg border border-gray-300 bg-gray-50 text-sm font-medium text-gray-300 cursor-not-allowed">
                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
+                <span class="sr-only">Previous</span>
               </span>
             <% end %>
 
@@ -270,29 +283,30 @@
 
             <% (start_page..end_page).each do |page_num| %>
               <% if page_num == @page %>
-                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                <span class="relative inline-flex items-center px-4 py-2 border border-transparent bg-blue-100 text-blue-700 font-medium text-sm">
                   <%= page_num %>
                 </span>
               <% else %>
-                <%= link_to page_num, trained_messages_path(params.permit!.merge(page: page_num)), 
-                    class: "relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50" %>
+                <%= link_to page_num, trained_messages_path(params.permit!.merge(page: page_num)),
+                    class: "relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors duration-150" %>
               <% end %>
             <% end %>
 
             <!-- Next Button -->
             <% if @page < @total_pages %>
-              <%= link_to trained_messages_path(params.permit!.merge(page: @page + 1)), 
-                  class: "relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50" do %>
+              <%= link_to trained_messages_path(params.permit!.merge(page: @page + 1)),
+                  class: "relative inline-flex items-center px-3 py-2 rounded-r-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors duration-150" do %>
                 <span class="sr-only">Next</span>
                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                 </svg>
               <% end %>
             <% else %>
-              <span class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-gray-50 text-sm font-medium text-gray-300 cursor-not-allowed">
+              <span class="relative inline-flex items-center px-3 py-2 rounded-r-lg border border-gray-300 bg-gray-50 text-sm font-medium text-gray-300 cursor-not-allowed">
                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                 </svg>
+                <span class="sr-only">Next</span>
               </span>
             <% end %>
           </nav>
@@ -303,17 +317,58 @@
 </div>
 
 <script>
-  // for "Select All"
+  // Initialize checkbox selection and counter functionality
   document.addEventListener('turbo:load', () => {
     const parentCheckbox = document.querySelector('[data-checkbox-select-all-target="parent"]');
-    if (!parentCheckbox) return;
-
     const childCheckboxes = Array.from(document.querySelectorAll('[data-checkbox-select-all-target="child"]'));
+    const selectedCountElement = document.getElementById('selected-count');
 
+    // Exit if required elements are not found
+    if (!parentCheckbox || !childCheckboxes.length) return;
+
+    /**
+     * Updates the selected items counter display
+     */
+    function updateSelectedCount() {
+      const checkedCount = childCheckboxes.filter(checkbox => checkbox.checked).length;
+      selectedCountElement.textContent = checkedCount;
+    }
+
+    /**
+     * Handles the "Select All" checkbox state changes
+     */
     parentCheckbox.addEventListener('change', (event) => {
       childCheckboxes.forEach(checkbox => {
         checkbox.checked = event.target.checked;
       });
+      updateSelectedCount();
     });
+
+    /**
+     * Handles individual checkbox state changes and updates the "Select All" checkbox state
+     */
+    childCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', () => {
+        updateSelectedCount();
+
+        // Update "Select All" checkbox state based on individual selections
+        const allChecked = childCheckboxes.every(cb => cb.checked);
+        const anyChecked = childCheckboxes.some(cb => cb.checked);
+
+        if (allChecked) {
+          parentCheckbox.checked = true;
+          parentCheckbox.indeterminate = false;
+        } else if (anyChecked) {
+          parentCheckbox.checked = false;
+          parentCheckbox.indeterminate = true;
+        } else {
+          parentCheckbox.checked = false;
+          parentCheckbox.indeterminate = false;
+        }
+      });
+    });
+
+    // Initialize count on page load
+    updateSelectedCount();
   });
 </script>
