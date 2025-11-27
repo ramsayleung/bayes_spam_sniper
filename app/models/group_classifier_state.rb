@@ -16,4 +16,36 @@ class GroupClassifierState < ApplicationRecord
 
   validates :group_id, uniqueness: true
   validates :language, inclusion: { in: I18n.available_locales.map(&:to_s) }, allow_nil: true
+
+  # Get top N most frequent spam words
+  def top_spam_words(limit = 50)
+    return [] unless spam_counts.is_a?(Hash)
+    spam_counts.to_a.sort_by { |word, count| -count }.first(limit)
+  end
+
+  # Get top N most frequent ham words
+  def top_ham_words(limit = 50)
+    return [] unless ham_counts.is_a?(Hash)
+    ham_counts.to_a.sort_by { |word, count| -count }.first(limit)
+  end
+
+  # Get total spam word count
+  def total_spam_words_count
+    return 0 unless spam_counts.is_a?(Hash)
+    spam_counts.values.sum
+  end
+
+  # Get total ham word count
+  def total_ham_words_count
+    return 0 unless ham_counts.is_a?(Hash)
+    ham_counts.values.sum
+  end
+
+  # Get configurable K value from parameter or use default
+  def get_k_value(params_k)
+    k = params_k.present? ? params_k.to_i : 20
+    k = 50 if k > 50  # Cap at 50 to prevent performance issues
+    k = 5 if k < 5     # Minimum of 5
+    k
+  end
 end

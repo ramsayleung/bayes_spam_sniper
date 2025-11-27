@@ -27,6 +27,7 @@ class GroupClassifierStatesController < ApplicationController
 
   # GET /group_classifier_states/1 or /group_classifier_states/1.json
   def show
+    @k_value = @group_classifier_state.get_k_value(params[:k])
   end
 
   # GET /group_classifier_states/new
@@ -79,7 +80,7 @@ class GroupClassifierStatesController < ApplicationController
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_group_classifier_state
-      @group_classifier_state = GroupClassifierState.find(params.expect(:id))
+      @group_classifier_state = GroupClassifierState.find(params[:id])
     end
 
     # Only allow a list of trusted parameters through.
