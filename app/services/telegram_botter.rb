@@ -955,17 +955,23 @@ class TelegramBotter
   def is_in_whitelist?(message)
     # 1. don't inspect message from administrator
     return true if is_admin_of_group?(user: message.from, group_id: message.chat.id)
-    # add more rules
 
-    # 2. Whitelist replies to the bot's own messages
-    # This specifically handles the user replying to the /feedspam prompt.
-    replied_to_message = message.reply_to_message
-    if replied_to_message && replied_to_message.from&.id == @bot_id
-      Rails.logger.info "Skipping inspection for user reply to bot message."
+    # 2. Whitelist messages sent on behalf of a channel (channel broadcasts)
+    channel_broadcast_blacklist = Rails.application.config.channel_broadcast_blacklist
+    if message.sender_chat.present? && !message.sender_chat.id.in?(channel_broadcast_blacklist)
+      Rails.logger.info "Skipping inspection for channel message: #{message.to_h.to_json}"
       return true
     end
 
-    # 3. This prevents the bot's instructional and alert messages from being deleted.
+    # 3. Whitelist replies to the bot's own messages
+    # This specifically handles the user replying to the /feedspam prompt.
+    replied_to_message = message.reply_to_message
+    if replied_to_message && replied_to_message.from&.id == @bot_id
+      Rails.logger.info "Skipping inspection for user reply to bot message: #{message.to_h.to_json}"
+      return true
+    end
+
+    # 4. This prevents the bot's instructional and alert messages from being deleted.
     if message.from&.id == @bot_id
       Rails.logger.info "Skipping spam inspection for a message sent by the bot (ID: #{@bot_id})"
       return true
