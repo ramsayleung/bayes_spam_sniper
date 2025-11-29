@@ -1,10 +1,6 @@
 require "test_helper"
 require "minitest/mock"
 
-module PostAction
-  DELETE_ALERT_MESSAGE = "delete_alert_msg"
-end
-
 class TelegramBotterTest < ActiveSupport::TestCase
   setup do
     @botter = TelegramBotter.new

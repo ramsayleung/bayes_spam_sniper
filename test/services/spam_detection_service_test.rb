@@ -67,6 +67,21 @@ class SpamDetectionServiceIntegrationTest < ActiveSupport::TestCase
     assert_equal TrainedMessage::TrainingTarget::MESSAGE_CONTENT, result.target
   end
 
+  test "returns spam result if a pre-existing message with #FOUND tag is marked as spam" do
+    spam_message_with_same_content = '#FOUND "aff=" IN VPSXB.NET(@vpsxb1) FROM VPSXB.NET(@vpsxb1) #BageVM 黑五限时狂欢开启啦！🖤🔥 今年的黑五，就让服务器陪你一起冲！它们已经在机房里瑟瑟发抖等你认领了 😆 🌟 Los Angeles - TINY 🖥 1x AMD Ryzen 9950x 💾 1GB RAM 📦 20GB SSD 🌐 4TB 流量 @1000Mbps 🔢 1 IPv4 & 1 IPv6 👉 购买地址 https://www.bagevm.com/aff.php?aff'
+
+    tg_message = OpenStruct.new(chat: @chat, from: @from, text: spam_message_with_same_content, message_id: 123)
+    service = SpamDetectionService.new(tg_message)
+
+    result = nil
+    TelegramMemberFetcher.stub(:get_bot_chat_member, OpenStruct.new(status: "administrator", can_restrict_members: true)) do
+      result = service.process
+    end
+
+    assert result.is_spam
+    assert_equal TrainedMessage::TrainingTarget::MESSAGE_CONTENT, result.target
+  end
+
   test "returns spam result even if a pre-existing message is marked as ham" do
     pre_existing_message = trained_messages(:pre_existing_ham)
     from = OpenStruct.new(id: 987654321, first_name: "Jon", last_name: "spam_last_name")

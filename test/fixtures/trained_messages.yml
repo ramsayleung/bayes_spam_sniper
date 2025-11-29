@@ -27,6 +27,14 @@ pre_existing_spam:
   training_target: <%= TrainedMessage.training_targets[:message_content] %>
   sender_chat_id: 987654321
 
+pre_existing_spam_with_found_tag:
+  group_id: -100123456789
+  message: '#BageVM 黑五限时狂欢开启啦！🖤🔥 今年的黑五，就让服务器陪你一起冲！它们已经在机房里瑟瑟发抖等你认领了 😆 🌟 Los Angeles - TINY 🖥 1x AMD Ryzen 9950x 💾 1GB RAM 📦 20GB SSD 🌐 4TB 流量 @1000Mbps 🔢 1 IPv4 & 1 IPv6 👉 购买地址 https://www.bagevm.com/aff.php?aff'
+  message_hash: <%= Digest::SHA256.hexdigest('#BageVM 黑五限时狂欢开启啦！🖤🔥 今年的黑五，就让服务器陪你一起冲！它们已经在机房里瑟瑟发抖等你认领了 😆 🌟 Los Angeles - TINY 🖥 1x AMD Ryzen 9950x 💾 1GB RAM 📦 20GB SSD 🌐 4TB 流量 @1000Mbps 🔢 1 IPv4 & 1 IPv6 👉 购买地址 https://www.bagevm.com/aff.php?aff') %>
+  message_type: <%= TrainedMessage.message_types[:spam] %>
+  training_target: <%= TrainedMessage.training_targets[:message_content] %>
+  sender_chat_id: 987654321
+
 pre_existing_ham:
   group_id: -100123789456
   message: "a pre-existing ham message"
