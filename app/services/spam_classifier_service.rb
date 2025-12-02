@@ -41,16 +41,16 @@ class SpamClassifierService
     tokens = tokenize(trained_message.message)
 
     if trained_message.spam?
-      @classifier_state.total_spam_messages += 1
-      @classifier_state.total_spam_words += tokens.size
+      @classifier_state.total_spam_messages = (@classifier_state.total_spam_messages || 0).to_i + 1
+      @classifier_state.total_spam_words = (@classifier_state.total_spam_words || 0).to_i + tokens.size
       tokens.each do |token|
         @classifier_state.spam_counts[token] = @classifier_state.spam_counts.fetch(token, 0) + 1
         @vocabulary.add(token)
       end
     else # :ham - FALSE POSITIVE BIAS: count ham tokens double
       # https://www.paulgraham.com/better.html
-      @classifier_state.total_ham_messages += 1
-      @classifier_state.total_ham_words += tokens.size * 2 # Double
+      @classifier_state.total_ham_messages = (@classifier_state.total_ham_messages || 0).to_i + 1
+      @classifier_state.total_ham_words = (@classifier_state.total_ham_words || 0).to_i + (tokens.size * 2) # Double
       # count for bias
       tokens.each do |token|
         @classifier_state.ham_counts[token] = @classifier_state.ham_counts.fetch(token, 0) + 2 # Double weight
@@ -74,13 +74,21 @@ class SpamClassifierService
   end
   def classify(message_text)
     @classifier_state.reload
-    return [ false, 0.0 ] if @classifier_state.total_ham_messages.zero? || @classifier_state.total_spam_messages.zero?
 
-    total_messages = @classifier_state.total_spam_messages + @classifier_state.total_ham_messages
+    # Check if either value is nil or zero
+    return [ false, 0.0 ] if @classifier_state.total_ham_messages.nil? || @classifier_state.total_ham_messages&.zero? ||
+                           @classifier_state.total_spam_messages.nil? || @classifier_state.total_spam_messages&.zero?
+
+    # Ensure both values are numeric before proceeding
+    total_spam = @classifier_state.total_spam_messages.to_i
+    total_ham = @classifier_state.total_ham_messages.to_i
+
+    total_messages = total_spam + total_ham
+    return [ false, 0.0 ] if total_messages.zero?
 
     # These are the actual priors
-    prob_spam_prior = @classifier_state.total_spam_messages.to_f / total_messages
-    prob_ham_prior = @classifier_state.total_ham_messages.to_f / total_messages
+    prob_spam_prior = total_spam.to_f / total_messages
+    prob_ham_prior = total_ham.to_f / total_messages
 
     tokens = tokenize(message_text)
 
@@ -153,15 +161,17 @@ class SpamClassifierService
 
   # It correctly calculates P(token|class) for all cases using Laplace smoothing.
   def get_likelihoods(token)
-    vocab_size = @classifier_state.vocabulary_size
+    vocab_size = @classifier_state.vocabulary_size.to_i
 
     # For a spam-only word, ham_count is 0, so ham_likelihood will be very small.
     # This is the correct, mathematically consistent way to handle it.
     spam_count = @classifier_state.spam_counts.fetch(token, 0)
-    spam_likelihood = (spam_count + 1.0) / (@classifier_state.total_spam_words + vocab_size)
+    total_spam_words = @classifier_state.total_spam_words.to_i
+    spam_likelihood = (spam_count + 1.0) / (total_spam_words + vocab_size)
 
     ham_count = @classifier_state.ham_counts.fetch(token, 0)
-    ham_likelihood = (ham_count + 1.0) / (@classifier_state.total_ham_words + vocab_size)
+    total_ham_words = @classifier_state.total_ham_words.to_i
+    ham_likelihood = (ham_count + 1.0) / (total_ham_words + vocab_size)
 
     [ spam_likelihood, ham_likelihood ]
   end

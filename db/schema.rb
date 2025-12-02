@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_21_023350) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_02_052824) do
   create_table "banned_users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "group_id"
@@ -44,12 +44,12 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_023350) do
     t.text "ham_counts"
     t.string "language"
     t.text "spam_counts"
-    t.integer "total_ham_messages"
-    t.integer "total_ham_words"
-    t.integer "total_spam_messages"
-    t.integer "total_spam_words"
+    t.integer "total_ham_messages", default: 0
+    t.integer "total_ham_words", default: 0
+    t.integer "total_spam_messages", default: 0
+    t.integer "total_spam_words", default: 0
     t.datetime "updated_at", null: false
-    t.integer "vocabulary_size"
+    t.integer "vocabulary_size", default: 0
     t.index ["group_id"], name: "index_group_classifier_states_on_group_id", unique: true
   end
 
