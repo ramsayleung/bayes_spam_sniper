@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+require_relative "../config/environment"
+
+Rails.logger.info "Starting Solid Queue for background jobs..."
+
+# Start Solid Queue to handle actual background jobs
+require "solid_queue/cli"
+SolidQueue::Cli.start(ARGV)

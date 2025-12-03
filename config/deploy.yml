@@ -10,8 +10,12 @@ servers:
     hosts:
       - 192.168.1.188
     options:
-      network-alias: "telegram-web" 
+      network-alias: "telegram-web"
   job:
+    hosts:
+      - 192.168.1.188
+    cmd: bin/run_queue_jobs
+  bot:
     hosts:
       - 192.168.1.188
     cmd: bin/bot

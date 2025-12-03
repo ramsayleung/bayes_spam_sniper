@@ -2,16 +2,22 @@
 
 require_relative "../config/environment"
 
-# Enqueue the bot job before starting the worker, ensuring the bot
-# starts immediately when the job worker container starts up.
+# This script runs the Telegram bot as a daemon process, it
+# ensures there's only one bot instance running at a time, preventing the
+# Telegram API conflict (error 409: "Conflict: terminated by other getUpdates request")
+
+Rails.logger.info "Starting Telegram bot daemon..."
+
 token = Rails.application.credentials.dig(:telegram_bot_token)
 if token
-  Rails.logger.info "Enqueuing TelegramBotWorkerJob..."
-  TelegramBotWorkerJob.perform_later(token)
-else
-  Rails.logger.info "No telegram bot token found"
-end
+  Rails.logger.info "Initializing Telegram bot..."
 
-# Start Solid queue
-require "solid_queue/cli"
-SolidQueue::Cli.start(ARGV)
+  # Disable query caching for the bot process since it runs indefinitely
+  ActiveRecord::Base.uncached do
+    current_bot = TelegramBotter.new
+    current_bot.start_bot(token)
+  end
+else
+  Rails.logger.error "No telegram bot token found in credentials!"
+  exit(1)
+end

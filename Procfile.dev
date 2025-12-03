@@ -1,3 +1,4 @@
 web: bin/rails server -b 0.0.0.0
 css: bin/rails tailwindcss:watch
 bot: JOB_CONCURRENCY=3 bin/bot
+job: bin/run_queue_jobs
