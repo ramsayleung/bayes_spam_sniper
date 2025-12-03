@@ -1,0 +1,11 @@
+#+LATEX_CLASS: ramsay-org-article
+#+LATEX_CLASS_OPTIONS: [oneside,A4paper,12pt]
+#+AUTHOR: Ramsay Leung
+#+EMAIL: ramsayleung@gmail.com
+#+DATE: 2025-12-02 Tue 19:39
+* Step to debug failed job
+  #+begin_src sql
+    select * from solid_queue_jobs where class_name LIKE '%Bot%' ORDER BY created_at DESC LIMIT 20;
+
+    select * from solid_queue_failed_executions where job_id in (select id from solid_queue_jobs where class_name = 'TelegramBotWorkerJob');
+  #+end_src
