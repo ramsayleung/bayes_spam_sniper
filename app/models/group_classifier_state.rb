@@ -17,6 +17,14 @@ class GroupClassifierState < ApplicationRecord
   validates :group_id, uniqueness: true
   validates :language, inclusion: { in: I18n.available_locales.map(&:to_s) }, allow_nil: true
 
+  # Ensure serialized fields return empty hashes instead of nil
+  # and ensure numeric fields have proper defaults instead of nil
+  # because we set the default value of these field as nil rather than
+  # proper value, after we update the schema to add the defalt value,
+  # data in database might still be null, so add this extra callback
+  # without repairing existing data
+  after_initialize :ensure_serialized_fields, :ensure_numeric_fields
+
   # Get top N most frequent spam words
   def top_spam_words(limit = 50)
     return [] unless spam_counts.is_a?(Hash)
@@ -47,5 +55,20 @@ class GroupClassifierState < ApplicationRecord
     k = 50 if k > 50  # Cap at 50 to prevent performance issues
     k = 5 if k < 5     # Minimum of 5
     k
+  end
+
+  private
+
+  def ensure_serialized_fields
+    self.spam_counts ||= {}
+    self.ham_counts ||= {}
+  end
+
+  def ensure_numeric_fields
+    self.total_spam_messages ||= 0
+    self.total_ham_messages ||= 0
+    self.total_spam_words ||= 0
+    self.total_ham_words ||= 0
+    self.vocabulary_size ||= 0
   end
 end
