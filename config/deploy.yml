@@ -9,15 +9,31 @@ servers:
   web:
     hosts:
       - 192.168.1.188
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "5"
+
     options:
       network-alias: "telegram-web"
   job:
     hosts:
       - 192.168.1.188
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "5"
     cmd: bin/run_queue_jobs
   bot:
     hosts:
       - 192.168.1.188
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "5"
     cmd: bin/bot
 
 volumes:
