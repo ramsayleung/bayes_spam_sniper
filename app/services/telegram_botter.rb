@@ -683,7 +683,7 @@ class TelegramBotter
         processing_time = Time.current - start_time
         increment_message_processing_time(processing_time, group_id, group_name)
       rescue => e
-        Rails.logger.error "Error processing regular message: #{e.message}\n#{e.backtrace.join("\n")}"
+        Rails.logger.error "Error processing regular message: #{message.to_h.to_json} #{e.message}\n#{e.backtrace.join("\n")}"
         increment_processing_errors(group_id, group_name, e.class.name)
       end
     end
@@ -993,7 +993,26 @@ class TelegramBotter
 
   # Escapes special characters for Telegram's Markdown mode
   def escape_markdown(text)
-    text.to_s.gsub(/([_*\[\]()~`>#+\-=|{}.!\\])/) { |match| "\\#{match}" }
+    text.to_s.gsub("\\", "\\\\")
+         .gsub("_", '\\_')
+         .gsub("*", '\\*')
+         .gsub("[", '\\[')
+         .gsub("]", '\\]')
+         .gsub("(", '\\(')
+         .gsub(")", '\\)')
+         .gsub("~", '\\~')
+         .gsub("`", '\\`')
+         .gsub(">", '\\>')
+         .gsub("#", '\\#')
+         .gsub("+", '\\+')
+         .gsub("-", '\\-')
+         .gsub("=", '\\=')
+         .gsub("|", '\\|')
+         .gsub("{", '\\{')
+         .gsub("}", '\\}')
+         .gsub(".", '\\.')
+         .gsub("!", '\\!')
+         .gsub("<", '\\<')
   end
 
 
