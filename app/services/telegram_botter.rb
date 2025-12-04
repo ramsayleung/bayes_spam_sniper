@@ -224,7 +224,7 @@ class TelegramBotter
     I18n.with_locale(@lang_code) do
       begin
         group_name = message.chat.title
-        user_name = [ replied.from.first_name, replied.from.last_name ].compact.join(" ")
+        user_name = [ replied.from&.first_name, replied.from&.last_name ].compact.join(" ")
         # 1. Save the traineded message, which will invoke ActiveModel
         # hook to train the model in the background job
         trained_message = TrainedMessage.create!(
@@ -247,7 +247,7 @@ class TelegramBotter
         bot.api.delete_message(chat_id: message.chat.id, message_id: replied.message_id)
 
         # 3. Ban user and record the ban
-        banned_user_name = [ replied.from.first_name, replied.from.last_name ].compact.join(" ")
+        banned_user_name = [ replied.from&.first_name, replied.from&.last_name ].compact.join(" ")
         if can_restrict_members
           bot.api.ban_chat_member(chat_id: message.chat.id, user_id: replied.from.id)
           BannedUser.find_or_create_by!(
@@ -360,7 +360,7 @@ class TelegramBotter
       Rails.logger.info "Spam message to train: #{spam_text}"
 
       begin
-        user_name = [ message.from.first_name, message.from.last_name ].compact.join(" ")
+        user_name = [ message.from&.first_name, message.from&.last_name ].compact.join(" ")
         chat_type = message.chat.type
 
         if chat_type == "private"
@@ -394,7 +394,7 @@ class TelegramBotter
   end
 
   def is_admin?(bot, user:, group_id:)
-    username = [ user.first_name, user.last_name ].compact.join(" ")
+    username = [ user&.first_name, user&.last_name ].compact.join(" ")
     user_id = user.id
     I18n.with_locale(@lang_code) do
       # Check if the user is admin of the target group
@@ -603,6 +603,7 @@ class TelegramBotter
 
   def handle_regular_message(bot, message)
     return if message.text.nil? || message.text.strip.empty?
+    Rails.logger.info "Handle regular message: #{message.text}"
     group_id = message.chat.id
     group_name = message.chat.title || "private_chat"
     increment_messages_processed(group_id, group_name)
@@ -611,7 +612,6 @@ class TelegramBotter
       Rails.logger.info "Skipping inspecting message #{message.text} as sender is in whitelist"
       return
     end
-    Rails.logger.info "Handle regular message: #{message.text}"
     I18n.with_locale(@lang_code) do
       begin
         start_time = Time.current
@@ -653,10 +653,20 @@ class TelegramBotter
           increment_spam_detected(group_id, group_name)
 
           # 1. Delete the original spam message
-          bot.api.delete_message(chat_id: message.chat.id, message_id: message.message_id)
+          begin
+            bot.api.delete_message(chat_id: message.chat.id, message_id: message.message_id)
+          rescue Telegram::Bot::Exceptions::ResponseError => e
+            if e.description.include?("message to delete not found")
+              Rails.logger.info "Spam message already deleted: #{e.message}"
+            else
+              Rails.logger.error "Error deleting spam message: #{e.message}"
+              # Re-raise the error if it's not the "message not found" case
+              raise e
+            end
+          end
 
           # 2. Send the warning message and capture the response
-          username = [ message.from.first_name, message.from.last_name ].compact.join(" ")
+          username = [ message.from&.first_name, message.from&.last_name ].compact.join(" ")
           delete_message_delay = Rails.application.config.delete_message_delay
           alert_msg = I18n.t("telegram_bot.handle_regular_message.alert_message", user_name: username, user_id: message.from.id, delete_message_delay: delete_message_delay)
           sent_warning_message = bot.api.send_message(chat_id: message.chat.id, text: alert_msg, parse_mode: "Markdown")
