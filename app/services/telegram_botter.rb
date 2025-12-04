@@ -458,8 +458,9 @@ class TelegramBotter
           max_spam_preview_button_length = Rails.application.config.max_spam_preview_button_length
           trained_messages.each_with_index do |message, index|
             # Truncate long spam messages for display
-            spam_preview = message.message.length > max_spam_preview_length ? "#{message.message[0..max_spam_preview_length]}..." : message.message
-            spam_button_preview = message.message.length > max_spam_preview_button_length ? "#{message.message[0..max_spam_preview_button_length]}..." : message.message
+            escaped_message = escape_markdown(message.message)
+            spam_preview = message.message.length > max_spam_preview_length ? "#{escape_markdown(message.message[0..max_spam_preview_length])}..." : escaped_message
+            spam_button_preview = message.message.length > max_spam_preview_button_length ? "#{escape_markdown(message.message[0..max_spam_preview_button_length])}..." : escaped_message
             text += "**#{index + 1}. #{I18n.t('telegram_bot.listspam.user_text')}:** *#{message.sender_user_name}*\n"
             text += "**#{I18n.t('telegram_bot.listspam.message_text')}:** `#{spam_preview}`\n"
             text += "**#{I18n.t('telegram_bot.listspam.spamtype_text')}:** *#{message.training_target}*\n"
@@ -554,7 +555,7 @@ class TelegramBotter
           max_spam_preview_length = Rails.application.config.max_spam_preview_length
           banned_users.each do |user|
             # Truncate long spam messages for display
-            spam_preview = user.spam_message.length > max_spam_preview_length ? "#{user.spam_message[0..max_spam_preview_length]}..." : user.spam_message
+            spam_preview = user.spam_message.length > max_spam_preview_length ? "#{escape_markdown(user.spam_message[0..max_spam_preview_length])}..." : escape_markdown(user.spam_message)
 
             text += "**#{I18n.t("telegram_bot.listbanuser.user_text")}:** *#{user.sender_user_name}*\n"
             text += "**#{I18n.t("telegram_bot.listbanuser.message_text")}:** `#{spam_preview}`\n"
@@ -979,6 +980,12 @@ class TelegramBotter
 
     false
   end
+
+  # Escapes special characters for Telegram's Markdown mode
+  def escape_markdown(text)
+    text.to_s.gsub(/([_*\[\]()~`>#+\-=|{}.!\\])/) { |match| "\\#{match}" }
+  end
+
 
   Signal.trap("TERM") do
     puts "Shutting down bot..."
