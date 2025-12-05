@@ -2,6 +2,7 @@
 require "test_helper"
 
 class SpamClassifierServiceTest < ActiveSupport::TestCase
+  fixtures :group_classifier_states
   def setup
     @group_id = 12345
     @group_name = "test group"
@@ -26,9 +27,7 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
   end
 
   test "it creates a new classifier from the most recent template if one exists" do
-    _old_template = GroupClassifierState.create!(
-      group_id: -100, group_name: "Old Public Group", total_spam_words: 10,
-    )
+    old_template = group_classifier_states(:main_group_state)
     recent_template = GroupClassifierState.create!(
       group_id: -200, group_name: "Recent Public Group",
       total_spam_words: 99, spam_counts: { "viagra" => 10 },
@@ -43,11 +42,11 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
     new_classifier = service.classifier_state
     assert_equal 456, new_classifier.group_id
     assert_equal "New Derived Group", new_classifier.group_name
-    assert_equal recent_template.total_spam_words, new_classifier.total_spam_words
-    assert_equal recent_template.spam_counts, new_classifier.spam_counts
+    assert_equal old_template.total_spam_words, new_classifier.total_spam_words
+    assert_equal old_template.spam_counts, new_classifier.spam_counts
 
     # Assert that the hash is a copy, not the same object.
-    refute_same recent_template.spam_counts, new_classifier.spam_counts
+    refute_same old_template.spam_counts, new_classifier.spam_counts
   end
 
   test "#train should correctly update state for a new spam message" do

@@ -9,7 +9,7 @@ class SpamClassifierService
     @group_id = group_id
     @group_name = group_name
     @classifier_state = classifier_state || GroupClassifierState.find_or_create_by!(group_id: @group_id) do |new_state|
-      # Find the most recently updated classifier for group to use as a template.
+      # Find the most earliest classifier for group to use as a template.
       template = GroupClassifierState.for_group.order(created_at: :asc).first
       if template
         new_state.spam_counts         = template.spam_counts.dup
