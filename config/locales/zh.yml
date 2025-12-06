@@ -1,10 +1,13 @@
 zh:
   telegram_bot:
+    settings:
+      open_instructions: "Click the button below to open the settings panel for this group."
     welcome:
       title: "🤖 欢迎使用基于机器学习算法的垃圾信息检测机器人！"
       description: "本机器人用爱发电，代码[开源地址](https://github.com/ramsayleung/bayes_spam_sniper)"
       select_option: "请选择下面的选项："
     buttons:
+      open_settings: "⚙️ Open Settings"
       user_guide: "📖使用说明"
       add_to_group: "💯拉我进群"
       back: "返回"
@@ -30,6 +33,7 @@ zh:
         setlang: "/setlang `<language_code>` - 设置机器人的语言"
       support: "如有问题，请加群 [@BSS 支持群](https://t.me/+i8fy3qOtiNAyODZl)。"
     setlang:
+      deprecation_message: "Setting the language via command is deprecated. Please use the /settings command to open the settings panel and configure the language."
       usage: "用法: /setlang <语言代码>. 可选: %{available_locales}"
       success: "✅ 此群组的语言已设置为: %{language}"
       failure: "❌ 未能设置此群组的语言。"
