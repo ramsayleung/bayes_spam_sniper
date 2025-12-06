@@ -12,6 +12,7 @@ class SpamClassifierService
       # Find the most earliest classifier for group to use as a template.
       template = GroupClassifierState.for_group.order(created_at: :asc).first
       if template
+        Rails.logger.info "Creating new GroupClassifierState for group_id=#{@group_id}, copying from template ID=#{template.id} created_at=#{template.created_at}, template_state={total_spam_words: #{template.total_spam_words}, total_ham_words: #{template.total_ham_words}, total_spam_messages: #{template.total_spam_messages}, total_ham_messages: #{template.total_ham_messages}, vocabulary_size: #{template.vocabulary_size}}"
         new_state.spam_counts         = template.spam_counts.dup
         new_state.ham_counts          = template.ham_counts.dup
         new_state.total_spam_words    = template.total_spam_words
@@ -20,6 +21,7 @@ class SpamClassifierService
         new_state.total_ham_messages  = template.total_ham_messages
         new_state.vocabulary_size     = template.vocabulary_size
       else
+        Rails.logger.info "No template found for group_id=#{@group_id}, initializing empty state"
         # If no template exists, initialize an empty state.
         new_state.spam_counts         = {}
         new_state.ham_counts          = {}
@@ -32,6 +34,9 @@ class SpamClassifierService
 
       new_state.group_name = group_name
     end
+
+    # Log the final state after initialization
+    Rails.logger.info "Initialized classifier for group_id=#{@group_id} with total_spam_words=#{@classifier_state.total_spam_words}, total_ham_words=#{@classifier_state.total_ham_words}, total_spam_messages=#{@classifier_state.total_spam_messages}, total_ham_messages=#{@classifier_state.total_ham_messages}"
   end
 
   def train_only(trained_message)
@@ -72,6 +77,7 @@ class SpamClassifierService
     end
     @classifier_state.save!
   end
+
   def classify(message_text)
     @classifier_state.reload
 
