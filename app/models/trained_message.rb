@@ -3,6 +3,13 @@ class TrainedMessage < ApplicationRecord
   # New enum for what is being trained
   enum :training_target, { message_content: 0, user_name: 1 }
   enum :source, { chat: 0, feedspam_command: 1, import: 2 }
+  enum :marked_by, { admin_dashboard: 0, group_admin: 1, auto_sync: 2, not_marked_yet: 3 }
+  module MarkedBy
+    GROUP_ADMIN = "group_admin"
+    ADMIN_DASHBOARD = "admin_dashboard"
+    AUTO_SYNC = "auto_sync"
+    NOT_MARKED_YET = "not_marked_yet"
+  end
   module MessageType
     SPAM = "spam"
     HAM = "ham"

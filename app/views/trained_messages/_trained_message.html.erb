@@ -15,6 +15,16 @@
     <strong class="block font-medium mb-1">Message type:</strong>
     <%= trained_message.message_type %>
   </div>
+
+  <div>
+    <strong class="block font-medium mb-1">Telegram Message Id:</strong>
+    <%= trained_message.message_id %>
+  </div>
+
+  <div>
+    <strong class="block font-medium mb-1">Message Hash:</strong>
+    <%= trained_message.message_hash %>
+  </div>
   <div>
     <strong class="block font-medium mb-1">Training target:</strong>
     <%= trained_message.training_target %>
@@ -24,9 +34,14 @@
     <%= trained_message.source %>
   </div>
   <div>
+    <strong class="block font-medium mb-1">Marked by:</strong>
+    <%= trained_message.marked_by&.humanize || 'Unknown' %>
+  </div>
+  <div>
     <strong class="block font-medium mb-1">Sender chat id:</strong>
     <%= trained_message.sender_chat_id %>
   </div>
+
   <div>
     <strong class="block font-medium mb-1">Sender user name:</strong>
     <%= trained_message.sender_user_name %>

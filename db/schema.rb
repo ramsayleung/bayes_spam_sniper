@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_02_052824) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_06_071717) do
   create_table "banned_users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "group_id"
@@ -67,6 +67,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_02_052824) do
     t.datetime "created_at", null: false
     t.bigint "group_id"
     t.string "group_name"
+    t.integer "marked_by", default: 0, null: false
     t.text "message"
     t.string "message_hash", limit: 64
     t.integer "message_id", default: 0, null: false

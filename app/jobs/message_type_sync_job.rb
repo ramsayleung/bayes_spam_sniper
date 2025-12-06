@@ -11,7 +11,7 @@ class MessageTypeSyncJob < ApplicationJob
     messages_to_sync = TrainedMessage.where(message_hash: message_hash)
                          .where.not(message_type: new_message_type)
 
-    messages_to_sync.update_all(message_type: new_type_value, updated_at: Time.current)
+    messages_to_sync.update_all(message_type: new_type_value, marked_by: TrainedMessage.marked_bies[:auto_sync], updated_at: Time.current)
 
     # 2. Trigger Retraining and Ban Checks for all updated messages
     messages_to_sync.each do |message|

@@ -189,7 +189,8 @@ namespace :telegram do
         sender_user_name: user_name || "Telegram collector",
         training_target: training_target,
         sender_chat_id: user_id,
-        source: :import
+        source: :import,
+        marked_by: :not_marked_yet
       )
     end
   end

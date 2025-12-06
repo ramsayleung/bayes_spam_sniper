@@ -108,6 +108,7 @@ class SpamDetectionService
 
   def create_trained_message(content, target, message_type)
     message_hash = Digest::SHA256.hexdigest(content.to_s)
+    marked_by = message_type.in?([ :ham, :spam ]) ? :auto_sync : :not_marked_yet
     TrainedMessage.create(
       message_hash: message_hash,
       group_id: @group_id,
@@ -117,7 +118,8 @@ class SpamDetectionService
       sender_chat_id: @user_id,
       sender_user_name: @username,
       message_type: message_type,
-      message_id: @tg_message_struct.message_id
+      message_id: @tg_message_struct.message_id,
+      marked_by: marked_by
     )
   end
 

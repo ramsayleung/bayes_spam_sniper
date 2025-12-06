@@ -233,7 +233,8 @@ class TelegramBotter
           group_name: group_name,
           sender_chat_id: replied.from.id,
           sender_user_name: user_name,
-          message_type: :spam
+          message_type: :spam,
+          marked_by: :group_admin
         )
         can_delete_messages = chat_member.can_delete_messages
         can_restrict_members = chat_member.can_restrict_members
@@ -378,7 +379,8 @@ class TelegramBotter
           sender_chat_id: message.from.id,
           sender_user_name: user_name,
           message_type: :maybe_spam,
-          source: :feedspam_command
+          source: :feedspam_command,
+          marked_by: :group_admin
         )
 
         # Show a preview of what was learned (truncated if too long)
@@ -819,7 +821,7 @@ class TelegramBotter
       begin
         # This will trigger ActiveModel hook to automatically rebuild
         # classifier in a background job
-        trained_message.update!(message_type: :ham)
+        trained_message.update!(message_type: :ham, marked_by: :group_admin)
         user_name = trained_message.sender_user_name
         user_id = trained_message.sender_chat_id
         edit_message_text(bot, chat_id, tg_message_id, I18n.t("telegram_bot.markasham.success_message", user_name: user_name, user_id: user_id))
@@ -857,7 +859,8 @@ class TelegramBotter
         )
         # This will trigger ActiveModel hook to automatically rebuild
         # classifier in a background job
-        messages_to_retrain.update!(message_type: :ham)
+        messages_to_retrain.update!(message_type: :ham, marked_by: :group_admin)
+
         begin
           bot.api.unban_chat_member(chat_id: chat_id, user_id: banned_user.sender_chat_id)
         rescue => e

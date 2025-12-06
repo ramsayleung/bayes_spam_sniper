@@ -39,6 +39,7 @@ namespace :import do
           record.sender_user_name = "CSV Import"
           record.training_target = row["target"] || "message_content"
           record.source = :import
+          record.marked_by = :admin_dashboard
 
           record.save!
 
@@ -94,7 +95,7 @@ namespace :import do
           attributes.delete(:id) # Let the database assign a new primary key.
           attributes[:message_hash] = message_hash
 
-          TrainedMessage.create!(attributes)
+          TrainedMessage.create!(attributes.merge(marked_by: :admin_dashboard))
           imported_count += 1
           print "." # '.' for imported
         end

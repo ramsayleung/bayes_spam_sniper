@@ -39,10 +39,18 @@
 
   <div class="my-5">
     <%= form.label :source %>
-    <%= form.select :source, 
-          options_for_select([['Chat', 'chat'], ['Feedspam Command', 'feedspam_command']], @trained_message.source), 
-          { prompt: 'Select training target' },
+    <%= form.select :source,
+          options_for_select([['Chat', 'chat'], ['Feedspam Command', 'feedspam_command'], ['Import', 'import']], @trained_message.source),
+          { prompt: 'Select source' },
        { class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": trained_message.errors[:source].none?, "border-red-400 focus:outline-red-600": trained_message.errors[:source].any?}] } %>
+  </div>
+
+  <div class="my-5">
+      <%= form.label :marked_by %>
+      <%= form.select :marked_by,
+       options_for_select([['Group Admin', 'group_admin'], ['Admin Dashboard', 'admin_dashboard'], ['Auto Sync', 'auto_sync'], ['Not Marked Yet', 'not_marked_yet']], @trained_message.marked_by),
+       { prompt: 'Select who marked this' },
+       { class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": trained_message.errors[:marked_by].none?, "border-red-400 focus:outline-red-600": trained_message.errors[:marked_by].any?}] } %>
   </div>
 
   <div class="my-5">

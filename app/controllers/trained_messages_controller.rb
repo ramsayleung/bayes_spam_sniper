@@ -21,6 +21,10 @@ class TrainedMessagesController < ApplicationController
       @trained_messages = @trained_messages.where(source: params[:source])
     end
 
+    if params[:marked_by].present? && params[:marked_by] != "all"
+      @trained_messages = @trained_messages.where(marked_by: params[:marked_by])
+    end
+
     if params[:search].present?
       @trained_messages = @trained_messages.where("message LIKE ?", "%#{params[:search]}%")
     end
@@ -45,13 +49,14 @@ class TrainedMessagesController < ApplicationController
     @total_pages = (@total_count.to_f / @per_page).ceil
 
     # Using unscoped ensures we get all possible options, not just the filtered ones.
-    filter_data = TrainedMessage.unscoped.distinct.pluck(:message_type, :training_target, :group_name, :source)
+    filter_data = TrainedMessage.unscoped.distinct.pluck(:message_type, :training_target, :group_name, :source, :marked_by)
 
     # Get filter options
     @message_types = filter_data.map(&:first).uniq.compact.sort
     @training_targets = filter_data.map(&:second).uniq.compact.sort
     @group_names = filter_data.map(&:third).uniq.compact.sort
     @sources = filter_data.map(&:fourth).uniq.compact.sort
+    @marked_bys = filter_data.map { |data| data[4] }.uniq.compact.sort
   end
 
   # GET /trained_messages/1 or /trained_messages/1.json
@@ -86,7 +91,7 @@ class TrainedMessagesController < ApplicationController
                                 return
     end
 
-    messages.update_all(message_type: new_message_type_symbol, updated_at: Time.current)
+    messages.update_all(message_type: new_message_type_symbol, marked_by: TrainedMessage.marked_bies[:admin_dashboard], updated_at: Time.current)
 
     # Update all messages to the same message type if they have same
     # message hash
@@ -116,6 +121,7 @@ class TrainedMessagesController < ApplicationController
   # POST /trained_messages or /trained_messages.json
   def create
     @trained_message = TrainedMessage.new(trained_message_params)
+    @trained_message.marked_by = :admin_dashboard
 
     respond_to do |format|
       if @trained_message.save
@@ -130,6 +136,9 @@ class TrainedMessagesController < ApplicationController
 
   # PATCH/PUT /trained_messages/1 or /trained_messages/1.json
   def update
+    # When updating through the admin dashboard, mark as admin_dashboard
+    @trained_message.marked_by = :admin_dashboard if @trained_message.changed?
+
     respond_to do |format|
       if @trained_message.update(trained_message_params)
         format.html { redirect_to @trained_message, notice: "Trained message was successfully updated.", status: :see_other }
@@ -155,16 +164,16 @@ class TrainedMessagesController < ApplicationController
   private
   # Use callbacks to share common setup or constraints between actions.
   def set_trained_message
-    @trained_message = TrainedMessage.find(params.expect(:id))
+    @trained_message = TrainedMessage.find(params[:id])
   end
 
   # Only allow a list of trusted parameters through.
   def trained_message_params
-    params.expect(trained_message: [ :group_id, :message, :message_type, :sender_chat_id, :sender_user_name, :group_name, :training_target ])
+    params.require(:trained_message).permit(:group_id, :message, :message_type, :sender_chat_id, :sender_user_name, :group_name, :training_target, :marked_by)
   end
 
   def index_params
-    params.permit(:search, :message_type, :training_target, :group_name, :per_page, :sort, :direction, :page)
+    params.permit(:search, :message_type, :training_target, :group_name, :source, :marked_by, :per_page, :sort, :direction, :page)
   end
 
   helper_method :index_params
