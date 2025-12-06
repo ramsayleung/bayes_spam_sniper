@@ -124,12 +124,12 @@ class TelegramBotter
       increment_command_counter("listspam")
       handle_listspam_command(bot, message)
     else
-      if message.reply_to_message
+      if reply_to_bot?(message)
         # If it's a reply, check if it's meant for the bot's training prompt
         handle_forced_reply(bot, message)
-        return
+      else
+        handle_regular_message(bot, message)
       end
-      handle_regular_message(bot, message)
     end
   rescue => e
     Rails.logger.error "An error occurred: #{e.message}\n#{e.backtrace.join("\n")}"
@@ -287,13 +287,13 @@ class TelegramBotter
     replied_to = message.reply_to_message
 
     # 1. Ensure it's a reply to a message sent by the bot
-    return unless replied_to && replied_to.from&.id == @bot_id
+    return unless reply_to_bot?(message)
+
+    Rails.logger.info "handle_forced_reply: #{replied_to.text}"
 
     # 2. Check if the bot's message was the /feedspam prompt.
     # defined in I18n.t('telegram_bot.feedspam.reply_prompt', locale: @lang_code)
     feedspam_expected_prefix = "/feedspam:"
-
-    Rails.logger.info "handle_forced_reply: #{replied_to.text}"
     if replied_to.text&.start_with?(feedspam_expected_prefix)
       spam_text = message.text&.strip
       if spam_text.nil? || spam_text.empty?
@@ -384,7 +384,7 @@ class TelegramBotter
         )
 
         # Show a preview of what was learned (truncated if too long)
-        preview = spam_text.length > 100 ? "#{spam_text[0..100]}..." : spam_text
+        preview = spam_text.length > 100 ? "#{escape_markdown(spam_text[0..100])}..." : escape_markdown(spam_text)
         response_message = I18n.t("telegram_bot.feedspam.success_message", preview: preview)
         # Send a final confirmation message
         bot.api.send_message(chat_id: message.chat.id, text: response_message, parse_mode: "Markdown")
@@ -997,27 +997,31 @@ class TelegramBotter
   # Escapes special characters for Telegram's Markdown mode
   def escape_markdown(text)
     text.to_s.gsub("\\", "\\\\")
-         .gsub("_", '\\_')
-         .gsub("*", '\\*')
-         .gsub("[", '\\[')
-         .gsub("]", '\\]')
-         .gsub("(", '\\(')
-         .gsub(")", '\\)')
-         .gsub("~", '\\~')
-         .gsub("`", '\\`')
-         .gsub(">", '\\>')
-         .gsub("#", '\\#')
-         .gsub("+", '\\+')
-         .gsub("-", '\\-')
-         .gsub("=", '\\=')
-         .gsub("|", '\\|')
-         .gsub("{", '\\{')
-         .gsub("}", '\\}')
-         .gsub(".", '\\.')
-         .gsub("!", '\\!')
-         .gsub("<", '\\<')
+      .gsub("_", '\\_')
+      .gsub("*", '\\*')
+      .gsub("[", '\\[')
+      .gsub("]", '\\]')
+      .gsub("(", '\\(')
+      .gsub(")", '\\)')
+      .gsub("~", '\\~')
+      .gsub("`", '\\`')
+      .gsub(">", '\\>')
+      .gsub("#", '\\#')
+      .gsub("+", '\\+')
+      .gsub("-", '\\-')
+      .gsub("=", '\\=')
+      .gsub("|", '\\|')
+      .gsub("{", '\\{')
+      .gsub("}", '\\}')
+      .gsub(".", '\\.')
+      .gsub("!", '\\!')
+      .gsub("<", '\\<')
   end
 
+  def reply_to_bot?(message)
+    replied_to = message.reply_to_message
+    replied_to && replied_to.from&.id == @bot_id
+  end
 
   Signal.trap("TERM") do
     puts "Shutting down bot..."
