@@ -181,8 +181,8 @@ class TelegramBotter
         group_id = message.chat.id
         group_name = message.chat.title || "Unknown Group"
 
-        group_state = GroupClassifierState.find_or_initialize_by(group_id: group_id)
-        group_state.group_name = group_name
+        service = SpamClassifierService.new(group_id, group_name)
+        group_state = service.classifier_state
         group_state.language = target_language
 
         if group_state.save
