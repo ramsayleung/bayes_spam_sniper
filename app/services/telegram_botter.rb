@@ -991,6 +991,13 @@ class TelegramBotter
       return true
     end
 
+    # 5. Skip if message is shorter than threshold
+    message_length_classify_threshold = Rails.application.config.message_length_classify_threshold
+    if message.text.length <= message_length_classify_threshold
+      Rails.logger.info "Skipping inspection for message shorter than threshold: #{message_length_classify_threshold} #{message.to_h.to_json}"
+      return true
+    end
+
     false
   end
 
