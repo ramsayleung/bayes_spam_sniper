@@ -84,21 +84,23 @@ class TelegramBotterTest < ActiveSupport::TestCase
 
   def test_handle_regular_message_not_spam
     message = OpenStruct.new(text: "this is a normal message", chat: OpenStruct.new(id: 123, title: "test group"), from: OpenStruct.new)
-    spam_detection_result = OpenStruct.new(is_spam: false)
 
-    spam_service_instance_mock = Minitest::Mock.new
-    spam_service_instance_mock.expect(:process, spam_detection_result)
+    job_mock = Minitest::Mock.new
+    job_mock.expect(:perform_later, true) do |message_data|
+      message_data[:text] == "this is a normal message" &&
+      message_data[:chat_id] == 123
+    end
 
-    SpamDetectionService.stub(:new, ->(msg) {
-      assert_equal message, msg
-      spam_service_instance_mock
+    SpamAnalysisJob.stub(:perform_later, ->(message_data) {
+      # Verify the message data structure
+      assert_equal "this is a normal message", message_data[:text]
+      assert_equal 123, message_data[:chat_id]
+      true
     }) do
       @botter.stub(:is_in_whitelist?, false) do
         @botter.send(:handle_regular_message, @bot, message)
       end
     end
-
-    assert spam_service_instance_mock.verify
   end
 
   def test_handle_regular_message_is_spam
@@ -108,53 +110,35 @@ class TelegramBotterTest < ActiveSupport::TestCase
       from: OpenStruct.new(id: 999, first_name: "spammer", last_name: nil),
       message_id: 789
     )
-    spam_detection_result = OpenStruct.new(is_spam: true)
 
-    spam_service_instance_mock = Minitest::Mock.new
-    spam_service_instance_mock.expect(:process, spam_detection_result)
-
-    api_mock = Minitest::Mock.new
-    api_mock.expect(:delete_message, nil, chat_id: 123, message_id: 789)
-    api_mock.expect(:send_message, OpenStruct.new(chat: OpenStruct.new(id: 123), message_id: 101112)) do |args|
-      args[:chat_id] == 123 && args[:text].include?("spammer")
-    end
-
-    @bot.expect(:api, api_mock)
-    @bot.expect(:api, api_mock)
-
-    TelegramBackgroundWorkerJob.stub(:set, ->(wait:) {
-      job_mock = Minitest::Mock.new
-      job_mock.expect(:perform_later, nil)
-      job_mock
+    SpamAnalysisJob.stub(:perform_later, ->(message_data) {
+      assert_equal "this is spam", message_data[:text]
+      assert_equal 123, message_data[:chat_id]
+      assert_equal 999, message_data[:from_id]
+      assert_equal 789, message_data[:message_id]
+      true
     }) do
-      SpamDetectionService.stub(:new, ->(msg) {
-        assert_equal message, msg
-        spam_service_instance_mock
-      }) do
-        @botter.stub(:is_in_whitelist?, false) do
-          @botter.send(:handle_regular_message, @bot, message)
-        end
+      @botter.stub(:is_in_whitelist?, false) do
+        @botter.send(:handle_regular_message, @bot, message)
       end
     end
 
-    assert spam_service_instance_mock.verify
-    assert api_mock.verify
+    # The test passes if no exceptions occur and the right data is passed to the job
+    assert true
   end
 
   def test_handle_regular_message_from_whitelisted_user
     message = OpenStruct.new(text: "this is a message from admin", chat: OpenStruct.new(id: 123, title: "test group"), from: OpenStruct.new)
 
-    # We expect SpamDetectionService.new to NOT be called.
-    # fails the test if it's ever invoked.
-    SpamDetectionService.stub(:new, ->(*args) { flunk "SpamDetectionService.new should not be called for a whitelisted user" }) do
+    SpamAnalysisJob.stub(:perform_later, ->(message_data) {
+      flunk "Analysis enqueuing should not be called for a whitelisted user"
+    }) do
       @botter.stub(:is_in_whitelist?, true) do
         @botter.send(:handle_regular_message, @bot, message)
       end
     end
 
-    # If the test reaches this point without `flunk` being called, it means the stub was not invoked,
-    # which is the desired outcome.
-    assert true, "Test passed because SpamDetectionService.new was not called."
+    assert true, "Test passed because message was queued for async processing."
   end
 
   def test_handle_regular_message_reply_to_bot

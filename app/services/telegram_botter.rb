@@ -605,7 +605,7 @@ class TelegramBotter
 
   def handle_regular_message(bot, message)
     return if message.text.nil? || message.text.strip.empty?
-    Rails.logger.info "Handle regular message: #{message.text}"
+    Rails.logger.info "Received message: #{message.text}"
     group_id = message.chat.id
     group_name = message.chat.title || "private_chat"
     increment_messages_processed(group_id, group_name)
@@ -614,81 +614,26 @@ class TelegramBotter
       Rails.logger.info "Skipping inspecting message #{message.text} as sender is in whitelist"
       return
     end
-    I18n.with_locale(@lang_code) do
-      begin
-        start_time = Time.current
-        is_spam = false
 
-        # First check the message itself
-        spam_detection_service = SpamDetectionService.new(message)
-        result = spam_detection_service.process
+    message_data = {
+      message_id: message.message_id,
+      text: message.text,
+      chat_id: message.chat.id,
+      chat_type: message.chat.type,
+      chat_title: message.chat.title,
+      from_id: message.from&.id,
+      from_first_name: message.from&.first_name,
+      from_last_name: message.from&.last_name,
+      date: message.date,
+      quote_text: message.quote&.text,
+      reply_to_text: message.reply_to_message&.text
+    }
 
-        if result.is_spam
-          is_spam = true
-          Rails.logger.info "Message flagged as spam due to message itself is spam"
-        elsif message.quote
-          # Check if quoting a spam message (especially from channels)
-          replied_message = message.reply_to_message
-          quoted_text = message.quote&.text
-
-          if quoted_text
-            original_message = message
-            quoted_message = OpenStruct.new(
-              message_id: original_message.message_id,
-              from: original_message.from,
-              date: original_message.date,
-              chat: original_message.chat,
-              text: quoted_text
-            )
-            replied_spam_service = SpamDetectionService.new(quoted_message)
-            replied_result = replied_spam_service.process
-
-            if replied_result.is_spam
-              is_spam = true
-              Rails.logger.info "Message flagged as spam due to quoting spam content"
-            end
-          end
-        end
-
-        if is_spam
-          # Increment the spam detected counter
-          increment_spam_detected(group_id, group_name)
-
-          # 1. Delete the original spam message
-          begin
-            bot.api.delete_message(chat_id: message.chat.id, message_id: message.message_id)
-          rescue Telegram::Bot::Exceptions::ResponseError => e
-            if e.description.include?("message to delete not found")
-              Rails.logger.info "Spam message already deleted: #{e.message}"
-            else
-              Rails.logger.error "Error deleting spam message: #{e.message}"
-              # Re-raise the error if it's not the "message not found" case
-              raise e
-            end
-          end
-
-          # 2. Send the warning message and capture the response
-          username = [ message.from&.first_name, message.from&.last_name ].compact.join(" ")
-          delete_message_delay = Rails.application.config.delete_message_delay
-          alert_msg = I18n.t("telegram_bot.handle_regular_message.alert_message", user_name: username, user_id: message.from.id, delete_message_delay: delete_message_delay)
-          sent_warning_message = bot.api.send_message(chat_id: message.chat.id, text: alert_msg, parse_mode: "Markdown")
-
-          # 3. Schedule a background job to delete the warning message
-          # to avoid polluting the group chat
-          TelegramBackgroundWorkerJob.set(wait: delete_message_delay.minutes).perform_later(
-            action: PostAction::DELETE_ALERT_MESSAGE,
-            chat_id: sent_warning_message.chat.id,
-            message_id: sent_warning_message.message_id)
-        end
-
-        # Calculate and record processing time
-        processing_time = Time.current - start_time
-        increment_message_processing_time(processing_time, group_id, group_name)
-      rescue => e
-        Rails.logger.error "Error processing regular message: #{message.to_h.to_json} #{e.message}\n#{e.backtrace.join("\n")}"
-        increment_processing_errors(group_id, group_name, e.class.name)
-      end
-    end
+    SpamAnalysisJob.perform_later(message_data)
+    nil
+  rescue => e
+    Rails.logger.error "Error queuing message for analysis: #{message.to_h.to_json} #{e.message}\n#{e.backtrace.join("\n")}"
+    increment_processing_errors(group_id, group_name, e.class.name)
   end
 
   def is_group_chat?(bot, message)

@@ -13,7 +13,7 @@ development:
     - polling_interval: 1
       batch_size: 500
   workers:
-    - queues: "bot"
+    - queues: "spam_analysis"
       processes: 1
       threads: 3
     - queues: "training"
@@ -37,7 +37,7 @@ production:
     - polling_interval: 1
       batch_size: 500
   workers:
-    - queues: "bot"
+    - queues: "spam_analysis"
       processes: 1
       threads: 3
     - queues: "training"
