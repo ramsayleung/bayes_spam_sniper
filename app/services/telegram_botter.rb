@@ -212,6 +212,7 @@ class TelegramBotter
   def handle_markspam_command(bot, message)
     return unless is_group_chat?(bot, message)
     return unless is_admin?(bot, user: message.from, group_id: message.chat.id)
+    return if message.reply_to_message.nil?
 
     group_id = message.chat.id
     chat_member = TelegramMemberFetcher.get_bot_chat_member(group_id)
@@ -219,7 +220,9 @@ class TelegramBotter
     return unless [ "administrator", "creator" ].include?(chat_member.status) && message.reply_to_message
 
     replied = message.reply_to_message
-    return if replied.text.nil? || replied.text.empty?
+    spam_text = extract_searchable_content(message.reply_to_message)
+    Rails.logger.info "markspam: #{spam_text} in #{group_id}"
+    return if spam_text.nil? || spam_text.empty?
 
     I18n.with_locale(@lang_code) do
       begin
@@ -229,7 +232,7 @@ class TelegramBotter
         # hook to train the model in the background job
         trained_message = TrainedMessage.create!(
           group_id: group_id,
-          message: replied.text,
+          message: spam_text,
           group_name: group_name,
           sender_chat_id: replied.from.id,
           sender_user_name: user_name,
@@ -256,7 +259,7 @@ class TelegramBotter
             group_id: message.chat.id,
             sender_chat_id: replied.from.id,
             sender_user_name: banned_user_name,
-            spam_message: replied.text
+            spam_message: spam_text
           )
         end
 
@@ -604,20 +607,22 @@ class TelegramBotter
   end
 
   def handle_regular_message(bot, message)
-    return if message.text.nil? || message.text.strip.empty?
-    Rails.logger.info "Received message: #{message.text}"
+    searchable_content = extract_searchable_content(message)
+    return if searchable_content.empty?
+    Rails.logger.info "Received message: #{searchable_content}"
+
     group_id = message.chat.id
     group_name = message.chat.title || "private_chat"
     increment_messages_processed(group_id, group_name)
 
     if is_in_whitelist?(message)
-      Rails.logger.info "Skipping inspecting message #{message.text} as sender is in whitelist"
+      Rails.logger.info "Skipping inspecting message #{searchable_content} as sender is in whitelist"
       return
     end
 
     message_data = {
       message_id: message.message_id,
-      text: message.text,
+      text: searchable_content,
       chat_id: message.chat.id,
       chat_type: message.chat.type,
       chat_title: message.chat.title,
@@ -966,6 +971,26 @@ class TelegramBotter
   def reply_to_bot?(message)
     replied_to = message.reply_to_message
     replied_to && replied_to.from&.id == @bot_id
+  end
+
+  # Extracts all relevant text content from a Telegram message for spam analysis.
+  # This includes message text, caption, poll questions, and inline keyboard button text.
+  def extract_searchable_content(message)
+    content_parts = []
+    content_parts << message.text if message.text.present?
+    content_parts << message.caption if message.caption.present?
+    content_parts << message.poll.question if message.poll&.question.present?
+    content_parts << message.sticker.emoji if message.sticker&.emoji.present? # Add sticker emoji
+
+    if message.reply_markup&.inline_keyboard.present?
+      message.reply_markup.inline_keyboard.each do |row|
+        row.each do |button|
+          content_parts << button.text if button.text.present?
+          content_parts << button.url if button.url.present?
+        end
+      end
+    end
+    content_parts.compact.join(" ").strip
   end
 
   Signal.trap("TERM") do
