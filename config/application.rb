@@ -38,6 +38,6 @@ module TelegramSpamSniperBot
     # broadcast message (I know, strange usecase), so inspect message
     # from these group as before
     config.channel_broadcast_blacklist = [ -1002133460865, -1002118991610 ]
-    config.message_length_classify_threshold = 5
+    config.short_message_word_threshold = 3
   end
 end

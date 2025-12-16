@@ -86,11 +86,11 @@ class SpamClassifierService
     total_messages = @classifier_state.total_spam_messages + @classifier_state.total_ham_messages
     return [ false, 0.0 ] if total_messages.zero?
 
+    tokens = tokenize(message_text)
+
     # These are the actual priors
     prob_spam_prior = @classifier_state.total_spam_messages.to_f / total_messages
     prob_ham_prior = @classifier_state.total_ham_messages.to_f / total_messages
-
-    tokens = tokenize(message_text)
 
     # Pass the priors to the selection method for consistent logic
     significant_tokens = get_significant_tokens(tokens, prob_spam_prior, prob_ham_prior)
@@ -104,6 +104,17 @@ class SpamClassifierService
 
       spam_score += Math.log(spam_likelihood)
       ham_score += Math.log(ham_likelihood)
+    end
+
+    # Apply a "ham bonus" for short messages to reduce false positives.
+    token_count = tokens.length
+    short_message_threshold = Rails.application.config.short_message_word_threshold
+    if token_count > 0 && token_count < short_message_threshold
+      # The bonus is larger for shorter messages.
+      # This is equivalent to multiplying the ham probability by a factor > 1.
+      bonus_factor = (short_message_threshold.to_f / token_count)
+      ham_score += Math.log(bonus_factor)
+      Rails.logger.info "Applied short message bonus to #{message_text}, token_count: #{token_count}, bonus_factor: #{bonus_factor.round(2)}"
     end
 
     diff = spam_score - ham_score
