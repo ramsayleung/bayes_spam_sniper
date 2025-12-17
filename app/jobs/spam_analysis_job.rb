@@ -36,7 +36,8 @@ class SpamAnalysisJob < ApplicationJob
           from: original_message.from,
           date: original_message.date,
           chat: original_message.chat,
-          text: quoted_text
+          text: quoted_text,
+          signals: original_message.signals
         )
         replied_spam_service = SpamDetectionService.new(quoted_message)
         replied_result = replied_spam_service.process
@@ -75,7 +76,8 @@ class SpamAnalysisJob < ApplicationJob
       ),
       date: message_data[:date],
       quote_text: message_data[:quote_text],
-      reply_to_message: message_data[:reply_to_text] ? OpenStruct.new(text: message_data[:reply_to_text]) : nil
+      reply_to_message: message_data[:reply_to_text] ? OpenStruct.new(text: message_data[:reply_to_text]) : nil,
+      signals: message_data[:signals] || []
     )
   end
 

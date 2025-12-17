@@ -5,7 +5,14 @@ class SpamDetectionService
     @group_name = tg_message_struct.chat&.title
     @user_id = tg_message_struct.from&.id
     @username = [ tg_message_struct.from&.first_name, tg_message_struct.from&.last_name ].compact.join(" ")
-    @message_text = TextCleaner.extract_found_message(tg_message_struct.text)
+
+    raw_message_text = TextCleaner.extract_found_message(tg_message_struct.text)
+    signals = tg_message_struct.signals || []
+    if signals.any?
+      @message_text = raw_message_text + " " + signals.join(" ")
+    else
+      @message_text = raw_message_text
+    end
     @is_confident = false
   end
 

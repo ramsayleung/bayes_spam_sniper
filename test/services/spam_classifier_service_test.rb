@@ -102,6 +102,18 @@ class SpamClassifierServiceTest < ActiveSupport::TestCase
     assert_equal 12, tokens.filter { |t| t =="🚘" }.length()
   end
 
+  test "#toenize should handle emoji and signal correctly" do
+    service = SpamClassifierService.new(@group_id, @group_name)
+    spam_message =" 🚘🚘🚘还在死扛单 🚘🚘🚘 这里策略准到爆 进群免费体验 @hakaoer 🚘🚘🚘不满意随便喷🚘🚘🚘 __HAS_EXTERNAL_REPLY__ __HAS_QUOTE__"
+    tokens = service.tokenize(spam_message)
+
+    assert_includes tokens, "🚘"
+    assert_includes tokens, "扛单" # user-defined dictionary
+    assert_includes tokens, "__has_external_reply__"
+    assert_includes tokens, "__has_quote__"
+    assert_equal 12, tokens.filter { |t| t =="🚘" }.length()
+  end
+
   test "#toenize should handle punctuation correctly" do
     service = SpamClassifierService.new(@group_id, @group_name)
     spam_message = "这人简-介挂的 合-约-报单群组挺牛的ETH500点，大饼5200点！ + @BTCETHl6666"

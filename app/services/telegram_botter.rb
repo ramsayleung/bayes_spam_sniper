@@ -620,6 +620,8 @@ class TelegramBotter
       return
     end
 
+    signals = extract_signals(message)
+
     message_data = {
       message_id: message.message_id,
       text: searchable_content,
@@ -631,14 +633,14 @@ class TelegramBotter
       from_last_name: message.from&.last_name,
       date: message.date,
       quote_text: message.quote&.text,
-      reply_to_text: message.reply_to_message&.text
+      reply_to_text: message.reply_to_message&.text,
+      signals: signals
     }
 
     SpamAnalysisJob.perform_later(message_data)
     nil
   rescue => e
-    Rails.logger.error "Error queuing message for analysis: #{message.to_h.to_json} #{e.message}\n#{e.backtrace.join("\n")}"
-    increment_processing_errors(group_id, group_name, e.class.name)
+    Rails.logger.error "Error queuing message #{message.to_h.to_json} for analysis: #{e}\n#{e.backtrace.join("\n")}"
   end
 
   def is_group_chat?(bot, message)
@@ -942,6 +944,16 @@ class TelegramBotter
     end
 
     false
+  end
+
+  # Leveraging signal in feature engineering
+  def extract_signals(message)
+    signals = []
+    signals << SignalTokens::HAS_EXTERNAL_REPLY if message.external_reply.present?
+    signals << SignalTokens::HAS_FORWARDED if message.forward_origin.present?
+    signals << SignalTokens::HAS_PHOTO if message.photo.present?
+    signals << SignalTokens::HAS_QUOTE if message.quote.present?
+    signals
   end
 
   # Escapes special characters for Telegram's Markdown mode

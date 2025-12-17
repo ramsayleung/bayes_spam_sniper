@@ -131,12 +131,13 @@ class SpamClassifierService
 
   def tokenize(text)
     cleaned_text = TextCleaner.call(text)
-    # This regex pre-tokenizes the string into 4 groups:
-    # 1. Emojis (one or more)
-    # 2. Chinese characters (one or more)
-    # 3. English words/numbers (one or more)
-    # 4. Punctuation/Symbols that we might want to discard later
-    pre_tokens = cleaned_text.scan(/(\p{Emoji_Presentation}+)|(\p{Han}+)|([a-zA-Z0-9]+)|([[:punct:]。、，！？]+)/).flatten.compact
+    # This regex pre-tokenizes the string into 5 groups:
+    # 1. Our special signal tokens (e.g., __HAS_EXTERNAL_REPLY__)
+    # 2. Emojis (one or more)
+    # 3. Chinese characters (one or more)
+    # 4. English words/numbers (one or more)
+    # 5. Punctuation/Symbols that we might want to discard later
+    pre_tokens = cleaned_text.scan(/(__[A-Z_]+__)|(\p{Emoji_Presentation}+)|(\p{Han}+)|([a-zA-Z0-9]+)|([[:punct:]。、，！？]+)/).flatten.compact
 
     processed_tokens = pre_tokens.flat_map do |token|
       if token.match?(/\p{Emoji_Presentation}/)

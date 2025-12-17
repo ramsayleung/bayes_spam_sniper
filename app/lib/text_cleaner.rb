@@ -1,3 +1,5 @@
+require_relative "signal_tokens"
+
 class TextCleaner
   def self.call(text)
     new.clean(text)
@@ -7,9 +9,25 @@ class TextCleaner
   def clean(text)
     return "" if text.nil?
 
-    cleaned = text.to_s.strip
+    text_to_process = text.to_s.strip
+    found_signals = []
 
-    cleaned = TextCleaner.extract_found_message(cleaned)
+    # Loop to strip all known signal prefixes from the text
+    loop do
+      signal_found_this_loop = false
+      SignalTokens::ALL.each do |signal|
+        if text_to_process.end_with?(signal)
+          found_signals << signal
+          text_to_process = text_to_process.sub(signal, "").strip
+          signal_found_this_loop = true
+          break
+        end
+      end
+      break unless signal_found_this_loop
+    end
+
+    # `text_to_process` now contains the text body without signals.
+    cleaned = TextCleaner.extract_found_message(text_to_process)
 
     # Step 1: Handle anti-spam separators
     # This still handles the cases like "合-约" -> "合约"
@@ -37,7 +55,7 @@ class TextCleaner
     # Step 4: Remove excessive space
     cleaned = cleaned.gsub(/\s+/, " ").strip
 
-    cleaned
+    ([ cleaned ] + found_signals.reverse).join(" ").strip
   end
 
   # Extracts the message content after the #FOUND ... FROM ... prefix

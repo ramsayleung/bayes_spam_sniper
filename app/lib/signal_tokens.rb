@@ -1,0 +1,12 @@
+module SignalTokens
+  HAS_QUOTE = "__HAS_QUOTE__"
+  HAS_PHOTO = "__HAS_PHOTO__"
+  HAS_FORWARDED = "__HAS_FORWARDED__"
+  HAS_EXTERNAL_REPLY = "__HAS_EXTERNAL_REPLY__"
+  ALL = Set.new([
+    HAS_QUOTE,
+    HAS_PHOTO,
+    HAS_FORWARDED,
+    HAS_EXTERNAL_REPLY
+  ]).freeze
+end

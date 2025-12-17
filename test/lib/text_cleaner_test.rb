@@ -42,4 +42,10 @@ class TextCleanerTest < ActiveSupport::TestCase
     cleaned_text = TextCleaner.call(spam_message)
     assert_equal "这人简介挂的合约报单群组挺牛的 ETH500 点大饼 5200 点！ + @BTCETHl6666", cleaned_text
   end
+
+  test "#call should handle signal correctly" do
+    spam_message = "这人简-介挂的 合-约-报单群组挺牛的ETH500点，大饼5200点！ + @BTCETHl6666" + " __HAS_EXTERNAL_REPLY__ __HAS_QUOTE__"
+    cleaned_text = TextCleaner.call(spam_message)
+    assert_equal "这人简介挂的合约报单群组挺牛的 ETH500 点大饼 5200 点！ + @BTCETHl6666 __HAS_EXTERNAL_REPLY__ __HAS_QUOTE__", cleaned_text
+  end
 end
