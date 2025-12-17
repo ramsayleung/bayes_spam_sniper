@@ -76,7 +76,7 @@ class TelegramBotter
 
   def handle_message(bot, message)
     message_text = message.text&.strip || ""
-    Rails.logger.info "Handling message #{message_text}"
+    Rails.logger.info "Handling message #{message.to_h.to_json}"
 
     # In group chats, ignore commands for other bots
     if is_group_message?(message)
@@ -210,6 +210,7 @@ class TelegramBotter
   end
 
   def handle_markspam_command(bot, message)
+    Rails.logger.info "Handling markspam: #{message.to_h.to_json}"
     return unless is_group_chat?(bot, message)
     return unless is_admin?(bot, user: message.from, group_id: message.chat.id)
     return if message.reply_to_message.nil?
@@ -221,8 +222,12 @@ class TelegramBotter
 
     replied = message.reply_to_message
     spam_text = extract_searchable_content(message.reply_to_message)
-    Rails.logger.info "markspam: #{spam_text} in #{group_id}"
     return if spam_text.nil? || spam_text.empty?
+
+    signals = extract_signals(message.reply_to_message)
+    if signals.any?
+      spam_text = spam_text + " " + signals.join(" ")
+    end
 
     I18n.with_locale(@lang_code) do
       begin
@@ -993,6 +998,7 @@ class TelegramBotter
     content_parts << message.caption if message.caption.present?
     content_parts << message.poll.question if message.poll&.question.present?
     content_parts << message.sticker.emoji if message.sticker&.emoji.present? # Add sticker emoji
+    content_parts << message.quote.text if message.quote.present? && message.quote.text.present?
 
     if message.reply_markup&.inline_keyboard.present?
       message.reply_markup.inline_keyboard.each do |row|
