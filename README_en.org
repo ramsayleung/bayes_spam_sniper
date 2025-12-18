@@ -87,6 +87,8 @@
    1. Feed training data using the =/feedspam= command.
    2. Join the [[https://t.me/+i8fy3qOtiNAyODZl][BSS Support Group]] or the author's [[https://t.me/pipeapplebun][private channel]], and post ads in the group.
    3. [[https://github.com/sponsors/ramsayleung][Sponsor the author]].
+** Release
+  [[./CHANGELOG.org]]
 ** Q&A
 *** If it's so powerful, why are some spam in my group still not being detected?
     The Bayesian algorithm is fundamentally a probability-based algorithm. If it hasn't encountered similar spam before, it cannot determine whether they are spam :(

@@ -84,6 +84,8 @@
    1. 通过 =/feedspam= 命令投喂训练数据
    2. 加入 [[https://t.me/+i8fy3qOtiNAyODZl][BSS 支持群]]，或作者[[https://t.me/pipeapplebun][私人频道]],在群里发广告
    3. [[https://github.com/sponsors/ramsayleung][Sponsor 作者]]
+** 版本日志
+  [[./CHANGELOG.org]]
 ** 常见问题
 *** 说得这么厉害，为什么别人在我群里发的广告还是没有被识别？
     贝叶斯算法本质是个概率算法，如果它没有见过类似的广告，那么它就没法判断是否垃圾广告 :(

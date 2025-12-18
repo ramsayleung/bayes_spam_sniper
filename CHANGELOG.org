@@ -1,0 +1,73 @@
+# Changelog
+
+This file summarizes the most important changes for each release.
+
+* Version 1.0.0 (2025-12-16)
+** Summary
+ - Enhanced feature engineering by adding signals for admin actions, forwarded messages, external replies, and photos.
+ - Improved the "ham bonus" calculation for short messages to reduce false positives.
+ - Expanded content extraction to include all searchable text from a message for a more thorough analysis.
+** Commits
+ - feat: add signal for spam marked by group admin (7888e78)
+ - feat: add forward/external_reply/photo as extra signal (c7b1f88)
+ - feat: extract all searchable text for spam analysis (b2e2965)
+ - feat: Apply a "ham bonus" by mathematically increase ham score (b729101)
+
+* Version 0.3 (2025-12-13)
+** Summary
+ - Rearchitected spam analysis to run in asynchronous background jobs, significantly improving message processing throughput.
+ - Implemented a global ban feature, allowing an admin's ban to apply across all groups the bot is in.
+ - Added support for detecting spam within quoted messages.
+ - Improved performance by skipping spam analysis for very short messages.
+** Commits
+ - feat: Async spam analysis to improve message processing throughput (e7dfb69)
+ - feat: Skip inspection if message is too short (d03c992)
+ - fix the subtle race condition bug (3317ed7)
+ - fix the bug that spam could bypass by replying to a msg (31a6c68)
+ - add a new column `marked_by` to trained_message model (f16fbbc)
+ - migrate telegram_botter from queue/worker to daemon process (c1118d4)
+ - save sanitized message without found tag to database (1c3f4be)
+ - add support to detect quoted spam message (c526b0c)
+ - sent notification to all groups when globally ban a user (822cde7)
+ - add monitoring support (69f7f4a)
+ - feat: add pattern for Found In Group spam message (05ff33c)
+ - feat add support globally ban spammer across groups (0629c23)
+ - fix: add missing administrator permission validation (aac0599)
+
+* Version 0.2 (2025-10-22)
+** Summary
+ - Introduced a rule-based classifier to detect spam messages with spaced-out characters (e.g., "s p a m").
+ - Migrated background jobs to a more efficient threadpool-based system.
+ - Added a background job to sync classifications for identical messages.
+** Commits
+ - feat: add support to globally ban user from all groups (f550f38)
+ - add background job to sync message type across messages if they are identical (c63a6a9)
+ - add a new field to track the origin of training data (202e811)
+ - add a rule based classifier to detect message separated by space (d1286c4)
+ - Migrate from recurring job to threadpool for checking pending batch (48c823f)
+ - Add a basic batching mechanism (44040a4)
+ - fix: Replace outdated tdlib-ruby with minimal ffi wrapper (86b66e3)
+ - Add telegram data collector to automatically collect train data set (09a63be)
+
+* Version 0.1 (2025-09-07)
+** Summary
+ - Initial implementation of the core spam classifier service using Naive Bayes.
+ - Added full internationalization (i18n) support for bot commands and messages.
+ - Established core features: bulk training, automatic deletion of spam, and a pre-existing message cache to speed up classification of previously seen messages.
+ - Optimized the text tokenizer to correctly handle and remove anti-spam separators.
+** Commits
+ - feat: Automatically delete warning message in 5 minutes (f9cf2df)
+ - feat: Add support to bulk mark message as spam or ham (0c32c31)
+ - feat: prioritizes a pre-existing message check over immediately using Bayesian classifier (b9279f8)
+ - Add message_hash to trained_message to identify the pre-existing message (504b471)
+ - Add overcommit to manage git hook (6023a0c)
+ - Auto retrain all public classifier after trained message change (14b79e1)
+ - Automatically ban user if he send spam more than 3 times (55b75b8)
+ - Optimize the tokenize function to remove anti-spam separator (c996841)
+ - Add classification for user_name (d5975f4)
+ - Add full international support for telegram bot (41e57a7)
+ - Add spam classifier service (650598b)
+ - Add new model for banned user and group classifier_state data (537d285)
+ - Move telegram bot to active job (1490b8b)
+ - Add telegram part (aef94ba)
+
