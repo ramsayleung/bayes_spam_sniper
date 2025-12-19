@@ -3,7 +3,7 @@ class GroupClassifierStatesController < ApplicationController
 
   # GET /group_classifier_states or /group_classifier_states.json
   def index
-    @group_classifier_states = GroupClassifierState.all
+    @group_classifier_states = GroupClassifierState.for_group
 
     # Sorting
     sort_by = params[:sort] || "created_at"
