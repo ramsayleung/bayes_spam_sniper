@@ -954,7 +954,10 @@ class TelegramBotter
   # Leveraging signal in feature engineering
   def extract_signals(message)
     signals = []
-    signals << SignalTokens::HAS_EXTERNAL_REPLY if message.external_reply.present?
+    if message.external_reply.present?
+      signals << SignalTokens::HAS_EXTERNAL_REPLY
+      signals << SignalTokens::HAS_PHOTO if message.external_reply.photo.present?
+    end
     signals << SignalTokens::HAS_FORWARDED if message.forward_origin.present?
     signals << SignalTokens::HAS_PHOTO if message.photo.present?
     signals << SignalTokens::HAS_QUOTE if message.quote.present?
@@ -1008,6 +1011,18 @@ class TelegramBotter
         end
       end
     end
+
+    if message&.external_reply.present?
+      if message.external_reply&.origin&.sender_user.present?
+        content_parts << message.external_reply.origin.sender_user.first_name
+        content_parts << message.external_reply.origin.sender_user.last_name
+      end
+
+      if message.external_reply&.chat.present?
+        content_parts << message.external_reply.chat.title
+      end
+    end
+
     content_parts.compact.join(" ").strip
   end
 
