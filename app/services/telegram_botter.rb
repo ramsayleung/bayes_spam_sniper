@@ -735,8 +735,6 @@ class TelegramBotter
 
       #{I18n.t('telegram_bot.user_guide.commands_title')}
       #{commands}
-
-      #{I18n.t('telegram_bot.user_guide.support')}
     TEXT
 
       bot.api.edit_message_text(

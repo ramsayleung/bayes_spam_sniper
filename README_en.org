@@ -85,8 +85,7 @@
    This project is purely powered by love. If you want to support it, you can contribute in the following ways:
 
    1. Feed training data using the =/feedspam= command.
-   2. Join the [[https://t.me/+i8fy3qOtiNAyODZl][BSS Support Group]] or the author's [[https://t.me/pipeapplebun][private channel]], and post ads in the group.
-   3. [[https://github.com/sponsors/ramsayleung][Sponsor the author]].
+   2. [[https://github.com/sponsors/ramsayleung][Sponsor the author]].
 ** Release
   [[./CHANGELOG.org]]
 ** Q&A

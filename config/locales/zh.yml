@@ -31,7 +31,6 @@ zh:
         listspam: "/listspam - 查看拦截广告消息列表"
         listbanuser: "/listbanuser - 查看封禁账户列表"
         setlang: "/setlang `<language_code>` - 设置机器人的语言"
-      support: "如有问题，请加群 [@BSS 支持群](https://t.me/+i8fy3qOtiNAyODZl)。"
     setlang:
       deprecation_message: "Setting the language via command is deprecated. Please use the /settings command to open the settings panel and configure the language."
       usage: "用法: /setlang <语言代码>. 可选: %{available_locales}"

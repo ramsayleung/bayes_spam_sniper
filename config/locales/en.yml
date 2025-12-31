@@ -60,7 +60,6 @@ en:
         listspam: "/listspam - View list of spam messages"
         listbanuser: "/listbanuser - List all banned users"
         setlang: "/setlang `<language_code>` - Set language for the bot"
-      support: "For assistance, join our support group: @[BSS support group](https://t.me/+i8fy3qOtiNAyODZl)"
     setlang:
       deprecation_message: "Setting the language via command is deprecated. Please use the /settings command to open the settings panel and configure the language."
       usage: "Usage: /setlang <language_code>. Available: %{available_locales}"

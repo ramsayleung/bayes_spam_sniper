@@ -82,8 +82,7 @@
    本项目纯粹用爱发电，如果想支持本项目，有以下的方式进行贡献:
 
    1. 通过 =/feedspam= 命令投喂训练数据
-   2. 加入 [[https://t.me/+i8fy3qOtiNAyODZl][BSS 支持群]]，或作者[[https://t.me/pipeapplebun][私人频道]],在群里发广告
-   3. [[https://github.com/sponsors/ramsayleung][Sponsor 作者]]
+   2. [[https://github.com/sponsors/ramsayleung][Sponsor 作者]]
 ** 版本日志
   [[./CHANGELOG.org]]
 ** 常见问题
