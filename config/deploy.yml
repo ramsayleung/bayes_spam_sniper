@@ -17,6 +17,7 @@ servers:
 
     options:
       network-alias: "telegram-web"
+      ulimit: "nofile=65535:65535"
   job:
     hosts:
       - 192.168.1.188
@@ -26,6 +27,8 @@ servers:
         max-size: "200m"
         max-file: "5"
     cmd: bin/run_queue_jobs
+    options:
+      ulimit: "nofile=65535:65535"
   bot:
     hosts:
       - 192.168.1.188
@@ -35,6 +38,8 @@ servers:
         max-size: "200m"
         max-file: "5"
     cmd: bin/bot
+    options:
+      ulimit: "nofile=65535:65535"
 
 volumes:
     - "telegram_spam_sniper_bot_metrics:/rails/tmp/prometheus"
