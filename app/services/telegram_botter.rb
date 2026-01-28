@@ -1000,6 +1000,7 @@ class TelegramBotter
     content_parts << message.poll.question if message.poll&.question.present?
     content_parts << message.sticker.emoji if message.sticker&.emoji.present? # Add sticker emoji
     content_parts << message.quote.text if message.quote.present? && message.quote.text.present?
+    content_parts << [ message.contact&.first_name, message.contact&.last_name ].compact.join(" ") if message.contact.present?
 
     if message.reply_markup&.inline_keyboard.present?
       message.reply_markup.inline_keyboard.each do |row|
