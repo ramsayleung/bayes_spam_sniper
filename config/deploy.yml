@@ -8,7 +8,7 @@ image: samrayleung/telegram_spam_sniper_bot
 servers:
   web:
     hosts:
-      - 192.168.1.188
+      - archlinuxserver.me
     logging:
       driver: "json-file"
       options:
@@ -20,7 +20,7 @@ servers:
       ulimit: "nofile=65535:65535"
   job:
     hosts:
-      - 192.168.1.188
+      - archlinuxserver.me
     logging:
       driver: "json-file"
       options:
@@ -31,7 +31,7 @@ servers:
       ulimit: "nofile=65535:65535"
   bot:
     hosts:
-      - 192.168.1.188
+      - archlinuxserver.me
     logging:
       driver: "json-file"
       options:
@@ -135,7 +135,7 @@ builder:
 accessories:
   # Metrics storage volume for the DirectFileStore persistence
   metrics:
-    host: 192.168.1.188
+    host: archlinuxserver.me
     image: samrayleung/telegram_spam_sniper_bot
     cmd: sleep infinity  # Keeps the container running but idle
     env:
@@ -152,7 +152,7 @@ accessories:
 
   # Prometheus server for collecting metrics
   prometheus:
-    host: 192.168.1.188
+    host: archlinuxserver.me
     image: prom/prometheus:latest
     port: "9090:9090"
     files:
@@ -172,7 +172,7 @@ accessories:
 
   # Grafana for visualization
   grafana:
-    host: 192.168.1.188
+    host: archlinuxserver.me
     image: grafana/grafana:latest
     port: "3001:3000"
     files:
@@ -189,7 +189,7 @@ accessories:
       add-host: "host.docker.internal:host-gateway"
 
   runner:
-    host: 192.168.1.188
+    host: archlinuxserver.me
     image: samrayleung/telegram_spam_sniper_bot
     cmd: sleep infinity  # Keeps the container running but idle
     env:

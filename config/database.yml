@@ -53,10 +53,10 @@ production:
     adapter: postgresql
     encoding: unicode
     pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 10 } %>
-    username: <%= ENV["POSTGRES_USER"] %>
-    database: <%= ENV["POSTGRES_DB"] %>
-    password: <%= ENV["POSTGRES_PASSWORD"] %>
-    host: <%= ENV["DB_HOST"] %>
+    username: "<%= ENV["POSTGRES_USER"] %>"
+    database: "<%= ENV["POSTGRES_DB"] %>"
+    password: "<%= ENV["POSTGRES_PASSWORD"] %>"
+    host: "<%= ENV["DB_HOST"] %>"
     port: <%= ENV["DB_PORT"] %>
   cache:
     <<: *primary_production
