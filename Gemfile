@@ -81,4 +81,4 @@ gem "prometheus-client"
 
 gem "silencer"
 
-gem "image_processing", "~> 1.2"
+gem "image_processing", "~> 2.0"
