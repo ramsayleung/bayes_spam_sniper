@@ -26,6 +26,7 @@ class TelegramBotter
       Rails.application.config.telegram_bot = bot
       # Get bot username for @ mentions
       get_me_result ||= bot.api.get_me
+      @ttl_cache = ActiveSupport::Cache::MemoryStore.new(expires_in: 10.seconds) # 10 second cache
       @bot_username ||= Rails.cache.fetch("bot_username", expires_in: 24.hours) do
         get_me_result.username
       end
@@ -148,6 +149,11 @@ class TelegramBotter
   end
 
   def handle_start_command(bot, message)
+    # https://github.com/ramsayleung/bayes_spam_sniper/issues/101
+    # Handling flooding by send tons of /start command at the same time
+    command_id = "#{message.chat&.id}_#{message.from&.id}_start"
+    return if @ttl_cache.exist?(command_id)
+
     keyboard = [
       [
         { text: I18n.t("telegram_bot.buttons.user_guide", locale: @lang_code),
@@ -164,13 +170,13 @@ class TelegramBotter
       "#{I18n.t('telegram_bot.welcome.select_option')}"
     end
 
-
     sent_message = bot.api.send_message(
       chat_id: message.chat.id,
       text: welcome_text,
       reply_markup: { inline_keyboard: keyboard }.to_json(),
       parse_mode: "Markdown"
     )
+    @ttl_cache.write(command_id, true)
     delete_alart_message(sent_message)
   end
 

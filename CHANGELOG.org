@@ -4,6 +4,8 @@ This file summarizes the most important changes for each release.
 * Version 1.1.0 (2026-05-22)
   - Automatically delete start message to avoid polluting the chat
   - Add support for banning guest bot spamming, if a user use guest bot to send spam message, the user who mentioned the bot will be banned
+  - Prevent users from flooding the bot in group chats. If a  user sends multiple /start commands within this window(10s), subsequent commands are ignored.
+
 
 
 * Version 1.0.0 (2025-12-16)
