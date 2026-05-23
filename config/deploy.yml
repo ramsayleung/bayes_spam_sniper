@@ -8,7 +8,7 @@ image: samrayleung/telegram_spam_sniper_bot
 servers:
   web:
     hosts:
-      - archlinuxserver.me
+      - bsssvr.me
     logging:
       driver: "json-file"
       options:
@@ -20,7 +20,7 @@ servers:
       ulimit: "nofile=65535:65535"
   job:
     hosts:
-      - archlinuxserver.me
+      - bsssvr.me
     logging:
       driver: "json-file"
       options:
@@ -31,7 +31,7 @@ servers:
       ulimit: "nofile=65535:65535"
   bot:
     hosts:
-      - archlinuxserver.me
+      - bsssvr.me
     logging:
       driver: "json-file"
       options:
@@ -50,7 +50,7 @@ volumes:
 # Note: If using Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
 proxy:
   #ssl: true
-  host: arch.me
+  host: bsssvr.me
 
 # Credentials for your image host.
 registry:
@@ -135,7 +135,7 @@ builder:
 accessories:
   # Metrics storage volume for the DirectFileStore persistence
   metrics:
-    host: archlinuxserver.me
+    host: bsssvr.me
     image: samrayleung/telegram_spam_sniper_bot
     cmd: sleep infinity  # Keeps the container running but idle
     env:
@@ -152,7 +152,7 @@ accessories:
 
   # Prometheus server for collecting metrics
   prometheus:
-    host: archlinuxserver.me
+    host: bsssvr.me
     image: prom/prometheus:latest
     port: "9090:9090"
     files:
@@ -172,7 +172,7 @@ accessories:
 
   # Grafana for visualization
   grafana:
-    host: archlinuxserver.me
+    host: bsssvr.me
     image: grafana/grafana:latest
     port: "3001:3000"
     files:
@@ -189,7 +189,7 @@ accessories:
       add-host: "host.docker.internal:host-gateway"
 
   runner:
-    host: archlinuxserver.me
+    host: bsssvr.me
     image: samrayleung/telegram_spam_sniper_bot
     cmd: sleep infinity  # Keeps the container running but idle
     env:
