@@ -54,6 +54,18 @@ class TelegramBotter
 
   private
 
+  def delete_alart_message(sent_message)
+    if !sent_message.nil?
+      # Schedule a background job to delete the message
+      # to avoid polluting the group chat
+      delete_message_delay = Rails.application.config.delete_message_delay
+      TelegramBackgroundWorkerJob.set(wait: delete_message_delay.minutes).perform_later(
+        action: PostAction::DELETE_ALERT_MESSAGE,
+        chat_id: sent_message.chat.id,
+        message_id: sent_message.message_id)
+    end
+  end
+
   # Determines the appropriate language code for a given message based on a layered approach.
   # 1. Checks for a group-specific language setting if it's a group message.
   # 2. Falls back to the sender's language code from their Telegram profile.
@@ -153,12 +165,13 @@ class TelegramBotter
     end
 
 
-    bot.api.send_message(
+    sent_message = bot.api.send_message(
       chat_id: message.chat.id,
       text: welcome_text,
       reply_markup: { inline_keyboard: keyboard }.to_json(),
       parse_mode: "Markdown"
     )
+    delete_alart_message(sent_message)
   end
 
   def handle_set_language_command(bot, message)
@@ -176,7 +189,7 @@ class TelegramBotter
         )
         return
       end
-
+      sent_message = nil
       if I18n.available_locales.map(&:to_s).include?(target_language)
         group_id = message.chat.id
         group_name = message.chat.title || "Unknown Group"
@@ -186,23 +199,25 @@ class TelegramBotter
         group_state.language = target_language
 
         if group_state.save
-          bot.api.send_message(
+          sent_message = bot.api.send_message(
             chat_id: message.chat.id,
             text: I18n.t("telegram_bot.setlang.success", language: target_language),
           )
         else
           Rails.logger.error "Error saving group language: #{group_state.errors.full_messages.join(', ')}"
-          bot.api.send_message(
+          sent_message = bot.api.send_message(
             chat_id: message.chat.id,
             text: I18n.t("telegram_bot.setlang.failure"),
           )
         end
       else
-        bot.api.send_message(
+        sent_message = bot.api.send_message(
           chat_id: message.chat.id,
           text: I18n.t("telegram_bot.setlang.unsupported_language", language: target_language, available_locales: I18n.available_locales.map(&:to_s).join(", ")),
         )
       end
+
+      delete_alart_message(sent_message)
     end
   rescue => e
     Rails.logger.error "Error in setlang command: #{e.message}\n#{e.backtrace.join("\n")}"
