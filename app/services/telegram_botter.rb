@@ -247,14 +247,15 @@ class TelegramBotter
     I18n.with_locale(@lang_code) do
       begin
         group_name = message.chat.title
-        user_name = [ replied.from&.first_name, replied.from&.last_name ].compact.join(" ")
+        actual_user = replied.try(:guest_bot_caller_user) || replied.from
+        user_name = [ actual_user&.first_name, actual_user&.last_name ].compact.join(" ")
         # 1. Save the traineded message, which will invoke ActiveModel
         # hook to train the model in the background job
         trained_message = TrainedMessage.create!(
           group_id: group_id,
           message: spam_text,
           group_name: group_name,
-          sender_chat_id: replied.from.id,
+          sender_chat_id: actual_user.id,
           sender_user_name: user_name,
           message_type: :spam,
           marked_by: :group_admin
@@ -271,13 +272,13 @@ class TelegramBotter
         bot.api.delete_message(chat_id: message.chat.id, message_id: replied.message_id)
 
         # 3. Ban user and record the ban
-        banned_user_name = [ replied.from&.first_name, replied.from&.last_name ].compact.join(" ")
+        banned_user_name = [ actual_user&.first_name, actual_user&.last_name ].compact.join(" ")
         if can_restrict_members
-          bot.api.ban_chat_member(chat_id: message.chat.id, user_id: replied.from.id)
+          bot.api.ban_chat_member(chat_id: message.chat.id, user_id: actual_user.id)
           BannedUser.find_or_create_by!(
             group_name: group_name,
             group_id: message.chat.id,
-            sender_chat_id: replied.from.id,
+            sender_chat_id: actual_user.id,
             sender_user_name: banned_user_name,
             spam_message: spam_text
           )
@@ -286,9 +287,9 @@ class TelegramBotter
         # 4. Confirm action
         response_message = ""
         if !can_restrict_members
-          response_message = I18n.t("telegram_bot.markspam.delete_message_only_success_message", banned_user_name: banned_user_name, user_id: replied.from.id)
+          response_message = I18n.t("telegram_bot.markspam.delete_message_only_success_message", banned_user_name: banned_user_name, user_id: actual_user.id)
         else
-          response_message = I18n.t("telegram_bot.markspam.success_message", banned_user_name: banned_user_name, user_id: replied.from.id)
+          response_message = I18n.t("telegram_bot.markspam.success_message", banned_user_name: banned_user_name, user_id: actual_user.id)
         end
 
         sent_message = bot.api.send_message(chat_id: message.chat.id, text: response_message, parse_mode: "Markdown")
@@ -642,15 +643,20 @@ class TelegramBotter
 
     signals = extract_signals(message)
 
+    # guest_bot_caller_user is the the user who mentioned the guest
+    # bot, if someone use guest bot to send spam, ban the user rather
+    # than the bot
+    actual_user = message.try(:guest_bot_caller_user) || message.from
+
     message_data = {
       message_id: message.message_id,
       text: searchable_content,
       chat_id: message.chat.id,
       chat_type: message.chat.type,
       chat_title: message.chat.title,
-      from_id: message.from&.id,
-      from_first_name: message.from&.first_name,
-      from_last_name: message.from&.last_name,
+      from_id: actual_user&.id,
+      from_first_name: actual_user&.first_name,
+      from_last_name: actual_user&.last_name,
       date: message.date,
       quote_text: message.quote&.text,
       reply_to_text: message.reply_to_message&.text,
