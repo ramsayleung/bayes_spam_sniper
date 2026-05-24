@@ -4,7 +4,7 @@ default: &default
       batch_size: 500
   workers:
     - queues: "*"
-      threads: 3
+      threads: 2
       processes: <%= ENV.fetch("JOB_CONCURRENCY", 1) %>
       polling_interval: 0.1
 
@@ -15,19 +15,19 @@ development:
   workers:
     - queues: "spam_analysis"
       processes: 1
-      threads: 3
+      threads: 1
     - queues: "training"
       processes: 1
-      threads: 3
+      threads: 1
     - queues: "batching"
       processes: 1
-      threads: 3
+      threads: 1
     - queues: "low_priority"
       processes: 1
-      threads: 5
+      threads: 1
     - queues: "*"
       processes: <%= [ENV.fetch("JOB_CONCURRENCY", "1").to_i - 5, 1].max %>
-      threads: 3
+      threads: 1
 
 test:
   <<: *default
@@ -39,16 +39,16 @@ production:
   workers:
     - queues: "spam_analysis"
       processes: 1
-      threads: 3
+      threads: 2
     - queues: "training"
       processes: 1
-      threads: 3
+      threads: 2
     - queues: "batching"
       processes: 1
-      threads: 3
+      threads: 2
     - queues: "low_priority"
       processes: 1
-      threads: 5
+      threads: 2
     - queues: "*"
       processes: <%= [ENV.fetch("JOB_CONCURRENCY", "1").to_i - 5, 1].max %>
-      threads: 3
+      threads: 2
