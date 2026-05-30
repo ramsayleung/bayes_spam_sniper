@@ -1,4 +1,3 @@
-require "solid_queue_dashboard"
 Rails.application.routes.draw do
   resources :group_classifier_states
   resources :banned_users
@@ -22,5 +21,5 @@ Rails.application.routes.draw do
   # Metrics endpoint for Prometheus
   get "/metrics", to: "metrics#show"
 
-  mount SolidQueueDashboard::Engine, at: "/solid-queue"
+  mount MissionControl::Jobs::Engine, at: "/jobs"
 end

@@ -75,10 +75,11 @@ gem "jieba_rb", "~> 0.0.5"
 
 gem "ffi"
 
-gem "solid_queue_dashboard", "~> 0.2.0"
 
 gem "prometheus-client"
 
 gem "silencer"
 
 gem "image_processing", "~> 2.0"
+
+gem "mission_control-jobs", "~> 1.1"

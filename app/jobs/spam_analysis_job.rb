@@ -88,7 +88,7 @@ class SpamAnalysisJob < ApplicationJob
     begin
       bot.api.delete_message(chat_id: message.chat.id, message_id: message.message_id)
     rescue Telegram::Bot::Exceptions::ResponseError => e
-      if e.description.include?("message to delete not found")
+      if e&.description.include?("message to delete not found")
         Rails.logger.info "Spam message already deleted: #{e.message}"
       else
         Rails.logger.error "Error deleting spam message: #{e.message}"
