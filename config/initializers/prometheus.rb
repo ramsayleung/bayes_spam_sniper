@@ -60,3 +60,18 @@ end
 
 # Make the metrics module globally accessible
 Object.const_set(:TelegramBotMetrics, TelegramBotMetrics) if !Object.const_defined?(:TelegramBotMetrics)
+
+# Monkey patch Prometheus::Client::Formats::Text to prevent invalid scrape output
+# If DirectFileStore gets corrupted, values (like "sum") can be missing.
+# The default formatter passes nil to a %s format string, resulting in an empty string
+# and causing Prometheus to reject the entire scrape with an "INVALID" error.
+require "prometheus/client/formats/text"
+
+module PrometheusFormatPatch
+  def metric(name, labels, value)
+    # Default nil values to 0.0 so the text format always ends with a number
+    super(name, labels, value || 0.0)
+  end
+end
+
+Prometheus::Client::Formats::Text.singleton_class.prepend(PrometheusFormatPatch)
