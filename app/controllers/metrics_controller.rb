@@ -1,5 +1,6 @@
 class MetricsController < ApplicationController
   skip_before_action :verify_authenticity_token
+  skip_before_action :authenticate, if: :internal_network?
 
   def show
     # For DirectFileStore, we need to use the registry's format method directly
@@ -20,5 +21,11 @@ class MetricsController < ApplicationController
       Rails.logger.error "Error in metrics endpoint: #{e.message}\n#{e.backtrace.join("\n")}"
       render plain: "# Error: #{e.message}", status: 500, content_type: "text/plain"
     end
+  end
+
+  private
+
+  def internal_network?
+    request.remote_ip.start_with?("172.", "10.", "192.168.", "127.", "::1")
   end
 end
