@@ -69,7 +69,7 @@ group :test do
   gem "selenium-webdriver"
 end
 
-gem "telegram-bot-ruby", "~> 2.7"
+gem "telegram-bot-ruby", "~> 2.8"
 
 gem "jieba_rb", "~> 0.0.5"
 
