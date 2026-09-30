@@ -37,6 +37,7 @@
 !/app/assets/builds/.keep
 
 /db/data
+!/db/data/db_migration_data.csv
 
 /config/credentials/development.key
 
